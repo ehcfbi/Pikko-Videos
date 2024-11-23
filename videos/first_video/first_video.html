@@ -5,10 +5,78 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>first video on Pikko Videos</title>
     <link rel="icon" href="favicon.ico">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+        }
+        .comment-box {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+    </style>
 </head>
 <body>
     <a href="https://ehcfbi.github.io/Pikko-Videos/"><img src="logo.png" alt="logo" width="200" height="100"></a>
     <h1>first video</h1>
     <video src="video.mp4" controls width="240" height="135" style="border:solid 1px #000000"></video>
+
+    <div class="container">
+        <h1>Comment submission form</h1>
+        <form id="commentForm">
+            <label for="name">name:</label>
+            <input type="text" id="name" name="name" required>
+            <br><br>
+            <label for="comment">comment:</label>
+            <textarea id="comment" name="comment" required></textarea>
+            <br><br>
+            <button type="submit">submit</button>
+        </form>
+        <div id="commentsSection"></div>
+    </div>
+
+    <script>
+        document.getElementById('commentForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const name = document.getElementById('name').value;
+            const comment = document.getElementById('comment').value;
+
+            fetch('http://localhost:3000/comments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name, comment })
+            }).then(response => response.json()).then(data => {
+                const commentBox = document.createElement('div');
+                commentBox.className = 'comment-box';
+                commentBox.innerHTML = `<p><strong>${data.name}:</strong></p><p>${data.comment}</p>`;
+                document.getElementById('commentsSection').appendChild(commentBox);
+                document.getElementById('commentForm').reset();
+            });
+        });
+
+        window.onload = function() {
+            fetch('http://localhost:3000/comments')
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(comment => {
+                        const commentBox = document.createElement('div');
+                        commentBox.className = 'comment-box';
+                        commentBox.innerHTML = `<p><strong>${comment.name}:</strong></p><p>${comment.comment}</p>`;
+                        document.getElementById('commentsSection').appendChild(commentBox);
+                    });
+                });
+        }
+    </script>
 </body>
 </html>
