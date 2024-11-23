@@ -78,7 +78,7 @@
             commentBox.innerHTML = `
                 <p><strong>${comment.name}:</strong></p>
                 <p>${comment.comment}</p>
-                <button onclick="deleteComment('${comment._id}')">削除</button>
+                <button onclick="deleteComment('${comment._id}')">delete</button>
             `;
             document.getElementById('commentsSection').appendChild(commentBox);
         }
