@@ -57,10 +57,7 @@
                 },
                 body: JSON.stringify({ name, comment })
             }).then(response => response.json()).then(data => {
-                const commentBox = document.createElement('div');
-                commentBox.className = 'comment-box';
-                commentBox.innerHTML = `<p><strong>${data.name}:</strong></p><p>${data.comment}</p>`;
-                document.getElementById('commentsSection').appendChild(commentBox);
+                addCommentToDOM(data);
                 document.getElementById('commentForm').reset();
             });
         });
@@ -70,12 +67,35 @@
                 .then(response => response.json())
                 .then(data => {
                     data.forEach(comment => {
-                        const commentBox = document.createElement('div');
-                        commentBox.className = 'comment-box';
-                        commentBox.innerHTML = `<p><strong>${comment.name}:</strong></p><p>${comment.comment}</p>`;
-                        document.getElementById('commentsSection').appendChild(commentBox);
+                        addCommentToDOM(comment);
                     });
                 });
+        }
+
+        function addCommentToDOM(comment) {
+            const commentBox = document.createElement('div');
+            commentBox.className = 'comment-box';
+            commentBox.innerHTML = `
+                <p><strong>${comment.name}:</strong></p>
+                <p>${comment.comment}</p>
+                <button onclick="deleteComment('${comment._id}')">削除</button>
+            `;
+            document.getElementById('commentsSection').appendChild(commentBox);
+        }
+
+        function deleteComment(id) {
+            fetch(`http://localhost:3000/comments/${id}`, {
+                method: 'DELETE'
+            }).then(() => {
+                document.getElementById('commentsSection').innerHTML = '';
+                fetch('http://localhost:3000/comments')
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(comment => {
+                            addCommentToDOM(comment);
+                        });
+                    });
+            });
         }
     </script>
 </body>
