@@ -50,7 +50,7 @@
             const name = document.getElementById('name').value;
             const comment = document.getElementById('comment').value;
 
-            fetch('https://pikko-videos.vercel.app/comments', {
+            fetch('https://15b1-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app/comments', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -63,7 +63,7 @@
         });
 
         window.onload = function() {
-            fetch('https://pikko-videos.vercel.app/comments')
+            fetch('https://15b1-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app/comments')
                 .then(response => response.json())
                 .then(data => {
                     data.forEach(comment => {
@@ -84,11 +84,11 @@
         }
 
         function deleteComment(id) {
-            fetch(`https://pikko-videos.vercel.app/comments/${id}`, {
+            fetch(`https://15b1-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app/comments/${id}`, {
                 method: 'DELETE'
             }).then(() => {
                 document.getElementById('commentsSection').innerHTML = '';
-                fetch('https://pikko-videos.vercel.app/comments')
+                fetch('https://15b1-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app/comments')
                     .then(response => response.json())
                     .then(data => {
                         data.forEach(comment => {
