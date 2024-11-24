@@ -51,7 +51,7 @@ document.getElementById('commentForm').addEventListener('submit', function(event
     const comment = document.getElementById('comment').value;
     const videoId = document.getElementById('videoId').value; // 動画IDを取得
 
-    fetch('https://15b1-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app/comments', {
+    fetch('https://fc93-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app/comments', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -66,7 +66,7 @@ document.getElementById('commentForm').addEventListener('submit', function(event
 // ページロード時にコメントを取得して表示
 window.onload = function() {
     const videoId = 'first'; // 動画IDをここで設定
-    fetch(`https://15b1-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app/comments/${videoId}`)
+    fetch(`https://fc93-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app/comments/${videoId}`)
         .then(response => response.json())
         .then(data => {
             data.forEach(comment => {
@@ -87,12 +87,12 @@ function addCommentToDOM(comment) {
 }
 
 function deleteComment(id) {
-    fetch(`https://15b1-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app/comments/${id}`, {
+    fetch(`https://fc93-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app/comments/${id}`, {
         method: 'DELETE'
     }).then(() => {
         document.getElementById('commentsSection').innerHTML = '';
         const videoId = 'first'; // 動画IDをここで設定
-        fetch(`https://15b1-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app/comments/${videoId}`)
+        fetch(`https://fc93-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app/comments/${videoId}`)
             .then(response => response.json())
             .then(data => {
                 data.forEach(comment => {
