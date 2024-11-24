@@ -51,7 +51,7 @@
             const comment = document.getElementById('comment').value;
             const videoId = document.getElementById('videoId').value; // 動画IDを取得
 
-            fetch('https://fc93-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app/comments', {
+            fetch('https://26c5-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app/comments', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -69,7 +69,7 @@
             if (videoIdElement) {
                 const videoId = videoIdElement.value; // 動画IDをここで設定
                 console.log(`Fetching comments for videoId: ${videoId}`);
-                fetch(`https://fc93-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app/comments/${videoId}`)
+                fetch(`https://26c5-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app/comments/${videoId}`)
                     .then(response => response.json())
                     .then(data => {
                         console.log('Comments fetched:', data);
@@ -95,14 +95,14 @@
         }
 
         function deleteComment(id) {
-            fetch(`https://fc93-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app/comments/${id}`, {
+            fetch(`https://26c5-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app/comments/${id}`, {
                 method: 'DELETE'
             }).then(() => {
                 document.getElementById('commentsSection').innerHTML = '';
                 const videoIdElement = document.getElementById('videoId');
                 if (videoIdElement) {
                     const videoId = videoIdElement.value; // 動画IDをここで設定
-                    fetch(`https://fc93-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app/comments/${videoId}`)
+                    fetch(`https://26c5-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app/comments/${videoId}`)
                         .then(response => response.json())
                         .then(data => {
                             data.forEach(comment => {
