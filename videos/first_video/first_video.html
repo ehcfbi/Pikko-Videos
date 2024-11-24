@@ -65,28 +65,34 @@
 
         // ページロード時にコメントを取得して表示
         window.onload = function() {
-            const videoId = document.getElementById('videoId').value; // 動画IDをここで設定
-            console.log(`Fetching comments for videoId: ${videoId}`);
-            fetch(`https://fc93-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app/comments/${videoId}`)
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Comments fetched:', data);
-                    data.forEach(comment => {
-                        addCommentToDOM(comment);
-                    });
-                })
-                .catch(error => console.error('Error fetching comments:', error));
-        }
+    const videoId = document.getElementById('videoId').value; // 動画IDをここで設定
+    console.log(`Fetching comments for videoId: ${videoId}`);
+    fetch(`https://fc93-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app/comments/${videoId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Comments fetched:', data);
+            data.forEach(comment => {
+                addCommentToDOM(comment);
+            });
+        })
+        .catch(error => console.error('Error fetching comments:', error));
+}
 
-        function addCommentToDOM(comment) { 
-            const commentBox = document.createElement('div'); 
-            commentBox.className = 'comment-box'; 
-            commentBox.innerHTML = ` 
-            <p><strong>${comment.name}:</strong></p> 
-            <p>${comment.comment}</p> 
-            <button onclick="deleteComment('${comment._id}')">delete</button> 
-            `; 
-            document.getElementById('commentsSection').appendChild(commentBox); 
+
+        function addCommentToDOM(comment) {
+            const commentBox = document.createElement('div');
+            commentBox.className = 'comment-box';
+            commentBox.innerHTML = `
+                <p><strong>${comment.name}:</strong></p>
+                <p>${comment.comment}</p>
+                <button onclick="deleteComment('${comment._id}')">delete</button>
+            `;
+            document.getElementById('commentsSection').appendChild(commentBox);
         }
 
         function deleteComment(id) {
