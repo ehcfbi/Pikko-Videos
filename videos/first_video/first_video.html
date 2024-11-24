@@ -78,15 +78,17 @@
                 .catch(error => console.error('Error fetching comments:', error));
         }
 
-        function addCommentToDOM(comment) {
-            const commentBox = document.createElement('div');
-            commentBox.className = 'comment-box';
-            commentBox.innerHTML = `
-                <p><strong>${comment.name}:</strong></p>
-                <p>${comment.comment}</p>
-                <button onclick="deleteComment('${comment._id}')">delete</button>
-            `;
-            document.getElementById('commentsSection').appendChild(commentBox);
+       function addCommentToDOM(comment) {
+    const commentBox = document.createElement('div');
+    commentBox.className = 'comment-box';
+    commentBox.innerHTML = `
+        <p><strong>${comment.name}:</strong></p>
+        <p>${comment.comment}</p>
+        <button onclick="deleteComment('${comment._id}')">delete</button>
+    `;
+    document.getElementById('commentsSection').appendChild(commentBox);
+}
+
         }
 
         function deleteComment(id) {
