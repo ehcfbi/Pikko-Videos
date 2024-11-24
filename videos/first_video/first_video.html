@@ -50,7 +50,7 @@
             const name = document.getElementById('name').value;
             const comment = document.getElementById('comment').value;
 
-            fetch('http://localhost:3000/comments', {
+            fetch('https://pikko-videos.vercel.app/comments', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -63,7 +63,7 @@
         });
 
         window.onload = function() {
-            fetch('http://localhost:3000/comments')
+            fetch('https://pikko-videos.vercel.app/comments')
                 .then(response => response.json())
                 .then(data => {
                     data.forEach(comment => {
@@ -84,11 +84,11 @@
         }
 
         function deleteComment(id) {
-            fetch(`http://localhost:3000/comments/${id}`, {
+            fetch(`https://pikko-videos.vercel.app/comments/${id}`, {
                 method: 'DELETE'
             }).then(() => {
                 document.getElementById('commentsSection').innerHTML = '';
-                fetch('http://localhost:3000/comments')
+                fetch('https://pikko-videos.vercel.app/comments')
                     .then(response => response.json())
                     .then(data => {
                         data.forEach(comment => {
