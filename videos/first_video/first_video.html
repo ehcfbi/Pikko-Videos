@@ -32,71 +32,76 @@
 
     <div class="container">
         <h1>Comment submission form</h1>
-        <form id="commentForm">
-            <label for="name">name:</label>
-            <input type="text" id="name" name="name" required>
-            <br><br>
-            <label for="comment">comment:</label>
-            <textarea id="comment" name="comment" required></textarea>
-            <br><br>
-            <button type="submit">submit</button>
-        </form>
+        <!-- コメント送信フォーム -->
+<form id="commentForm">
+    <input type="text" id="name" placeholder="name" required>
+    <textarea id="comment" placeholder="comment" required></textarea>
+    <input type="hidden" id="videoId" value="your-video-id">
+    <button type="submit">submit</button>
+</form>
+
         <div id="commentsSection"></div>
     </div>
 
     <script>
-        document.getElementById('commentForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            const name = document.getElementById('name').value;
-            const comment = document.getElementById('comment').value;
+        // コメント送信フォームのイベントリスナー
+document.getElementById('commentForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const name = document.getElementById('name').value;
+    const comment = document.getElementById('comment').value;
+    const videoId = document.getElementById('videoId').value; // 動画IDを取得
 
-            fetch('https://15b1-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app/comments', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ name, comment })
-            }).then(response => response.json()).then(data => {
-                addCommentToDOM(data);
-                document.getElementById('commentForm').reset();
+    fetch('https://15b1-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app//comments', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name, comment, videoId })
+    }).then(response => response.json()).then(data => {
+        addCommentToDOM(data);
+        document.getElementById('commentForm').reset();
+    });
+});
+
+// ページロード時にコメントを取得して表示
+window.onload = function() {
+    const videoId = 'first'; // 動画IDをここで設定
+    fetch(`https://15b1-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app//comments/${videoId}`)
+        .then(response => response.json())
+        .then(data => {
+            data.forEach(comment => {
+                addCommentToDOM(comment);
             });
         });
+}
 
-        window.onload = function() {
-            fetch('https://15b1-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app/comments')
-                .then(response => response.json())
-                .then(data => {
-                    data.forEach(comment => {
-                        addCommentToDOM(comment);
-                    });
+function addCommentToDOM(comment) {
+    const commentBox = document.createElement('div');
+    commentBox.className = 'comment-box';
+    commentBox.innerHTML = `
+        <p><strong>${comment.name}:</strong></p>
+        <p>${comment.comment}</p>
+        <button onclick="deleteComment('${comment._id}')">delete</button>
+    `;
+    document.getElementById('commentsSection').appendChild(commentBox);
+}
+
+function deleteComment(id) {
+    fetch(`https://15b1-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app//comments/${id}`, {
+        method: 'DELETE'
+    }).then(() => {
+        document.getElementById('commentsSection').innerHTML = '';
+        const videoId = 'first'; // 動画IDをここで設定
+        fetch(`https://15b1-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app//comments/${videoId}`)
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(comment => {
+                    addCommentToDOM(comment);
                 });
-        }
-
-        function addCommentToDOM(comment) {
-            const commentBox = document.createElement('div');
-            commentBox.className = 'comment-box';
-            commentBox.innerHTML = `
-                <p><strong>${comment.name}:</strong></p>
-                <p>${comment.comment}</p>
-                <button onclick="deleteComment('${comment._id}')">delete</button>
-            `;
-            document.getElementById('commentsSection').appendChild(commentBox);
-        }
-
-        function deleteComment(id) {
-            fetch(`https://15b1-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app/comments/${id}`, {
-                method: 'DELETE'
-            }).then(() => {
-                document.getElementById('commentsSection').innerHTML = '';
-                fetch('https://15b1-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app/comments')
-                    .then(response => response.json())
-                    .then(data => {
-                        data.forEach(comment => {
-                            addCommentToDOM(comment);
-                        });
-                    });
             });
-        }
+    });
+}
+
     </script>
 </body>
 </html>
