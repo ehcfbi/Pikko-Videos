@@ -51,7 +51,7 @@ document.getElementById('commentForm').addEventListener('submit', function(event
     const comment = document.getElementById('comment').value;
     const videoId = document.getElementById('videoId').value; // 動画IDを取得
 
-    fetch('https://fc93-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app/comments/${videoId}', {
+    fetch('https://fc93-2400-2411-84a0-6400-dd0b-99fd-ec77-97e9.ngrok-free.app/comments', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
