@@ -7,7 +7,7 @@
   <link rel="icon" href="favicon.ico">
 </head>
 <body>
-  <a href="https://videos.bird.f5.si/"><img src="logo.png" alt="logo" width="200" height="100"></a>
+  <a href="https://videos.bird.f5.si"><img src="logo.png" alt="logo" width="200" height="100"></a>
   <input type="button" value="share" onclick="copyUrl()">
   <div id="content"></div>
   <script>
@@ -27,7 +27,7 @@
               .then(res => res.json())
               .then(videos => {
                 const list = videos.map(v =>
-                  `<div><a href="watch.html?id=${v.id}">${v.title}</a></div>`
+                  `<div><a href="watch?id=${v.id}">${v.title}</a></div>`
                 ).join("");
                 document.getElementById("content").innerHTML += list;
               });
