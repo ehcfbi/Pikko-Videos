@@ -8,19 +8,19 @@
   <link rel="icon" href="favicon.ico">
 </head>
 <body>
-  <a href="https://videos.bird.f5.si/"><img src="logo.png" alt="logo" width="200" height="100"></a>
+  <a href="https://videos.bird.f5.si"><img src="logo.png" alt="logo" width="200" height="100"></a>
   <a href="you.html">My page</a>
   <h1>channels</h1>
   <div id="userList"></div>
   <script>
     const me = Storage.getUser();
-    if (!me) location.href = "signin.html";
+    if (!me) location.href = "signin";
 
     fetch(`${SERVER}/users`)
       .then(res => res.json())
       .then(users => {
         const list = users.filter(u => u !== me)
-          .map(u => `<div><a href="channel.html?name=${encodeURIComponent(u)}">${u}</a></div>`)
+          .map(u => `<div><a href="channel?name=${encodeURIComponent(u)}">${u}</a></div>`)
           .join("");
         document.getElementById("userList").innerHTML = list || "Other channels are not there.";
       });
