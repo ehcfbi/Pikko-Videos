@@ -1,41 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>signin</title>
   <script src="js/config.js"></script>
   <script src="js/storage.js"></script>
 </head>
 <body>
-  <a href="https://videos.bird.f5.si/"><img src="logo.png" alt="logo" width="200" height="100"></a>
   <h1>signin</h1>
-  <input id="u" placeholder="name"><br>
-  <input id="p" type="password" placeholder="password"><br>
+  <input id="username" placeholder="name"><br>
+  <input id="password" type="password" placeholder="password"><br>
   <button onclick="signin()">signin</button>
-  <p id="msg"></p>
+  <p id="message"></p>
+
   <script>
     function signin() {
-  const username = document.getElementById('u').value.trim();
-  const password = document.getElementById('p').value;
-  if (!username || !password) {
-    msg.innerText = "Enter.";
-    return;
-  }
+      const user = document.getElementById("username").value.trim();
+      const pass = document.getElementById("password").value;
+      const msg = document.getElementById("message");
 
-  fetch(`${SERVER}/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password })
-  })
-  .then(res => res.ok ? res.json() : Promise.reject())
-  .then(data => {
-    Storage.setUser(data.username);
-    location.href = "index.html";
-  })
-  .catch(() => {
-    msg.innerText = "That name or that password is wrong.";
-  });
-}
+      if (!user || !pass) {
+        msg.textContent = "Enter.";
+        return;
+      }
+
+      fetch(`${SERVER}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: user, password: pass })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error();
+        return res.json();
+      })
+      .then(data => {
+        Storage.setUser(data.username);
+        location.href = "index.html";
+      })
+      .catch(() => {
+        msg.textContent = "That name or that password is wrong.";
+      });
     }
   </script>
 </body>
