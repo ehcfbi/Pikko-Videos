@@ -1,39 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>signup</title>
   <script src="js/config.js"></script>
   <script src="js/storage.js"></script>
 </head>
 <body>
- <a href="https://videos.bird.f5.si/"><img src="logo.png" alt="logo" width="200" height="100"></a>
   <h1>signup</h1>
-  <input id="u" placeholder="name"><br>
-  <input id="p" type="password" placeholder="password"><br>
+  <input id="username" placeholder="name"><br>
+  <input id="password" type="password" placeholder="password"><br>
   <button onclick="signup()">signup</button>
-  <p id="msg"></p>
-  <script>
-  function signup() {
-    const username = document.getElementById("u").value.trim();
-    const password = document.getElementById("p").value;
-    if (!username || !password) {
-      msg.innerText = "Enter.";
-      return;
-    }
+  <p id="message"></p>
 
-    fetch(`${SERVER}/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password })
-    })
-    .then(res => {
-      if (!res.ok) return Promise.reject();
-      Storage.setUser(username);
-      location.href = "index.html";
-    })
-    .catch(() => msg.innerText = "That name is already there.");
-  }
-</script>
+  <script>
+    function signup() {
+      const user = document.getElementById("username").value.trim();
+      const pass = document.getElementById("password").value;
+      const msg = document.getElementById("message");
+
+      if (!user || !pass) {
+        msg.textContent = "Enter.";
+        return;
+      }
+
+      fetch(`${SERVER}/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: user, password: pass })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error();
+        Storage.setUser(user);
+        location.href = "index.html";
+      })
+      .catch(() => {
+        msg.textContent = "That name is alredy there.";
+      });
+    }
+  </script>
 </body>
 </html>
