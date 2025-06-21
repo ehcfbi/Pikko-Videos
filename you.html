@@ -48,7 +48,7 @@
         .then(videos => {
           const list = videos.map(v =>
             `<div>
-              <a href="watch.html?id=${v.id}">${v.title}</a>
+              <a href="watch?id=${v.id}">${v.title}</a>
               <button onclick="deleteVideo('${v.id}')">delete</button>
             </div>`
           ).join("");
