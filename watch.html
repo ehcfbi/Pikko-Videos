@@ -21,12 +21,12 @@
           if (!info) {
             document.getElementById("content").innerText = "Pikko and Pikko Videos couldn't find this video.";
           } else {
-            document.title = `${info.title} by ${info.username} - Pikko Videos`;
-            document.getElementById("content").innerHTML = `
-              <h1>${info.title} - ${info.username}</h1>
-              <video src="${info.url}" controls autoplay></video>
-              <p style="white-space: pre-wrap; margin-top:1em;">${info.description}</p>
-            `;
+              document.title = `${info.title} by ${info.username} - Pikko Videos`;
+              content.innerHTML = `
+                <h1>${info.title} - ${info.username}</h1>
+                <video src="/videos/${info.fileName}" controls autoplay></video>
+                <p style="white-space: pre-wrap; margin-top:1em;">${info.description || ""}</p>
+              `;
           }
         });
     }
