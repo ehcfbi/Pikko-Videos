@@ -19,7 +19,7 @@
         .then(res => res.ok ? res.json() : null)
         .then(info => {
           if (!info) {
-            document.getElementById("content").innerHTML = "<p><font color="red">Pikko and Pikko Videos couldn't find this video.</font></p>";
+            document.getElementById("content").innerText = "Pikko and Pikko Videos couldn't find this video.";
           } else {
             document.getElementById("content").innerHTML = `
               <h1>${info.title} - ${info.username}</h1>
