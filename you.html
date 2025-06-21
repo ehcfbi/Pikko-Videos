@@ -8,9 +8,13 @@
   <link rel="icon" href="favicon.ico">
 </head>
 <body>
-  <a href="https://videos.bird.f5.si"><img src="logo.png" alt="logo" width="200" height="100"></a>
+  <a href="https://videos.bird.f5.si">
+    <img src="logo.png" alt="logo" width="200" height="100">
+  </a>
+
   <h1>My page</h1>
-  <font size="7" color="purple"><p id="currentUser"></p></font>
+  <p id="currentUser" style="font-size: 2em; color: purple;"></p>
+
   <button onclick="logout()">logout</button>
   <button onclick="removeAccount()">delete this account</button>
 
@@ -25,7 +29,9 @@
 
   <script>
     const me = Storage.getUser();
-    if (!me) location.href = "signin";
+    if (!me) location.href = "signin.html";
+
+    document.getElementById("currentUser").textContent = me;
 
     function logout() {
       Storage.clearUser();
@@ -50,7 +56,7 @@
         .then(videos => {
           const list = videos.map(v =>
             `<div>
-              <a href="watch?id=${v.id}">${v.title}</a>
+              <a href="watch.html?id=${v.id}">${v.title}</a>
               <button onclick="deleteVideo('${v.id}')">delete</button>
             </div>`
           ).join("");
@@ -67,6 +73,8 @@
     function upload() {
       const title = document.getElementById("titleInput").value.trim();
       const file = document.getElementById("fileInput").files[0];
+      const description = document.getElementById("description").value;
+
       if (!title || !file) {
         alert("Enter the title and video file.");
         return;
@@ -81,41 +89,22 @@
           body: JSON.stringify({
             username: me,
             title: title,
-            base64: base64
+            base64: base64,
+            description: description
           })
         })
         .then(res => res.json())
         .then(() => {
           document.getElementById("titleInput").value = "";
           document.getElementById("fileInput").value = "";
-          renderVideos(); // 一覧を更新
+          document.getElementById("description").value = "";
+          renderVideos();
         });
       };
       reader.readAsDataURL(file);
     }
 
-    renderVideos(); // 初期表示
-
-    const username = Storage.getUser();
-  const p = document.getElementById("currentUser");
-  if (username) {
-    p.textContent = `${username}`;
-  } else {
-    p.textContent = "You are not logging in.";
-  }
-
-    const description = document.getElementById("description").value;
-
-fetch(`${SERVER}/upload`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    username: me,
-    title: title,
-    base64: base64,
-    description: description
-  })
-})
+    renderVideos();
   </script>
 </body>
 </html>
