@@ -21,6 +21,7 @@
           if (!info) {
             document.getElementById("content").innerText = "Pikko and Pikko Videos couldn't find this video.";
           } else {
+            document.title = `${info.title} by ${info.username} - Pikko Videos`;
             document.getElementById("content").innerHTML = `
               <h1>${info.title} - ${info.username}</h1>
               <video src="${info.url}" controls autoplay></video>
