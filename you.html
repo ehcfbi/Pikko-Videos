@@ -17,6 +17,7 @@
   <h2>upload a video</h2>
   <input id="titleInput" placeholder="title"><br>
   <input id="fileInput" type="file" accept="video/mp4"><br>
+  <textarea id="description" placeholder="description" rows="4"></textarea><br>
   <button onclick="upload()">upload</button>
 
   <h2>your videos</h2>
@@ -103,6 +104,18 @@
     p.textContent = "You are not logging in.";
   }
 
+    const description = document.getElementById("description").value;
+
+fetch(`${SERVER}/upload`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    username: me,
+    title: title,
+    base64: base64,
+    description: description
+  })
+})
   </script>
 </body>
 </html>
