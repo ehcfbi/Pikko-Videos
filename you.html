@@ -7,7 +7,9 @@
   <script src="js/storage.js"></script>
 </head>
 <body>
-  <a href="https://videos.bird.f5.si"><img src="https://videos.bird.f5.si/logo.png" alt="logo" width="200" height="100"></a>
+  <a href="https://videos.bird.f5.si">
+    <img src="https://videos.bird.f5.si/logo.png" alt="logo" width="200" height="100">
+  </a>
   <h1>My page</h1>
   <font size="7" color="purple"><p id="currentUser"></p></font>
   <button onclick="logout()">logout</button>
@@ -86,21 +88,21 @@
         .then(() => {
           document.getElementById("titleInput").value = "";
           document.getElementById("fileInput").value = "";
-          renderVideos(); // 一覧を更新
+          renderVideos();
         });
       };
       reader.readAsDataURL(file);
     }
 
-    renderVideos(); // 初期表示
-    
-    const username = Storage.getUser();
-  const p = document.getElementById("currentUser");
-  if (username) {
-    p.textContent = `${username}`;
-  } else {
-    p.textContent = "You are not logging in.";
+    renderVideos();
 
+    const username = Storage.getUser();
+    const p = document.getElementById("currentUser");
+    if (username) {
+      p.textContent = `${username}`;
+    } else {
+      p.textContent = "You are not logging in.";
+    }
   </script>
 </body>
 </html>
