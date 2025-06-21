@@ -10,7 +10,7 @@
 <body>
   <a href="https://videos.bird.f5.si"><img src="logo.png" alt="logo" width="200" height="100"></a>
   <h1>My page</h1>
-  <p id="currentUser"></p>
+  <p id="currentUser"><font size="7" color="purple"></font></p>
   <button onclick="logout()">logout</button>
   <button onclick="removeAccount()">delete this account</button>
 
@@ -98,7 +98,7 @@
     const username = Storage.getUser();
   const p = document.getElementById("currentUser");
   if (username) {
-    p.textContent = `Currently logged in user: ${username}`;
+    p.textContent = `${username}`;
   } else {
     p.textContent = "You are not logging in.";
   }
