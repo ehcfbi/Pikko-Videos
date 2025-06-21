@@ -4,36 +4,39 @@
   <meta charset="UTF-8">
   <title>watch - Pikko Videos</title>
   <script src="js/config.js"></script>
-  <link rel="icon" href="favicon.ico">
+  <style>
+    .error {
+      color: red;
+      font-weight: bold;
+      margin-top: 1em;
+    }
+  </style>
 </head>
 <body>
-  <a href="https://videos.bird.f5.si"><img src="logo.png" alt="logo" width="200" height="100"></a>
-  <input type="button" value="share" onclick="copyUrl()">
   <div id="content"></div>
+
   <script>
     const id = new URLSearchParams(location.search).get("id");
+    const content = document.getElementById("content");
+
     if (!id) {
-      document.getElementById("content").innerText = "Pikko and Pikko Videos couldn't find this video.";
+      content.innerHTML = `<p class="error">Pikko and Pikko Videos couldn't find this video.</p>`;
     } else {
       fetch(`${SERVER}/videoInfo/${id}`)
         .then(res => res.ok ? res.json() : null)
         .then(info => {
           if (!info) {
-            document.getElementById("content").innerText = "Pikko and Pikko Videos couldn't find this video.";
+            content.innerHTML = `<p class="error">Pikko and Pikko Videos couldn't find this video.</p>`;
           } else {
-              document.title = `${info.title} by ${info.username} - Pikko Videos`;
-              content.innerHTML = `
-                <h1>${info.title} - ${info.username}</h1>
-                <video src="/videos/${info.fileName}" controls autoplay></video>
-                <p style="white-space: pre-wrap; margin-top:1em;">${info.description || ""}</p>
-              `;
+            content.innerHTML = `
+              <h1>${info.title} - ${info.username}</h1>
+              <video src="${info.url}" controls autoplay></video>
+            `;
           }
+        })
+        .catch(() => {
+          content.innerHTML = `<p class="error">error</p>`;
         });
-    }
-    
-    function copyUrl() {
-  var url = location.href;
-  navigator.clipboard.writeText(url);
     }
   </script>
 </body>
