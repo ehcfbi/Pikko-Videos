@@ -7,10 +7,17 @@
   <script src="js/storage.js"></script>
 </head>
 <body>
-  <a href="https://videos.bird.f5.si/"><img src="logo.png" alt="logo" width="200" height="100"></a>
   <h1>My page</h1>
+
   <button onclick="logout()">logout</button>
   <button onclick="removeAccount()">delete this account</button>
+
+  <h2>upload a video</h2>
+  <input id="titleInput" placeholder="title"><br>
+  <input id="fileInput" type="file" accept="video/mp4"><br>
+  <button onclick="upload()">upload</button>
+
+  <h2>your videos</h2>
   <div id="list"></div>
 
   <script>
@@ -23,7 +30,7 @@
     }
 
     function removeAccount() {
-      if (!confirm("Will you delete your account?")) return;
+      if (!confirm("Do you delete this account?")) return;
       fetch(`${SERVER}/deleteAccount`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
@@ -34,23 +41,57 @@
       });
     }
 
-    fetch(`${SERVER}/videos/user/${me}`)
-      .then(res => res.json())
-      .then(videos => {
-        const list = videos.map(v =>
-          `<div>
-             <a href="watch.html?id=${v.id}">${v.title}</a>
-             <button onclick="deleteVideo('${v.id}')">delete</button>
-           </div>`
-        ).join("");
-        document.getElementById("list").innerHTML = list || "The videos is not there.";
-      });
+    function renderVideos() {
+      fetch(`${SERVER}/videos/user/${me}`)
+        .then(res => res.json())
+        .then(videos => {
+          const list = videos.map(v =>
+            `<div>
+              <a href="watch.html?id=${v.id}">${v.title}</a>
+              <button onclick="deleteVideo('${v.id}')">delete</button>
+            </div>`
+          ).join("");
+          document.getElementById("list").innerHTML = list || "The videos is not there.";
+        });
+    }
 
     function deleteVideo(id) {
-      if (!confirm("Will you delete this video?")) return;
+      if (!confirm("Do you delete this video?")) return;
       fetch(`${SERVER}/deleteVideo/${id}`, { method: "DELETE" })
-        .then(() => location.reload());
+        .then(() => renderVideos());
     }
+
+    function upload() {
+      const title = document.getElementById("titleInput").value.trim();
+      const file = document.getElementById("fileInput").files[0];
+      if (!title || !file) {
+        alert("Enter the title and video file.");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = reader.result;
+        fetch(`${SERVER}/upload`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: me,
+            title: title,
+            base64: base64
+          })
+        })
+        .then(res => res.json())
+        .then(() => {
+          document.getElementById("titleInput").value = "";
+          document.getElementById("fileInput").value = "";
+          renderVideos(); // 一覧を更新
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+
+    renderVideos(); // 初期表示
   </script>
 </body>
 </html>
