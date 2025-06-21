@@ -2,18 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>My page - Pikko Videos</title>
+  <title>My page</title>
+  <font size="7" color="purple"><p id="currentUser"></p>
   <script src="js/config.js"></script>
   <script src="js/storage.js"></script>
-  <link rel="icon" href="favicon.ico">
 </head>
 <body>
-  <a href="https://videos.bird.f5.si">
-    <img src="logo.png" alt="logo" width="200" height="100">
-  </a>
-
   <h1>My page</h1>
-  <p id="currentUser" style="font-size: 2em; color: purple;"></p>
 
   <button onclick="logout()">logout</button>
   <button onclick="removeAccount()">delete this account</button>
@@ -21,7 +16,6 @@
   <h2>upload a video</h2>
   <input id="titleInput" placeholder="title"><br>
   <input id="fileInput" type="file" accept="video/mp4"><br>
-  <textarea id="description" placeholder="description" rows="4"></textarea><br>
   <button onclick="upload()">upload</button>
 
   <h2>your videos</h2>
@@ -29,9 +23,7 @@
 
   <script>
     const me = Storage.getUser();
-    if (!me) location.href = "signin.html";
-
-    document.getElementById("currentUser").textContent = me;
+    if (!me) location.href = "signin";
 
     function logout() {
       Storage.clearUser();
@@ -60,7 +52,7 @@
               <button onclick="deleteVideo('${v.id}')">delete</button>
             </div>`
           ).join("");
-          document.getElementById("list").innerHTML = list || "The videos is not there.";
+          document.getElementById("list").innerHTML = list || "the videos is not there";
         });
     }
 
@@ -73,8 +65,6 @@
     function upload() {
       const title = document.getElementById("titleInput").value.trim();
       const file = document.getElementById("fileInput").files[0];
-      const description = document.getElementById("description").value;
-
       if (!title || !file) {
         alert("Enter the title and video file.");
         return;
@@ -89,22 +79,28 @@
           body: JSON.stringify({
             username: me,
             title: title,
-            base64: base64,
-            description: description
+            base64: base64
           })
         })
         .then(res => res.json())
         .then(() => {
           document.getElementById("titleInput").value = "";
           document.getElementById("fileInput").value = "";
-          document.getElementById("description").value = "";
-          renderVideos();
+          renderVideos(); // 一覧を更新
         });
       };
       reader.readAsDataURL(file);
     }
 
-    renderVideos();
+    renderVideos(); // 初期表示
+    
+    const username = Storage.getUser();
+  const p = document.getElementById("currentUser");
+  if (username) {
+    p.textContent = `${username}`;
+  } else {
+    p.textContent = "You are not logging in.";
+
   </script>
 </body>
 </html>
