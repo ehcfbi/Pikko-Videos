@@ -22,6 +22,7 @@
           if (!users.includes(name)) {
             document.getElementById("content").innerText = "Pikko and Pikko Videos couldn't find this account.";
           } else {
+            document.title = `${name} - Pikko Videos`;
             document.getElementById("content").innerHTML = `<h1>${name}</h1>`;
             fetch(`${SERVER}/videos/user/${name}`)
               .then(res => res.json())
