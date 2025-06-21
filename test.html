@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>動画情報テスト</title>
+  <style>
+    body { font-family: sans-serif; padding: 2em; }
+    input { width: 400px; }
+    video { margin-top: 20px; max-width: 100%; }
+  </style>
+</head>
+<body>
+  <h2>🎬 動画情報取得テスト</h2>
+  <label>動画ID：<input id="videoIdInput" type="text" placeholder="例: abcd-efgh-1234..."></label>
+  <button onclick="loadVideo()">情報取得</button>
+
+  <div id="result" style="margin-top:1.5em;"></div>
+  <video id="videoPlayer" controls></video>
+
+  <script>
+    const SERVER = "https://pikko-videos-data.loca.lt"; // ← ここを必要に応じて変更
+
+    async function loadVideo() {
+      const id = document.getElementById('videoIdInput').value;
+      if (!id) return alert('動画IDを入力してください');
+
+      try {
+        const res = await fetch(`${SERVER}/videoInfo/${id}`);
+        if (!res.ok) throw new Error('情報取得失敗');
+
+        const info = await res.json();
+        document.getElementById('result').innerHTML = `
+          <strong>タイトル：</strong> ${info.title}<br>
+          <strong>投稿者：</strong> ${info.username}<br>
+          <strong>URL：</strong> <a href="${info.url}" target="_blank">${info.url}</a>
+        `;
+
+        const player = document.getElementById('videoPlayer');
+        player.src = info.url;
+        player.load();
+      } catch (e) {
+        document.getElementById('result').innerHTML = `<span style="color:red;">エラー：${e.message}</span>`;
+        document.getElementById('videoPlayer').src = '';
+      }
+    }
+  </script>
+</body>
+</html>
