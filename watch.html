@@ -28,6 +28,7 @@
           if (!info) {
             content.innerHTML = `<p class="error">Pikko and Pikko Videos couldn't find this video.</p>`;
           } else {
+            document.title = `${info.title} by ${info.username} - Pikko Videos`;
             content.innerHTML = `
               <h1>${info.title} - ${info.username}</h1>
               <video src="${info.url}" controls autoplay></video>
