@@ -8,13 +8,13 @@
   <link rel="icon" href="favicon.ico">
 </head>
 <body>
-  <a href="https://videos.bird.f5.si/"><img src="logo.png" alt="logo" width="200" height="100"></a>
+  <a href="https://videos.bird.f5.si"><img src="logo.png" alt="logo" width="200" height="100"></a>
   <h1>signup</h1>
   <input id="username" placeholder="name"><br>
   <input id="password" type="password" placeholder="password"><br>
   <button onclick="signup()">signup</button>
   <p id="message"></p>
-  <p><a href="signin.html">signin</a></p>
+  <p><a href="signin">signin</a></p>
 
   <script>
     function signup() {
@@ -35,7 +35,7 @@
       .then(res => {
         if (!res.ok) throw new Error();
         Storage.setUser(user);
-        location.href = "https://videos.bird.f5.si/";
+        location.href = "https://videos.bird.f5.si";
       })
       .catch(() => {
         msg.textContent = "That name is alredy there.";
