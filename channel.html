@@ -14,7 +14,7 @@
     const params = new URLSearchParams(location.search);
     const name = params.get("name");
     if (!name) {
-      document.getElementById("content").innerText = "Pikko and Pikko Videos couldn't find this account.";
+      document.getElementById("content").innerHTML = "<p><font color="red">Pikko and Pikko Videos couldn't find this account.</font></p>";
     } else {
       fetch(`${SERVER}/users`)
         .then(res => res.json())
