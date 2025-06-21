@@ -1,0 +1,160 @@
+(function (Scratch) {
+    'use strict';
+
+    const SERVER = 'https://pikko-videos-data.loca.lt';
+
+    class VideoManager {
+        constructor() {
+            this.username = '';
+        }
+
+        getInfo() {
+            return {
+                id: 'videoManager',
+                name: '動画管理',
+                blocks: [
+                    { opcode: 'register', blockType: Scratch.BlockType.COMMAND, text: '登録 [USERNAME] [PASSWORD]', arguments: { USERNAME: { type: Scratch.ArgumentType.STRING }, PASSWORD: { type: Scratch.ArgumentType.STRING } } },
+                    { opcode: 'login', blockType: Scratch.BlockType.COMMAND, text: 'ログイン [USERNAME] [PASSWORD]', arguments: { USERNAME: { type: Scratch.ArgumentType.STRING }, PASSWORD: { type: Scratch.ArgumentType.STRING } } },
+                    { opcode: 'logout', blockType: Scratch.BlockType.COMMAND, text: 'ログアウト' },
+                    { opcode: 'getCurrentUser', blockType: Scratch.BlockType.REPORTER, text: '現在のログインユーザー' },
+                    { opcode: 'deleteAccount', blockType: Scratch.BlockType.COMMAND, text: 'アカウント削除' },
+                    { opcode: 'getAllUsers', blockType: Scratch.BlockType.REPORTER, text: '全ユーザー一覧' },
+                    { opcode: 'verifyUserCredentials', blockType: Scratch.BlockType.BOOLEAN, text: 'ユーザー名 [USERNAME] のパスワードは [PASSWORD] である', arguments: { USERNAME: { type: Scratch.ArgumentType.STRING }, PASSWORD: { type: Scratch.ArgumentType.STRING } } },
+                    { opcode: 'upload', blockType: Scratch.BlockType.COMMAND, text: '動画アップロード [TITLE] Base64:[BASE64]', arguments: { TITLE: { type: Scratch.ArgumentType.STRING }, BASE64: { type: Scratch.ArgumentType.STRING } } },
+                    { opcode: 'delete', blockType: Scratch.BlockType.COMMAND, text: '動画削除 [VIDEO_ID]', arguments: { VIDEO_ID: { type: Scratch.ArgumentType.STRING } } },
+                    { opcode: 'videoURL', blockType: Scratch.BlockType.REPORTER, text: '動画URL [VIDEO_ID]', arguments: { VIDEO_ID: { type: Scratch.ArgumentType.STRING } } },
+                    { opcode: 'videoTitle', blockType: Scratch.BlockType.REPORTER, text: 'タイトル取得 [VIDEO_ID]', arguments: { VIDEO_ID: { type: Scratch.ArgumentType.STRING } } },
+                    { opcode: 'videoAuthor', blockType: Scratch.BlockType.REPORTER, text: '投稿者取得 [VIDEO_ID]', arguments: { VIDEO_ID: { type: Scratch.ArgumentType.STRING } } },
+                    { opcode: 'getAllVideos', blockType: Scratch.BlockType.REPORTER, text: '全動画一覧' },
+                    { opcode: 'getUserVideos', blockType: Scratch.BlockType.REPORTER, text: '自分の動画一覧' },
+                    { opcode: 'getUserVideosByName', blockType: Scratch.BlockType.REPORTER, text: 'ユーザー [USERNAME] の動画一覧', arguments: { USERNAME: { type: Scratch.ArgumentType.STRING } } },
+                    { opcode: 'reset', blockType: Scratch.BlockType.COMMAND, text: 'すべて初期化' }
+                ]
+            };
+        }
+
+        async register({ USERNAME, PASSWORD }) {
+            const password = String(PASSWORD);
+            await fetch(`${SERVER}/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: USERNAME, password })
+            });
+        }
+
+        async login({ USERNAME, PASSWORD }) {
+            const password = String(PASSWORD);
+            const res = await fetch(`${SERVER}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: USERNAME, password })
+            });
+            if (res.ok) {
+                const json = await res.json();
+                this.username = json.username;
+            }
+        }
+
+        logout() {
+            this.username = '';
+        }
+
+        getCurrentUser() {
+            return this.username || '';
+        }
+
+        async deleteAccount() {
+            if (!this.username) return;
+            await fetch(`${SERVER}/deleteAccount`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: this.username })
+            });
+            this.username = '';
+        }
+
+        async getAllUsers() {
+            const res = await fetch(`${SERVER}/users`);
+            if (!res.ok) return '';
+            const users = await res.json();
+            return JSON.stringify(users);
+        }
+
+        async verifyUserCredentials({ USERNAME, PASSWORD }) {
+            const res = await fetch(`${SERVER}/verify`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: USERNAME, password: String(PASSWORD) })
+            });
+            if (!res.ok) return false;
+            const json = await res.json();
+            return json.exists && json.valid;
+        }
+
+        async upload({ TITLE, BASE64 }) {
+            if (!this.username) return;
+            await fetch(`${SERVER}/upload`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: this.username,
+                    title: TITLE,
+                    base64: BASE64
+                })
+            });
+        }
+
+        async delete({ VIDEO_ID }) {
+            await fetch(`${SERVER}/deleteVideo/${VIDEO_ID}`, {
+                method: 'DELETE'
+            });
+        }
+
+        async videoURL({ VIDEO_ID }) {
+            return `${SERVER}/video/${VIDEO_ID}`;
+        }
+
+        async videoTitle({ VIDEO_ID }) {
+            const res = await fetch(`${SERVER}/videoInfo/${VIDEO_ID}`);
+            if (!res.ok) return '';
+            const json = await res.json();
+            return json.title || '';
+        }
+
+        async videoAuthor({ VIDEO_ID }) {
+            const res = await fetch(`${SERVER}/videoInfo/${VIDEO_ID}`);
+            if (!res.ok) return '';
+            const json = await res.json();
+            return json.username || '';
+        }
+
+        async getAllVideos() {
+            const res = await fetch(`${SERVER}/videos`);
+            if (!res.ok) return '';
+            const data = await res.json();
+            return JSON.stringify(data.map(v => v.id));
+        }
+
+        async getUserVideos() {
+            if (!this.username) return '';
+            const res = await fetch(`${SERVER}/videos/user/${this.username}`);
+            if (!res.ok) return '';
+            const data = await res.json();
+            return JSON.stringify(data.map(v => v.id));
+        }
+
+        async getUserVideosByName({ USERNAME }) {
+            const res = await fetch(`${SERVER}/videos/user/${USERNAME}`);
+            if (!res.ok) return '';
+            const data = await res.json();
+            return JSON.stringify(data.map(v => v.id));
+        }
+
+        async reset() {
+            await fetch(`${SERVER}/reset`, { method: 'POST' });
+            this.username = '';
+        }
+    }
+
+    Scratch.extensions.register(new VideoManager());
+})(Scratch);
