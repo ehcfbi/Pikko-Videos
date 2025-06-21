@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>home - Pikko Videos</title>
+  <script src="js/config.js"></script>
+  <script src="js/storage.js"></script>
+</head>
+<body>
+  <h1>channels</h1>
+  <div id="userList"></div>
+  <script>
+    const me = Storage.getUser();
+    if (!me) location.href = "signin.html";
+
+    fetch(`${SERVER}/users`)
+      .then(res => res.json())
+      .then(users => {
+        const list = users.filter(u => u !== me)
+          .map(u => `<div><a href="channel.html?name=${encodeURIComponent(u)}">${u}</a></div>`)
+          .join("");
+        document.getElementById("userList").innerHTML = list || "Other channels are not there.";
+      });
+  </script>
+</body>
+</html>

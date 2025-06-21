@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My page</title>
+  <script src="js/config.js"></script>
+  <script src="js/storage.js"></script>
+</head>
+<body>
+  <h1>My page</h1>
+  <button onclick="logout()">logout</button>
+  <button onclick="removeAccount()">delete this account</button>
+  <div id="list"></div>
+
+  <script>
+    const me = Storage.getUser();
+    if (!me) location.href = "signin.html";
+
+    function logout() {
+      Storage.clearUser();
+      location.href = "index.html";
+    }
+
+    function removeAccount() {
+      if (!confirm("Will you delete your account?")) return;
+      fetch(`${SERVER}/deleteAccount`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: me })
+      }).then(() => {
+        Storage.clearUser();
+        location.href = "index.html";
+      });
+    }
+
+    fetch(`${SERVER}/videos/user/${me}`)
+      .then(res => res.json())
+      .then(videos => {
+        const list = videos.map(v =>
+          `<div>
+             <a href="watch.html?id=${v.id}">${v.title}</a>
+             <button onclick="deleteVideo('${v.id}')">delete</button>
+           </div>`
+        ).join("");
+        document.getElementById("list").innerHTML = list || "The videos is not there.";
+      });
+
+    function deleteVideo(id) {
+      if (!confirm("Will you delete this video?")) return;
+      fetch(`${SERVER}/deleteVideo/${id}`, { method: "DELETE" })
+        .then(() => location.reload());
+    }
+  </script>
+</body>
+</html>

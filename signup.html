@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>signup</title>
+  <script src="js/config.js"></script>
+  <script src="js/storage.js"></script>
+</head>
+<body>
+  <h1>signup</h1>
+  <input id="u" placeholder="name"><br>
+  <input id="p" type="password" placeholder="password"><br>
+  <button onclick="signup()">signup</button>
+  <p id="msg"></p>
+  <script>
+  function signup() {
+    const username = document.getElementById("u").value.trim();
+    const password = document.getElementById("p").value;
+    if (!username || !password) {
+      msg.innerText = "Enter.";
+      return;
+    }
+
+    fetch(`${SERVER}/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    })
+    .then(res => {
+      if (!res.ok) return Promise.reject();
+      Storage.setUser(username);
+      location.href = "index.html";
+    })
+    .catch(() => msg.innerText = "That name is already there.");
+  }
+</script>
+</body>
+</html>

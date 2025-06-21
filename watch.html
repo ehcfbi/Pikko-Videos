@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>watch - Pikko Videos</title>
+  <script src="js/config.js"></script>
+</head>
+<body>
+  <div id="content"></div>
+  <script>
+    const id = new URLSearchParams(location.search).get("id");
+    if (!id) {
+      document.getElementById("content").innerText = "Pikko and Pikko Videos couldn't find this video.";
+    } else {
+      fetch(`${SERVER}/videoInfo/${id}`)
+        .then(res => res.ok ? res.json() : null)
+        .then(info => {
+          if (!info) {
+            document.getElementById("content").innerText = "Pikko and Pikko Videos couldn't find this video.";
+          } else {
+            document.getElementById("content").innerHTML = `
+              <h1>${info.title} - ${info.username}</h1>
+              <video src="${info.url}" controls autoplay></video>
+            `;
+          }
+        });
+    }
+  </script>
+</body>
+</html>

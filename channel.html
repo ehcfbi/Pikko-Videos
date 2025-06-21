@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>channel - Pikko Videos</title>
+  <script src="js/config.js"></script>
+</head>
+<body>
+  <div id="content"></div>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const name = params.get("name");
+    if (!name) {
+      document.getElementById("content").innerText = "Pikko and Pikko Videos couldn't find this account.";
+    } else {
+      fetch(`${SERVER}/users`)
+        .then(res => res.json())
+        .then(users => {
+          if (!users.includes(name)) {
+            document.getElementById("content").innerText = "Pikko and Pikko Videos couldn't find this account.";
+          } else {
+            document.getElementById("content").innerHTML = `<h1>${name}</h1>`;
+            fetch(`${SERVER}/videos/user/${name}`)
+              .then(res => res.json())
+              .then(videos => {
+                const list = videos.map(v =>
+                  `<div><a href="watch.html?id=${v.id}">${v.title}</a></div>`
+                ).join("");
+                document.getElementById("content").innerHTML += list;
+              });
+          }
+        });
+    }
+  </script>
+</body>
+</html>
