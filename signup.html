@@ -34,7 +34,7 @@
       .then(res => {
         if (!res.ok) throw new Error();
         Storage.setUser(user);
-        location.href = "index.html";
+        location.href = "https://videos.bird.f5.si/";
       })
       .catch(() => {
         msg.textContent = "That name is alredy there.";
