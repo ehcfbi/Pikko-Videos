@@ -31,12 +31,24 @@
             content.innerHTML = `<p class="error">Pikko and Pikko Videos couldn't find this video.</p>`;
           } else {
             document.title = `${info.title} by ${info.username} - Pikko Videos`;
-            const videoUrl = `${SERVER}/video/${id}`;
             content.innerHTML = `
               <h1>${info.title} by ${info.username}</h1>
-              <video src="${videoUrl}" controls autoplay playsinline></video>
+              <video id="video" controls autoplay playsinline></video>
               <p style="white-space: pre-wrap; margin-top: 1em;">${info.description}</p>
             `;
+
+            // CORS-safe 動画再生（fetch + blob URL）
+            fetch(`${SERVER}${info.url}`)
+              .then(res => res.blob())
+              .then(blob => {
+                const blobUrl = URL.createObjectURL(blob);
+                document.getElementById("video").src = blobUrl;
+              })
+              .catch(() => {
+                document.getElementById("video").replaceWith(
+                  `<p class="error">Failed to load video file.</p>`
+                );
+              });
           }
         })
         .catch(() => {
@@ -45,8 +57,8 @@
     }
 
     function copyUrl() {
-  var url = location.href;
-  navigator.clipboard.writeText(url);
+      const url = location.href;
+      navigator.clipboard.writeText(url);
     }
   </script>
 </body>
