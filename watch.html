@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <title>watch - Pikko Videos</title>
-  <script src="js/config.js"></script>
+  <script>
+    // HTTPS用に直接ホストを固定
+    const SERVER = "https://pikko-videos-data.loca.lt";
+  </script>
   <style>
     .error {
       color: red;
@@ -13,7 +16,9 @@
   </style>
 </head>
 <body>
-  <a href="https://videos.bird.f5.si"><img src="logo.png" alt="logo" width="200" height="100"></a>
+  <a href="https://videos.bird.f5.si">
+    <img src="logo.png" alt="logo" width="200" height="100">
+  </a>
   <div id="content"></div>
 
   <script>
@@ -30,9 +35,10 @@
             content.innerHTML = `<p class="error">Pikko and Pikko Videos couldn't find this video.</p>`;
           } else {
             document.title = `${info.title} by ${info.username} - Pikko Videos`;
+            const videoUrl = `${SERVER}/video/${id}`;
             content.innerHTML = `
               <h1>${info.title} - ${info.username}</h1>
-              <video src="${info.url}" controls autoplay></video>
+              <video src="${videoUrl}" controls autoplay playsinline></video>
             `;
           }
         })
