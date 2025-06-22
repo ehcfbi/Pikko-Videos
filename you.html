@@ -14,9 +14,11 @@
   <button onclick="removeAccount()">delete this account</button>
 
   <h2>upload a video</h2>
-  <input id="titleInput" placeholder="title"><br>
-  <input id="fileInput" type="file" accept="video/mp4"><br>
-  <button onclick="upload()">upload</button>
+<input id="titleInput" placeholder="title"><br>
+<input id="fileInput" type="file" accept="video/mp4"><br>
+<textarea id="description" placeholder="description" rows="4"></textarea><br>
+<button onclick="upload()">upload</button>
+
 
   <h2>your videos</h2>
   <div id="list"></div>
@@ -63,12 +65,14 @@
     }
 
     function upload() {
-      const title = document.getElementById("titleInput").value.trim();
-      const file = document.getElementById("fileInput").files[0];
-      if (!title || !file) {
-        alert("Enter the title and video file.");
-        return;
-      }
+  const title = document.getElementById("titleInput").value.trim();
+  const file = document.getElementById("fileInput").files[0];
+  const description = document.getElementById("description").value.trim();
+
+  if (!title || !file) {
+    alert("Enter the title and video file.");
+    return;
+  }
 
       const reader = new FileReader();
       reader.onload = () => {
