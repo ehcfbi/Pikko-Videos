@@ -3,10 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>watch - Pikko Videos</title>
-  <script>
-    // HTTPS用に直接ホストを固定
-    const SERVER = "https://pikko-videos-data.loca.lt";
-  </script>
+  <script>const SERVER = "https://pikko-videos-data.loca.lt";</script>
   <style>
     .error {
       color: red;
@@ -17,7 +14,6 @@
 </head>
 <body>
   <a href="https://videos.bird.f5.si"><img src="logo.png" alt="logo" width="200" height="100"></a>
-  <input type="button" value="share" onclick="copyUrl()">
   <div id="content"></div>
 
   <script>
@@ -40,16 +36,11 @@
               <video src="${videoUrl}" controls autoplay playsinline></video>
               <p style="white-space: pre-wrap; margin-top: 1em;">${info.description}</p>
             `;
-
           }
         })
         .catch(() => {
           content.innerHTML = `<p class="error">error</p>`;
         });
-    }
-    function copyUrl() {
-  var url = location.href;
-  navigator.clipboard.writeText(url);
     }
   </script>
 </body>
