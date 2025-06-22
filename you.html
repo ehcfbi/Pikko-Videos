@@ -7,25 +7,27 @@
   <script src="js/storage.js"></script>
 </head>
 <body>
-  <a href="https://videos.bird.f5.si"><img src="logo.png" alt="logo" width="200" height="100"></a>
+  <a href="https://videos.bird.f5.si">
+    <img src="https://videos.bird.f5.si/logo.png" alt="logo" width="200" height="100">
+  </a>
   <h1>My page</h1>
   <font size="7" color="purple"><p id="currentUser"></p></font>
   <button onclick="logout()">logout</button>
   <button onclick="removeAccount()">delete this account</button>
 
   <h2>upload a video</h2>
-<input id="titleInput" placeholder="title"><br>
-<input id="fileInput" type="file" accept="video/mp4"><br>
-<textarea id="description" placeholder="description" rows="4"></textarea><br>
-<button onclick="upload()">upload</button>
-
+  <input id="titleInput" placeholder="title"><br>
+  <input id="fileInput" type="file" accept="video/mp4"><br>
+  <textarea id="description" placeholder="description" rows="4" cols="40"></textarea><br>
+  <button onclick="upload()">upload</button>
 
   <h2>your videos</h2>
   <div id="list"></div>
 
   <script>
     const me = Storage.getUser();
-    if (!me) location.href = "signin";
+    if (!me) location.href = "signin.html";
+    document.getElementById("currentUser").textContent = me;
 
     function logout() {
       Storage.clearUser();
@@ -50,7 +52,7 @@
         .then(videos => {
           const list = videos.map(v =>
             `<div>
-              <a href="watch?id=${v.id}">${v.title}</a>
+              <a href="watch.html?id=${v.id}">${v.title}</a>
               <button onclick="deleteVideo('${v.id}')">delete</button>
             </div>`
           ).join("");
@@ -65,45 +67,35 @@
     }
 
     function upload() {
-  const title = document.getElementById("titleInput").value.trim();
-  const file = document.getElementById("fileInput").files[0];
-  const description = document.getElementById("description").value.trim();
+      const title = document.getElementById("titleInput").value.trim();
+      const file = document.getElementById("fileInput").files[0];
+      const description = document.getElementById("description").value.trim();
 
-  if (!title || !file) {
-    alert("Enter the title and video file.");
-    return;
-  }
+      if (!title || !file) {
+        alert("Enter the title and video file.");
+        return;
+      }
 
-  const form = new FormData();
-  form.append("username", me);
-  form.append("title", title);
-  form.append("description", description);
-  form.append("video", file); // ← ファイルそのまま！
+      const form = new FormData();
+      form.append("username", me);
+      form.append("title", title);
+      form.append("description", description);
+      form.append("video", file);
 
-  fetch(`${SERVER}/upload`, {
-    method: "POST",
-    body: form
-  })
-    .then(res => res.json())
-    .then(() => {
-      document.getElementById("titleInput").value = "";
-      document.getElementById("fileInput").value = "";
-      document.getElementById("description").value = "";
-      renderVideos();
-    });
-}
-      reader.readAsDataURL(file);
+      fetch(`${SERVER}/upload`, {
+        method: "POST",
+        body: form
+      })
+        .then(res => res.json())
+        .then(() => {
+          document.getElementById("titleInput").value = "";
+          document.getElementById("fileInput").value = "";
+          document.getElementById("description").value = "";
+          renderVideos();
+        });
     }
 
     renderVideos();
-
-    const username = Storage.getUser();
-    const p = document.getElementById("currentUser");
-    if (username) {
-      p.textContent = `${username}`;
-    } else {
-      p.textContent = "You are not logging in.";
-    }
   </script>
 </body>
 </html>
