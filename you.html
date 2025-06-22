@@ -7,7 +7,9 @@
   <script src="js/storage.js"></script>
 </head>
 <body>
-  <a href="https://videos.bird.f5.si"><img src="https://videos.bird.f5.si/logo.png" alt="logo" width="200" height="100"></a>
+  <a href="https://videos.bird.f5.si">
+    <img src="https://videos.bird.f5.si/logo.png" alt="logo" width="200" height="100">
+  </a>
   <input type="button" value="share" onclick="copyUrl()">
   <span id="copyMessage" style="color: green; margin-left: 10px;"></span>
 
@@ -33,7 +35,7 @@
   <div id="list"></div>
 
   <script>
-    const me = Storage.getUser();
+    let me = Storage.getUser();
     if (!me) location.href = "signin.html";
     document.getElementById("currentUser").textContent = me;
 
@@ -60,7 +62,7 @@
       const pass = document.getElementById("newPassword").value.trim();
 
       if (!now || !name || !pass) {
-        alert("すべて入力してください");
+        alert("Enter all.");
         return;
       }
 
@@ -77,11 +79,12 @@
       .then(res => res.ok ? res.json() : Promise.reject())
       .then(() => {
         Storage.setUser(name);
+        me = name;
         document.getElementById("currentUser").textContent = name;
         document.getElementById("changeMsg").textContent = "✔️ changed";
         renderVideos();
       })
-      .catch(() => alert("ユーザー名重複またはパスワードが違います"));
+      .catch(() => alert("Change failed"));
     }
 
     function upload() {
@@ -118,11 +121,12 @@
         .then(res => res.json())
         .then(videos => {
           const list = videos.map(v => `
-            <div>
-              <b>${v.title}</b>
-              <button onclick="editVideo('${v.id}', '${v.title}', \`${v.description || ""}\`)">edit</button><br>
+            <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+              <b>${v.title}</b><br>
               <a href="watch?id=${v.id}">watch</a>
               <button onclick="deleteVideo('${v.id}')">delete</button>
+              <button onclick="showEdit('${v.id}', \`${v.title}\`, \`${v.description || ""}\`)">edit</button>
+              <div id="edit-${v.id}"></div>
             </div>
           `).join("");
           document.getElementById("list").innerHTML = list || "the videos is not there";
@@ -135,12 +139,24 @@
         .then(() => renderVideos());
     }
 
-    function editVideo(id, title, description) {
-      const newTitle = prompt("Edit title:", title);
-      if (newTitle === null) return;
-      const newDesc = prompt("Edit description:", description);
-      if (newDesc === null) return;
+    function showEdit(id, title, description) {
+      const container = document.getElementById(`edit-${id}`);
+      container.innerHTML = `
+        <p>Edit:</p>
+        <input id="title-${id}" value="${title}" style="width: 80%;"><br>
+        <textarea id="desc-${id}" rows="4" style="width: 80%;">${description}</textarea><br>
+        <button onclick="submitEdit('${id}')">save</button>
+        <button onclick="cancelEdit('${id}')">cancel</button>
+      `;
+    }
 
+    function cancelEdit(id) {
+      document.getElementById(`edit-${id}`).innerHTML = "";
+    }
+
+    function submitEdit(id) {
+      const newTitle = document.getElementById(`title-${id}`).value.trim();
+      const newDesc = document.getElementById(`desc-${id}`).value.trim();
       fetch(`${SERVER}/editVideo/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
