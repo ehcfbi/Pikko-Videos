@@ -10,17 +10,23 @@
   <a href="https://videos.bird.f5.si"><img src="logo.png" alt="logo" width="200" height="100"></a>
   <p><input type="button" value="share" onclick="copyUrl()"></p>
   <div id="content"></div>
+
   <script>
     const params = new URLSearchParams(location.search);
     const name = params.get("name");
+
     if (!name) {
-      document.getElementById("content").innerText = "Pikko and Pikko Videos couldn't find this account.";
+      document.getElementById("content").innerText =
+        "Pikko and Pikko Videos couldn't find this account.";
     } else {
       fetch(`${SERVER}/users`)
         .then(res => res.json())
-        .then(users => {
-          if (!users.includes(name)) {
-            document.getElementById("content").innerText = "Pikko and Pikko Videos couldn't find this account.";
+        .then(data => {
+          const usersArray = data.users || [];
+          const usernames = usersArray.map(u => u.username);
+          if (!usernames.includes(name)) {
+            document.getElementById("content").innerText =
+              "Pikko and Pikko Videos couldn't find this account.";
           } else {
             document.title = `${name} - Pikko Videos`;
             document.getElementById("content").innerHTML = `<h1>${name}</h1>`;
@@ -37,8 +43,8 @@
     }
 
     function copyUrl() {
-  var url = location.href;
-  navigator.clipboard.writeText(url);
+      const url = location.href;
+      navigator.clipboard.writeText(url);
     }
   </script>
 </body>
