@@ -16,9 +16,8 @@
   </style>
 </head>
 <body>
-  <a href="https://videos.bird.f5.si">
-    <img src="logo.png" alt="logo" width="200" height="100">
-  </a>
+  <a href="https://videos.bird.f5.si"><img src="logo.png" alt="logo" width="200" height="100"></a>
+  <input type="button" value="share" onclick="copyUrl()">
   <div id="content"></div>
 
   <script>
@@ -45,6 +44,10 @@
         .catch(() => {
           content.innerHTML = `<p class="error">error</p>`;
         });
+    }
+    function copyUrl() {
+  var url = location.href;
+  navigator.clipboard.writeText(url);
     }
   </script>
 </body>
