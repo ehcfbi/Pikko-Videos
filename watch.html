@@ -33,7 +33,7 @@
             document.title = `${info.title} by ${info.username} - Pikko Videos`;
             const videoUrl = `${SERVER}/video/${id}`;
             content.innerHTML = `
-              <h1>${info.title} - ${info.username}</h1>
+              <h1>${info.title} by ${info.username}</h1>
               <video src="${videoUrl}" controls autoplay playsinline></video>
               <p style="white-space: pre-wrap; margin-top: 1em;">${info.description}</p>
             `;
