@@ -9,10 +9,19 @@
 <body>
   <a href="https://videos.bird.f5.si"><img src="https://videos.bird.f5.si/logo.png" alt="logo" width="200" height="100"></a>
   <input type="button" value="share" onclick="copyUrl()">
+  <span id="copyMessage" style="color: green; margin-left: 10px;"></span>
+
   <h1>My page</h1>
   <font size="7" color="purple"><p id="currentUser"></p></font>
   <button onclick="logout()">logout</button>
   <button onclick="removeAccount()">delete this account</button>
+
+  <h2>change account</h2>
+  <input id="currentPassword" type="password" placeholder="current password"><br>
+  <input id="newUsername" placeholder="new username"><br>
+  <input id="newPassword" type="password" placeholder="new password"><br>
+  <button onclick="changeAccount()">change account</button>
+  <p id="changeMsg" style="color: green;"></p>
 
   <h2>upload a video</h2>
   <input id="titleInput" placeholder="title"><br>
@@ -45,24 +54,34 @@
       });
     }
 
-    function renderVideos() {
-      fetch(`${SERVER}/videos/user/${me}`)
-        .then(res => res.json())
-        .then(videos => {
-          const list = videos.map(v =>
-            `<div>
-              <a href="watch?id=${v.id}">${v.title}</a>
-              <button onclick="deleteVideo('${v.id}')">delete</button>
-            </div>`
-          ).join("");
-          document.getElementById("list").innerHTML = list || "the videos is not there";
-        });
-    }
+    function changeAccount() {
+      const now = document.getElementById("currentPassword").value.trim();
+      const name = document.getElementById("newUsername").value.trim();
+      const pass = document.getElementById("newPassword").value.trim();
 
-    function deleteVideo(id) {
-      if (!confirm("Do you delete this video?")) return;
-      fetch(`${SERVER}/deleteVideo/${id}`, { method: "DELETE" })
-        .then(() => renderVideos());
+      if (!now || !name || !pass) {
+        alert("すべて入力してください");
+        return;
+      }
+
+      fetch(`${SERVER}/changeAccount`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          oldUsername: me,
+          currentPassword: now,
+          newUsername: name,
+          newPassword: pass
+        })
+      })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(() => {
+        Storage.setUser(name);
+        document.getElementById("currentUser").textContent = name;
+        document.getElementById("changeMsg").textContent = "✔️ changed";
+        renderVideos();
+      })
+      .catch(() => alert("ユーザー名重複またはパスワードが違います"));
     }
 
     function upload() {
@@ -94,12 +113,47 @@
         });
     }
 
-    renderVideos();
-    
+    function renderVideos() {
+      fetch(`${SERVER}/videos/user/${me}`)
+        .then(res => res.json())
+        .then(videos => {
+          const list = videos.map(v => `
+            <div>
+              <b>${v.title}</b>
+              <button onclick="editVideo('${v.id}', '${v.title}', \`${v.description || ""}\`)">edit</button><br>
+              <a href="watch?id=${v.id}">watch</a>
+              <button onclick="deleteVideo('${v.id}')">delete</button>
+            </div>
+          `).join("");
+          document.getElementById("list").innerHTML = list || "the videos is not there";
+        });
+    }
+
+    function deleteVideo(id) {
+      if (!confirm("Do you delete this video?")) return;
+      fetch(`${SERVER}/deleteVideo/${id}`, { method: "DELETE" })
+        .then(() => renderVideos());
+    }
+
+    function editVideo(id, title, description) {
+      const newTitle = prompt("Edit title:", title);
+      if (newTitle === null) return;
+      const newDesc = prompt("Edit description:", description);
+      if (newDesc === null) return;
+
+      fetch(`${SERVER}/editVideo/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: newTitle, description: newDesc })
+      }).then(() => renderVideos());
+    }
+
     function copyUrl() {
-  const url = `https://videos.bird.f5.si/channel?name=${me}`;
+  var url = 'https://videos.bird.f5.si/channel?name=${me}';
   navigator.clipboard.writeText(url);
     }
+
+    renderVideos();
   </script>
 </body>
 </html>
