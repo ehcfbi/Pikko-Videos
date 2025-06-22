@@ -74,25 +74,24 @@
     return;
   }
 
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64 = reader.result;
-        fetch(`${SERVER}/upload`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: me,
-            title: title,
-            base64: base64
-          })
-        })
-        .then(res => res.json())
-        .then(() => {
-          document.getElementById("titleInput").value = "";
-          document.getElementById("fileInput").value = "";
-          renderVideos();
-        });
-      };
+  const form = new FormData();
+  form.append("username", me);
+  form.append("title", title);
+  form.append("description", description);
+  form.append("video", file); // ← ファイルそのまま！
+
+  fetch(`${SERVER}/upload`, {
+    method: "POST",
+    body: form
+  })
+    .then(res => res.json())
+    .then(() => {
+      document.getElementById("titleInput").value = "";
+      document.getElementById("fileInput").value = "";
+      document.getElementById("description").value = "";
+      renderVideos();
+    });
+}
       reader.readAsDataURL(file);
     }
 
