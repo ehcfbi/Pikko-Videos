@@ -1,2 +1,2 @@
 // APIサーバーのURL（必要に応じて変更）
-const SERVER = "https://pikko-videos-data.onrender.com/";
+const SERVER = "https://pikko-videos-data.onrender.com";
