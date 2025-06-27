@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <script>const SERVER = "https://pikko1.tcpexposer.com";</script>
@@ -13,8 +13,15 @@
     }
     .video-container {
       position: relative;
-      width: 640px;
-      height: 360px;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background-color: #000;
     }
     .overlay {
       position: absolute;
@@ -26,15 +33,14 @@
       align-items: center;
       justify-content: center;
       flex-direction: column;
+      pointer-events: none;
+    }
+    .overlay a {
+      pointer-events: auto;
     }
     .thumb {
       width: 120px;
       opacity: 0.6;
-    }
-    video {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
     }
   </style>
 </head>
@@ -42,7 +48,7 @@
   <div class="video-container">
     <video controls></video>
     <div class="overlay">
-      <a id="watch" href="#"><img src="logo.png" class="thumb"></a>
+      <a id="watch" href="#" target="_blank"><img src="logo.png" class="thumb" alt="logo"></a>
     </div>
   </div>
 
@@ -52,17 +58,11 @@
     const videoId = params.get("id");
 
     if (videoId) {
-      // 例：動画ファイルが /videos/ に保存されている場合
-      videoEl.src = `${SERVER}/videos/${videoId}.mp4`;
-
-      // 必要ならタイトルや説明の取得・表示も可能（fetchなどで拡張）
+      videoEl.src = `${SERVER}/videos/${encodeURIComponent(videoId)}.mp4`;
+      document.getElementById("watch").href = `watch.html?id=${encodeURIComponent(videoId)}`;
     } else {
       document.body.innerHTML = "<p style='color:white;text-align:center;'>error</p>";
     }
-    const linkEl = document.getElementById("watch");
-if (videoId) {
-  linkEl.href = `watch.html?id=${videoId}`;
-}
   </script>
 </body>
 </html>
