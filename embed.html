@@ -28,7 +28,7 @@
 
     if (videoId) {
       // 例：動画ファイルが /videos/ に保存されている場合
-      videoEl.src = `${SERVER}/videos/${info.fileName}`;
+      videoEl.src = `${SERVER}/videos/${params}`;
 
       // 必要ならタイトルや説明の取得・表示も可能（fetchなどで拡張）
     } else {
