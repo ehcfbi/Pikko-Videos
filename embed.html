@@ -19,6 +19,7 @@
   </style>
 </head>
 <body>
+  <a id="watch" href="#">watch on Pikko Videos</a>
   <video controls autoplay></video>
 
   <script>
@@ -34,6 +35,10 @@
     } else {
       document.body.innerHTML = "<p style='color:white;text-align:center;'>error</p>";
     }
+    const linkEl = document.getElementById("watch");
+if (videoId) {
+  linkEl.href = `watch.html?id=${videoId}`;
+}
   </script>
 </body>
 </html>
