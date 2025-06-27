@@ -14,7 +14,12 @@
 </head>
 <body>
   <a href="https://videos.bird.f5.si"><img src="logo.png" alt="logo" width="200" height="100"></a>
-  <p><input type="button" value="share" onclick="copyUrl()"></p>
+  <table>
+    <tr>
+      <th><input type="button" value="share" onclick="copyUrl()"></th>
+      <th><input type="button" value="embed" onclick="copyCode()"></th>
+    </tr>
+  </table>
   <div id="content"></div>
 
   <script>
@@ -58,6 +63,10 @@
 
     function copyUrl() {
       const url = location.href;
+      navigator.clipboard.writeText(url);
+
+    function copyCode() {
+      const url = `<iframe src="http://videos.bird.f5.si/embed?id=${id}" width="640" height="360" frameborder="0" allowfullscreen></iframe>`;
       navigator.clipboard.writeText(url);
     }
   </script>
