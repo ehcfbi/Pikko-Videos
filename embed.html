@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <script>cont SERVER = "https://pikko1.tcpexposer.com";</script>
+  <title>embed - Pikko Videos</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background-color: #000;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+  </style>
+</head>
+<body>
+  <video controls autoplay></video>
+
+  <script>
+    const videoEl = document.querySelector("video");
+    const params = new URLSearchParams(window.location.search);
+    const videoId = params.get("id");
+
+    if (videoId) {
+      // 例：動画ファイルが /videos/ に保存されている場合
+      videoEl.src = `${SERVER}/videos/${info.fileName}`;
+
+      // 必要ならタイトルや説明の取得・表示も可能（fetchなどで拡張）
+    } else {
+      document.body.innerHTML = "<p style='color:white;text-align:center;'>error</p>";
+    }
+  </script>
+</body>
+</html>
