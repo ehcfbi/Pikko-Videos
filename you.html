@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>My page - Pikko Videos</title>
+  <title>my page - Pikko Videos</title>
   <script src="js/config.js"></script>
   <script src="js/storage.js"></script>
 </head>
@@ -95,6 +95,13 @@
         return;
       }
 
+      // ✅ ファイルサイズ上限チェック（30MB = 30 * 1024 * 1024）
+      const MAX_SIZE_BYTES = 30 * 1024 * 1024;
+      if (file.size > MAX_SIZE_BYTES) {
+        alert("File size is too large. Please select a file 30mb or less.");
+        return;
+      }
+
       const form = new FormData();
       form.append("username", me);
       form.append("title", title);
@@ -163,8 +170,8 @@
     }
 
     function copyUrl() {
-  const url = `https://videos.bird.f5.si/channel?name=${me}`;
-  navigator.clipboard.writeText(url);
+      const url = `https://videos.bird.f5.si/channel?name=${me}`;
+      navigator.clipboard.writeText(url);
     }
 
     renderVideos();
