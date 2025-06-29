@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>channel - Pikko Videos</title>
+  <title>user - Pikko Videos</title>
   <script src="js/config.js"></script>
   <link rel="icon" href="favicon.ico">
 </head>
@@ -17,7 +17,7 @@
 
     if (!name) {
       document.getElementById("content").innerText =
-        "Pikko and Pikko Videos couldn't find this account.";
+        "Pikko and Pikko Videos couldn't find this user.";
     } else {
       fetch(`${SERVER}/users`)
         .then(res => res.json())
