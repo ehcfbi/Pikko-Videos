@@ -30,7 +30,7 @@
         const usersArray = data.users || [];
         const list = usersArray
           .filter(user => user.username !== me)
-          .map(user => `<div><a href="channel?name=${encodeURIComponent(user.username)}">${user.username}</a></div>`)
+          .map(user => `<div><a href="user?name=${encodeURIComponent(user.username)}">${user.username}</a></div>`)
           .join("");
         document.getElementById("userList").innerHTML = list || "Other channels are not there.";
       });
