@@ -36,7 +36,7 @@
           .filter(user => user.username !== me)
           .map(user => `<div><a href="user?name=${encodeURIComponent(user.username)}">${user.username}</a></div>`)
           .join("");
-        document.getElementById("userList").innerHTML = list || "Other channels are not there.";
+        document.getElementById("userList").innerHTML = list || "Other users are not there.";
       });
   </script>
 </body>
