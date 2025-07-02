@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>watch - Pikko Videos</title>
-  <meta name="description" content="Let's watch the videos.">
+  <meta name="description" content="Let's watch the videos and musics.">
 <meta property="og:title" content="Pikko Videos">
 <meta property="og:description" content="Let's watch the videos.">
 <meta property="og:url" content="https://videos.bird.f5.si">
@@ -31,13 +31,13 @@
     const content = document.getElementById("content");
 
     if (!id) {
-      content.innerHTML = `<p class="error">Pikko and Pikko Videos couldn't find this video.</p>`;
+      content.innerHTML = `<p class="error">Pikko and Pikko Videos couldn't find this video or music.</p>`;
     } else {
       fetch(`${SERVER}/videoInfo/${id}`)
         .then(res => res.ok ? res.json() : null)
         .then(info => {
           if (!info || !info.fileName) {
-            content.innerHTML = `<p class="error">Pikko and Pikko Videos couldn't find this video.</p>`;
+            content.innerHTML = `<p class="error">Pikko and Pikko Videos couldn't find this video or music.</p>`;
             return;
           }
 
