@@ -143,7 +143,7 @@
     }
 
     function deleteVideo(id) {
-      if (!confirm("Do you delete this video?")) return;
+      if (!confirm("Do you delete this video or music?")) return;
       fetch(`${SERVER}/deleteVideo/${id}`, { method: "DELETE" })
         .then(() => renderVideos());
     }
