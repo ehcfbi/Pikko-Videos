@@ -10,16 +10,21 @@
       padding: 0;
       height: 100%;
       background-color: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .video-container {
+    .media-container {
       position: relative;
       width: 100vw;
       height: 100vh;
-      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    video {
-      width: 100%;
-      height: 100%;
+    video, audio {
+      max-width: 100%;
+      max-height: 100%;
       object-fit: contain;
       background-color: #000;
     }
@@ -27,9 +32,6 @@
       position: absolute;
       top: 20px;
       right: 20px;
-      width: auto;
-      height: auto;
-      display: block;
     }
     .thumb {
       width: 120px;
@@ -38,23 +40,43 @@
   </style>
 </head>
 <body>
-  <div class="video-container">
-    <video controls></video>
-    <div class="overlay">
-      <a id="watch" href="#" target="_blank"><img src="logo.png" class="thumb" alt="logo"></a>
-    </div>
+  <div class="media-container" id="container">
+    <!-- プレイヤーは後から挿入 -->
+  </div>
+  <div class="overlay">
+    <a id="watch" href="#" target="_blank"><img src="logo.png" class="thumb" alt="logo"></a>
   </div>
 
   <script>
-    const videoEl = document.querySelector("video");
-    const params = new URLSearchParams(window.location.search);
-    const videoId = params.get("id");
+    const params = new URLSearchParams(location.search);
+    const id = params.get("id");
+    const container = document.getElementById("container");
 
-    if (videoId) {
-      videoEl.src = `${SERVER}/videos/${encodeURIComponent(videoId)}.mp4`;
-      document.getElementById("watch").href = `watch.html?id=${encodeURIComponent(videoId)}`;
+    if (!id) {
+      container.innerHTML = "<p style='color:white;text-align:center;'>Video ID has not been entered.</p>";
     } else {
-      document.body.innerHTML = "<p style='color:white;text-align:center;'>Video ID has not been entered.</p> <p style='color:white;text-align:center;'>by Pikko Videos</p>";
+      fetch(`${SERVER}/videoInfo/${id}`)
+        .then(res => res.ok ? res.json() : null)
+        .then(info => {
+          if (!info || !info.fileName) {
+            container.innerHTML = "<p style='color:white;text-align:center;'>Media not found.</p>";
+            return;
+          }
+
+          const ext = info.fileName.split(".").pop().toLowerCase();
+          const isAudio = ext === "mp3" || ext === "wav";
+          const mediaUrl = `${SERVER}/videos/${encodeURIComponent(info.fileName)}`;
+          const tag = isAudio
+            ? `<audio id="player" controls></audio>`
+            : `<video id="player" controls muted playsinline></video>`;
+
+          container.innerHTML = tag;
+          document.getElementById("player").src = mediaUrl;
+          document.getElementById("watch").href = `watch.html?id=${encodeURIComponent(id)}`;
+        })
+        .catch(() => {
+          container.innerHTML = "<p style='color:white;text-align:center;'>Error loading content.</p>";
+        });
     }
   </script>
 </body>
