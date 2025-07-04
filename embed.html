@@ -47,6 +47,19 @@
       width: 120px;
       opacity: 0.6;
     }
+    .info-overlay {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background-color: rgba(0, 0, 0, 0.6);
+      color: white;
+      font-size: 16px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-family: sans-serif;
+      max-width: 80vw;
+      z-index: 10;
+    }
     button {
       background: #0af;
       color: white;
@@ -63,7 +76,8 @@
 </head>
 <body>
   <div class="media-container" id="container">
-    <!-- wave/video inserted here -->
+    <div class="info-overlay" id="videoInfoText">Loading...</div>
+    <!-- media player will be inserted here -->
   </div>
   <div class="overlay">
     <a id="watch" href="#" target="_blank"><img src="logo.png" class="thumb" alt="logo"></a>
@@ -75,13 +89,13 @@
     const container = document.getElementById("container");
 
     if (!id) {
-      container.innerHTML = "<p style='color:white;text-align:center;'>Video ID has not been entered.</p>";
+      container.innerHTML += "<p style='color:white;text-align:center;'>Video ID has not been entered.</p>";
     } else {
       fetch(`${SERVER}/videoInfo/${id}`)
         .then(res => res.ok ? res.json() : null)
         .then(info => {
           if (!info || !info.fileName) {
-            container.innerHTML = "<p style='color:white;text-align:center;'>Media not found.</p>";
+            container.innerHTML += "<p style='color:white;text-align:center;'>Media not found.</p>";
             return;
           }
 
@@ -89,9 +103,9 @@
           const isAudio = ext === "mp3" || ext === "wav";
           const mediaUrl = `${SERVER}/videos/${encodeURIComponent(info.fileName)}`;
           document.getElementById("watch").href = `watch.html?id=${encodeURIComponent(id)}`;
+          document.getElementById("videoInfoText").textContent = `${info.title} by ${info.username}`;
 
           if (isAudio) {
-            // 🎧 Audio player with waveform and button
             const waveformDiv = document.createElement("div");
             waveformDiv.id = "waveform";
 
@@ -130,18 +144,19 @@
             });
 
           } else {
-            // 🎥 Video playback
             const video = document.createElement("video");
             video.controls = true;
             video.autoplay = true;
             video.playsInline = true;
             video.muted = true;
             video.src = mediaUrl;
+            video.style.maxWidth = "100%";
+            video.style.maxHeight = "100%";
             container.appendChild(video);
           }
         })
         .catch(() => {
-          container.innerHTML = "<p style='color:white;text-align:center;'>Failed to load media.</p>";
+          container.innerHTML += "<p style='color:white;text-align:center;'>Failed to load media.</p>";
         });
     }
   </script>
