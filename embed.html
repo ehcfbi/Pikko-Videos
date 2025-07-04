@@ -76,7 +76,7 @@
 </head>
 <body>
   <div class="media-container" id="container">
-    <div class="info-overlay" id="videoInfoText">Loading...</div>
+    <div class="info-overlay" id="videoInfoText">Pikko and Pikko Videos is looking for this videos or music...</div>
     <!-- media player will be inserted here -->
   </div>
   <div class="overlay">
@@ -89,13 +89,13 @@
     const container = document.getElementById("container");
 
     if (!id) {
-      container.innerHTML += "<p style='color:white;text-align:center;'>Video ID has not been entered.</p>";
+      container.innerHTML += "<p style='color:white;text-align:center;'>video or music id has not been entered.</p>";
     } else {
       fetch(`${SERVER}/videoInfo/${id}`)
         .then(res => res.ok ? res.json() : null)
         .then(info => {
           if (!info || !info.fileName) {
-            container.innerHTML += "<p style='color:white;text-align:center;'>Media not found.</p>";
+            container.innerHTML += "<p style='color:white;text-align:center;'>Pikko and Pikko Videos couldn't find this video or music.</p>";
             return;
           }
 
@@ -146,9 +146,9 @@
           } else {
             const video = document.createElement("video");
             video.controls = true;
-            video.autoplay = true;
+            video.autoplay = false;
             video.playsInline = true;
-            video.muted = true;
+            video.muted = false;
             video.src = mediaUrl;
             video.style.maxWidth = "100%";
             video.style.maxHeight = "100%";
