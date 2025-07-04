@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <title>watch - Pikko Videos</title>
   <meta name="description" content="Let's watch the videos and musics.">
-<meta property="og:title" content="Pikko Videos">
-<meta property="og:description" content="Let's watch the videos.">
-<meta property="og:url" content="https://videos.bird.f5.si">
+  <meta property="og:title" content="Pikko Videos">
+  <meta property="og:description" content="Let's watch the videos.">
+  <meta property="og:url" content="https://videos.bird.f5.si">
   <script>const SERVER = "https://pikko1.tcpexposer.com";</script>
   <style>
     .error {
@@ -42,9 +42,14 @@
           }
 
           document.title = `${info.title} by ${info.username} - Pikko Videos`;
+          const ext = info.fileName.split(".").pop().toLowerCase();
+          const isAudio = ext === "mp3" || ext === "wav";
+
           content.innerHTML = `
             <h1>${info.title} by ${info.username}</h1>
-            <video id="video" controls autoplay playsinline></video>
+            ${isAudio
+              ? `<audio id="player" controls autoplay></audio>`
+              : `<video id="player" controls autoplay playsinline></video>`}
             <p style="white-space: pre-wrap; margin-top: 1em;">${info.description}</p>
           `;
 
@@ -52,12 +57,11 @@
             .then(res => res.blob())
             .then(blob => {
               const url = URL.createObjectURL(blob);
-              document.getElementById("video").src = url;
+              document.getElementById("player").src = url;
             })
             .catch(() => {
-              document.getElementById("video").replaceWith(
-                `<p class="error">Failed to load video file.</p>`
-              );
+              const el = document.getElementById("player");
+              if (el) el.replaceWith(`<p class="error">Failed to load file.</p>`);
             });
         })
         .catch(() => {
