@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <script>const SERVER = "https://pikko1.tcpexposer.com";</script>
   <title>embed - Pikko Videos</title>
+  <script>const SERVER = "https://pikko1.tcpexposer.com";</script>
+  <script src="https://unpkg.com/wavesurfer.js"></script>
   <style>
     html, body {
       margin: 0;
@@ -11,22 +12,27 @@
       height: 100%;
       background-color: #000;
       display: flex;
-      align-items: center;
       justify-content: center;
+      align-items: center;
     }
     .media-container {
-      position: relative;
       width: 100vw;
       height: 100vh;
+      position: relative;
       display: flex;
-      align-items: center;
+      flex-direction: column;
       justify-content: center;
+      align-items: center;
     }
     video, audio {
       max-width: 100%;
       max-height: 100%;
-      object-fit: contain;
-      background-color: #000;
+      background: #000;
+    }
+    #waveform {
+      width: 100%;
+      height: 80px;
+      background: #111;
     }
     .overlay {
       position: absolute;
@@ -41,7 +47,7 @@
 </head>
 <body>
   <div class="media-container" id="container">
-    <!-- プレイヤーは後から挿入 -->
+    <!-- wave / video player will be inserted here -->
   </div>
   <div class="overlay">
     <a id="watch" href="#" target="_blank"><img src="logo.png" class="thumb" alt="logo"></a>
@@ -66,16 +72,42 @@
           const ext = info.fileName.split(".").pop().toLowerCase();
           const isAudio = ext === "mp3" || ext === "wav";
           const mediaUrl = `${SERVER}/videos/${encodeURIComponent(info.fileName)}`;
-          const tag = isAudio
-            ? `<audio id="player" controls></audio>`
-            : `<video id="player" controls muted playsinline></video>`;
-
-          container.innerHTML = tag;
-          document.getElementById("player").src = mediaUrl;
           document.getElementById("watch").href = `watch.html?id=${encodeURIComponent(id)}`;
+
+          if (isAudio) {
+            // 🎧 音声（波形表示）
+            const waveformDiv = document.createElement("div");
+            waveformDiv.id = "waveform";
+            container.appendChild(waveformDiv);
+
+            const wavesurfer = WaveSurfer.create({
+              container: '#waveform',
+              waveColor: '#555',
+              progressColor: '#0af',
+              height: 80,
+              barWidth: 2,
+              responsive: true
+            });
+
+            wavesurfer.load(mediaUrl);
+            wavesurfer.on('ready', () => {
+              wavesurfer.play();
+            });
+          } else {
+            // 🎥 動画（従来通り）
+            const video = document.createElement("video");
+            video.controls = true;
+            video.autoplay = true;
+            video.playsInline = true;
+            video.muted = true;
+            video.src = mediaUrl;
+            video.style.maxWidth = "100%";
+            video.style.maxHeight = "100%";
+            container.appendChild(video);
+          }
         })
         .catch(() => {
-          container.innerHTML = "<p style='color:white;text-align:center;'>Error loading content.</p>";
+          container.innerHTML = "<p style='color:white;text-align:center;'>Failed to load media.</p>";
         });
     }
   </script>
