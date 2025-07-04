@@ -24,15 +24,19 @@
       justify-content: center;
       align-items: center;
     }
-    video, audio {
+    video {
       max-width: 100%;
       max-height: 100%;
       background: #000;
     }
     #waveform {
-      width: 100%;
+      width: 90%;
       height: 80px;
       background: #111;
+      margin-bottom: 10px;
+    }
+    #controls {
+      margin-top: 10px;
     }
     .overlay {
       position: absolute;
@@ -43,11 +47,23 @@
       width: 120px;
       opacity: 0.6;
     }
+    button {
+      background: #0af;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    button:hover {
+      background: #09c;
+    }
   </style>
 </head>
 <body>
   <div class="media-container" id="container">
-    <!-- wave / video player will be inserted here -->
+    <!-- wave/video inserted here -->
   </div>
   <div class="overlay">
     <a id="watch" href="#" target="_blank"><img src="logo.png" class="thumb" alt="logo"></a>
@@ -75,10 +91,20 @@
           document.getElementById("watch").href = `watch.html?id=${encodeURIComponent(id)}`;
 
           if (isAudio) {
-            // 🎧 音声（波形表示）
+            // 🎧 Audio player with waveform and button
             const waveformDiv = document.createElement("div");
             waveformDiv.id = "waveform";
+
+            const btn = document.createElement("button");
+            btn.id = "togglePlay";
+            btn.textContent = "▶️ 再生";
+
+            const controls = document.createElement("div");
+            controls.id = "controls";
+            controls.appendChild(btn);
+
             container.appendChild(waveformDiv);
+            container.appendChild(controls);
 
             const wavesurfer = WaveSurfer.create({
               container: '#waveform',
@@ -90,19 +116,27 @@
             });
 
             wavesurfer.load(mediaUrl);
-            wavesurfer.on('ready', () => {
-              wavesurfer.play();
+
+            btn.addEventListener("click", () => {
+              wavesurfer.playPause();
             });
+
+            wavesurfer.on("play", () => {
+              btn.textContent = "⏸";
+            });
+
+            wavesurfer.on("pause", () => {
+              btn.textContent = "▶";
+            });
+
           } else {
-            // 🎥 動画（従来通り）
+            // 🎥 Video playback
             const video = document.createElement("video");
             video.controls = true;
             video.autoplay = true;
             video.playsInline = true;
             video.muted = true;
             video.src = mediaUrl;
-            video.style.maxWidth = "100%";
-            video.style.maxHeight = "100%";
             container.appendChild(video);
           }
         })
