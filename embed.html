@@ -97,7 +97,7 @@
 
             const btn = document.createElement("button");
             btn.id = "togglePlay";
-            btn.textContent = "▶";
+            btn.textContent = "play";
 
             const controls = document.createElement("div");
             controls.id = "controls";
@@ -122,11 +122,11 @@
             });
 
             wavesurfer.on("play", () => {
-              btn.textContent = "⏸";
+              btn.textContent = "pause";
             });
 
             wavesurfer.on("pause", () => {
-              btn.textContent = "▶";
+              btn.textContent = "play";
             });
 
           } else {
