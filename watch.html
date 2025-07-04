@@ -75,7 +75,7 @@
             <h1>${info.title} by ${info.username}</h1>
             ${isAudio ? `
               <div id="waveform"></div>
-              <div id="controls"><button id="togglePlay">▶</button></div>
+              <div id="controls"><button id="togglePlay">play</button></div>
             ` : `
               <video id="player" controls autoplay playsinline></video>
             `}
@@ -99,11 +99,11 @@
             });
 
             wavesurfer.on("play", () => {
-              btn.textContent = "⏸";
+              btn.textContent = "pause";
             });
 
             wavesurfer.on("pause", () => {
-              btn.textContent = "▶";
+              btn.textContent = "play";
             });
           } else {
             fetch(mediaUrl)
