@@ -146,8 +146,8 @@
           } else {
             const video = document.createElement("video");
             video.controls = true;
-            controlsList.nodownload = true;
             video.autoplay = false;
+            video.setAttribute("controlsList", "nodownload");
             video.playsInline = true;
             video.muted = false;
             video.src = mediaUrl;
