@@ -5,12 +5,26 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>home - Pikko Videos</title>
   <meta name="description" content="This is a video posting service.">
-<meta property="og:title" content="Pikko Videos">
-<meta property="og:description" content="This is a video posting service.">
-<meta property="og:url" content="https://videos.bird.f5.si">
+  <meta property="og:title" content="Pikko Videos">
+  <meta property="og:description" content="This is a video posting service.">
+  <meta property="og:url" content="https://videos.bird.f5.si">
   <script src="js/config.js"></script>
   <script src="js/storage.js"></script>
   <link rel="icon" href="favicon.ico">
+  <style>
+    .userEntry {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .userEntry img {
+      width: 50px;
+      height: 50px;
+      margin-right: 10px;
+      object-fit: cover;
+      border-radius: 5px;
+    }
+  </style>
 </head>
 <body>
   <a href="./"><img src="logo.png" alt="logo" width="200" height="100"></a>
@@ -35,8 +49,14 @@
         const usersArray = data.users || [];
         const list = usersArray
           .filter(user => user.username !== me)
-          .map(user => `<div><a href="user?name=${encodeURIComponent(user.username)}">${user.username}</a></div>`)
-          .join("");
+          .map(user => {
+            const iconPath = `${SERVER}/icons/${user.username}.jpg`;
+            return `
+              <div class="userEntry">
+                <img src="${iconPath}" alt="icon">
+                <a href="user?name=${encodeURIComponent(user.username)}">${user.username}</a>
+              </div>`;
+          }).join("");
         document.getElementById("userList").innerHTML = list || "Other users are not there.";
       });
   </script>
