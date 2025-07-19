@@ -41,7 +41,6 @@
 
   <script>
     const me = Storage.getUser();
-    if (!me) location.href = "signin";
 
     fetch(`${SERVER}/users`)
       .then(res => res.json())
