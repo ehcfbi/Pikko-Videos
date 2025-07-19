@@ -90,7 +90,13 @@
             <div class="videoCard">
               <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}" alt="thumb">
               <b>${v.title}</b><br>
-              ${new Date(v.date).toLocaleDateString()}<br>
+              ${new Date(v.date).toLocaleString("ja-JP", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit"
+              })}<br>
               <a href="watch?id=${v.id}">watch</a>
             </div>
           `).join("");
