@@ -47,7 +47,7 @@
   <h2>your videos and musics</h2>
   <div id="list"></div>
 
-  <script>
+    <script>
     let me = Storage.getUser();
     if (!me) location.href = "signin.html";
     document.getElementById("currentUser").textContent = me;
@@ -152,7 +152,48 @@
         .then(() => {
           document.getElementById("titleInput").value = "";
           document.getElementById("fileInput").value = "";
-          document.getElement
+          document.getElementById("thumbInput").value = "";
+          document.getElementById("description").value = "";
+          renderVideos();
+        });
+    }
+
+    function renderVideos() {
+      fetch(`${SERVER}/videos/user/${me}`)
+        .then(res => res.json())
+        .then(videos => {
+          const list = videos.map(v => `
+            <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+              <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}" width="200"><br>
+              <b>${v.title}</b><br>
+              ${new Date(v.date).toLocaleDateString()}<br>
+              <a href="watch?id=${v.id}">watch</a>
+              <button onclick="deleteVideo('${v.id}')">delete</button>
+              <button onclick="showEdit('${v.id}', \`${v.title}\`, \`${v.description || ""}\`)">edit</button>
+              <div id="edit-${v.id}"></div>
+            </div>`).join("");
+          document.getElementById("list").innerHTML = list || "No videos yet.";
+        });
+    }
+
+    function deleteVideo(id) {
+      if (!confirm("Do you delete this video or music?")) return;
+      fetch(`${SERVER}/deleteVideo/${id}`, { method: "DELETE" })
+        .then(() => renderVideos());
+    }
+
+    function showEdit(id, title, description) {
+      const container = document.getElementById(`edit-${id}`);
+      container.innerHTML = `
+        <p>Edit:</p>
+        <input id="title-${id}" value="${title}" style="width: 80%;"><br>
+        <textarea id="desc-${id}" rows="4" style="width: 80%;">${description}</textarea><br>
+        <input id="thumb-${id}" type="file" accept=".jpg"><br>
+        <button onclick="submitEdit('${id}')">save</button>
+        <button onclick="cancelEdit('${id}')">cancel</button>
+            `;
+    }
+
     function cancelEdit(id) {
       document.getElementById(`edit-${id}`).innerHTML = "";
     }
@@ -170,7 +211,10 @@
       fetch(`${SERVER}/editVideo/${id}`, {
         method: "PATCH",
         body: form
-      }).then(() => renderVideos());
+      }).then(() => {
+        renderVideos();
+        cancelEdit(id);
+      });
     }
 
     renderVideos();
