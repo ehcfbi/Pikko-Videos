@@ -14,7 +14,6 @@
 <body>
   <a href="./"><img src="https://videos.bird.f5.si/logo.png" alt="logo" width="200" height="100"></a>
   <p><input type="button" value="share" onclick="copyUrl()"></p>
-  <span id="copyMessage" style="color: green; margin-left: 10px;"></span>
 
   <h1>My page</h1>
   <div style="display: flex; align-items: center;">
@@ -30,12 +29,10 @@
   <input id="newUsername" placeholder="new username"><br>
   <input id="newPassword" type="password" placeholder="new password"><br>
   <button onclick="changeAccount()">change account</button>
-  <p id="changeMsg" style="color: green;"></p>
 
   <h2>change your icon</h2>
   <input id="iconInput" type="file" accept=".jpg"><br>
   <button onclick="updateIcon()">update icon</button>
-  <p id="iconMsg" style="color: green;"></p>
 
   <h2>upload a video or music</h2>
   <input id="titleInput" placeholder="title"><br>
@@ -61,7 +58,6 @@
     function copyUrl() {
       const url = `https://videos.bird.f5.si/user?name=${me}`;
       navigator.clipboard.writeText(url);
-      document.getElementById("copyMessage").textContent = "✔️ copied";
     }
 
     function removeAccount() {
@@ -102,7 +98,6 @@
         me = name;
         document.getElementById("currentUser").textContent = name;
         document.getElementById("iconPreview").src = `${SERVER}/icons/${name}.jpg`;
-        document.getElementById("changeMsg").textContent = "✔️ changed";
         renderVideos();
       })
       .catch(() => alert("Change failed"));
@@ -117,7 +112,6 @@
       fetch(`${SERVER}/updateIcon`, { method: "POST", body: form })
         .then(res => res.ok ? res.json() : Promise.reject())
         .then(() => {
-          document.getElementById("iconMsg").textContent = "✔️ icon updated";
           document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg?${Date.now()}`;
         })
         .catch(() => alert("Icon update failed"));
