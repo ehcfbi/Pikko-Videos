@@ -49,7 +49,7 @@
 
     <script>
     let me = Storage.getUser();
-    if (!me) location.href = "signin.html";
+    if (!me) location.href = "signin";
     document.getElementById("currentUser").textContent = me;
     document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg`;
 
