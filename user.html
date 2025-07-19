@@ -4,16 +4,45 @@
   <meta charset="UTF-8">
   <title>user - Pikko Videos</title>
   <meta name="description" content="user page">
-<meta property="og:title" content="Pikko Videos">
-<meta property="og:description" content="user page">
-<meta property="og:url" content="https://videos.bird.f5.si">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta property="og:title" content="Pikko Videos">
+  <meta property="og:description" content="user page">
+  <meta property="og:url" content="https://videos.bird.f5.si">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <script src="js/config.js"></script>
   <link rel="icon" href="favicon.ico">
+  <style>
+    .videoCard {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .videoCard img {
+      width: 320px;
+      height: auto;
+      display: block;
+      margin-bottom: 5px;
+      border-radius: 5px;
+    }
+    .userHeader {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .userHeader img {
+      width: 60px;
+      height: 60px;
+      margin-right: 10px;
+      border-radius: 5px;
+    }
+  </style>
 </head>
 <body>
   <a href="./"><img src="logo.png" alt="logo" width="200" height="100"></a>
   <p><input type="button" value="share" onclick="copyUrl()"></p>
+  <select id="sortOrder" onchange="loadVideos()" style="margin-bottom: 10px;">
+    <option value="new">Newest first</option>
+    <option value="old">Oldest first</option>
+  </select>
   <div id="content"></div>
 
   <script>
@@ -34,16 +63,39 @@
               "Pikko and Pikko Videos couldn't find this account.";
           } else {
             document.title = `${name} - Pikko Videos`;
-            document.getElementById("content").innerHTML = `<h1>${name}</h1>`;
-            fetch(`${SERVER}/videos/user/${name}`)
-              .then(res => res.json())
-              .then(videos => {
-                const list = videos.map(v =>
-                  `<div><a href="watch?id=${v.id}">${v.title}</a></div>`
-                ).join("");
-                document.getElementById("content").innerHTML += list;
-              });
+            const iconPath = `${SERVER}/icons/${name}.jpg`;
+            document.getElementById("content").innerHTML = `
+              <div class="userHeader">
+                <img src="${iconPath}" alt="icon">
+                <h1>${name}</h1>
+              </div>
+              <div id="videoList">Loading...</div>`;
+            loadVideos();
           }
+        });
+    }
+
+    function loadVideos() {
+      fetch(`${SERVER}/videos/user/${name}`)
+        .then(res => res.json())
+        .then(videos => {
+          const sort = document.getElementById("sortOrder").value;
+          videos.sort((a, b) => {
+            const timeA = new Date(a.date).getTime();
+            const timeB = new Date(b.date).getTime();
+            return sort === "new" ? timeB - timeA : timeA - timeB;
+          });
+
+          const list = videos.map(v => `
+            <div class="videoCard">
+              <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}" alt="thumb">
+              <b>${v.title}</b><br>
+              ${new Date(v.date).toLocaleDateString()}<br>
+              <a href="watch?id=${v.id}">watch</a>
+            </div>
+          `).join("");
+
+          document.getElementById("videoList").innerHTML = list || "No videos yet.";
         });
     }
 
