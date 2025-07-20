@@ -31,15 +31,16 @@
   <button onclick="changeAccount()">change account</button>
 
   <h2>change your icon</h2>
+  <h3>icon(600px*600px and 100KB or less and .jpg)</h3>
   <input id="iconInput" type="file" accept=".jpg"><br>
   <button onclick="updateIcon()">update icon</button>
 
   <h2>upload a video or music</h2>
   <h3>title</h3>
   <input id="titleInput" placeholder="title"><br>
-  <h3>video</h3>
+  <h3>video or music(30mb or less)</h3>
   <input id="fileInput" type="file" accept="video/mp4,audio/mp3,audio/wav"><br>
-  <h3>thumbnail</h3>
+  <h3>thumbnail(640px*360px or 640px*480px , 360px*640px and 130KB or less and .jpg)</h3>
   <input id="thumbInput" type="file" accept=".jpg"><br>
   <textarea id="description" placeholder="description" rows="4" cols="40"></textarea><br>
   <button onclick="upload()">upload</button>
@@ -128,7 +129,7 @@
         .then(() => {
           document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg?${Date.now()}`;
         })
-        .catch(() => alert("Icon update failed"));
+        .catch(() => alert("Icon update failed. select 600px*600px file."));
     }
 
     function upload() {
