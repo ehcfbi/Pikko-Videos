@@ -88,7 +88,7 @@
 
           const list = videos.map(v => `
             <div class="videoCard">
-              <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}" alt="thumb">
+              <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}" alt="thumb"><br>
               <b>${v.title}</b><br>
               ${new Date(v.date).toLocaleString("ja-JP", {
                 year: "numeric",
