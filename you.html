@@ -232,24 +232,29 @@
     document.getElementById(`edit-${id}`).innerHTML = "";
   }
 
-  function submitEdit(id) {
-    const newTitle = document.getElementById(`title-${id}`).value.trim();
-    const newDesc = document.getElementById(`desc-${id}`).value.trim();
-    const newThumb = document.getElementById(`thumb-${id}`).files[0];
+function submitEdit(id) {
+  const newTitle = document.getElementById(`title-${id}`).value.trim();
+  const newDesc = document.getElementById(`desc-${id}`).value.trim();
+  const newThumb = document.getElementById(`thumb-${id}`).files[0];
 
-    const form = new FormData();
-    form.append("title", newTitle);
-    form.append("description", newDesc);
-    if (newThumb) form.append("thumbnail", newThumb);
-
-    fetch(`${SERVER}/editVideo/${id}`, {
-      method: "PATCH",
-      body: form
-    }).then(() => {
-      renderVideos();
-      cancelEdit(id);
-    });
+  if (newThumb && newThumb.size > 130 * 1024) {
+    alert("Thumbnail image is too large. Please select a .jpg image 130KB or less.");
+    return;
   }
+
+  const form = new FormData();
+  form.append("title", newTitle);
+  form.append("description", newDesc);
+  if (newThumb) form.append("thumbnail", newThumb);
+
+  fetch(`${SERVER}/editVideo/${id}`, {
+    method: "PATCH",
+    body: form
+  }).then(() => {
+    renderVideos();
+    cancelEdit(id);
+  });
+}
 
   renderVideos();
 </script>
