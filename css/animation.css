@@ -32,6 +32,17 @@ transform: scaleY(1);
 }
 
 100% {
+
+body {
+  background-color: #fff;
+  color: #222;
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+body.dark {
+  background-color: #121212;
+  color: #eee;
+}
 transform-origin: bottom;
 transform: scaleY(0);
 }
