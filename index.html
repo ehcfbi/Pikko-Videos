@@ -37,27 +37,83 @@
   </table>
 
   <h1>channels</h1>
+
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+    <div>
+      <label for="sortSelect">Sort by:</label>
+      <select id="sortSelect" onchange="loadUsers()">
+        <option value="new">Newest first</option>
+        <option value="old">Oldest first</option>
+      </select>
+    </div>
+    <div>
+      <input id="userSearch" placeholder="Search user" oninput="loadUsers()" style="margin-right: 5px;">
+      <input id="videoSearch" placeholder="Search video title" oninput="loadUsers()">
+    </div>
+  </div>
+
   <div id="userList"></div>
-
   <script>
-    const me = Storage.getUser();
+  const me = Storage.getUser();
 
+  function normalize(text) {
+    return text.toLowerCase().replace(/\s+/g, "");
+  }
+
+  function loadUsers() {
     fetch(`${SERVER}/users`)
       .then(res => res.json())
       .then(data => {
         const usersArray = data.users || [];
-        const list = usersArray
-          .filter(user => user.username !== me)
-          .map(user => {
-            const iconPath = `${SERVER}/icons/${user.username}.jpg`;
-            return `
-              <div class="userEntry">
-                <img src="${iconPath}" alt="icon">
-                <a href="user?name=${encodeURIComponent(user.username)}">${user.username}</a>
-              </div>`;
-          }).join("");
-        document.getElementById("userList").innerHTML = list || "Other users are not there.";
+        const sort = document.getElementById("sortSelect").value;
+        const userQuery = normalize(document.getElementById("userSearch").value);
+        const videoQuery = normalize(document.getElementById("videoSearch").value);
+
+        const filtered = usersArray
+          .filter(u => u.username !== me)
+          .filter(u => normalize(u.username).includes(userQuery));
+
+        fetch(`${SERVER}/videos`)
+          .then(res => res.json())
+          .then(videos => {
+            const lastMap = {};
+            videos.forEach(v => {
+              const time = new Date(v.date).getTime();
+              const prev = lastMap[v.username];
+              if (!prev || time > prev) {
+                lastMap[v.username] = time;
+              }
+            });
+
+            const matched = filtered
+              .filter(u => {
+                if (!videoQuery) return true;
+                return videos.some(v =>
+                  v.username === u.username &&
+                  normalize(v.title).includes(videoQuery)
+                );
+              })
+              .sort((a, b) => {
+                const ta = lastMap[a.username] || 0;
+                const tb = lastMap[b.username] || 0;
+                return sort === "old" ? ta - tb : tb - ta;
+              });
+
+            const list = matched.map(user => {
+              const iconPath = `${SERVER}/icons/${user.username}.jpg`;
+              return `
+                <div class="userEntry">
+                  <img src="${iconPath}" alt="icon">
+                  <a href="user?name=${encodeURIComponent(user.username)}">${user.username}</a>
+                </div>`;
+            }).join("");
+
+            document.getElementById("userList").innerHTML = list || "No users found.";
+          });
       });
-  </script>
+  }
+
+  loadUsers();
+</script>
 </body>
 </html>
