@@ -1,7 +1,7 @@
 .bg-animation::before {
 content: "";
 animation-name: pageAnime;
-background: #29FE00;
+background: #69C956;
 position: fixed;
 z-index: 3;
 top: 0;
