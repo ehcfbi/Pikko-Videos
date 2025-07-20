@@ -63,92 +63,94 @@
   </div>
 
   <div id="userList"></div>
+
   <script>
-  const me = Storage.getUser();
+    const me = Storage.getUser();
 
-  function normalize(text) {
-    return text.toLowerCase().replace(/\s+/g, "");
-  }
+    function normalize(text) {
+      return text.toLowerCase().replace(/\s+/g, "");
+    }
 
-  function loadUsers() {
-    const sort = document.getElementById("sortSelect").value;
-    const userQuery = normalize(document.getElementById("userSearch").value);
-    const videoQuery = normalize(document.getElementById("videoSearch").value);
+    function loadUsers() {
+      const sort = document.getElementById("sortSelect").value;
+      const userQuery = normalize(document.getElementById("userSearch").value);
+      const videoQuery = normalize(document.getElementById("videoSearch").value);
 
-    fetch(`${SERVER}/users`)
-      .then(res => res.json())
-      .then(data => {
-        const usersArray = data.users || [];
-        const filteredUsers = usersArray.filter(u => u.username !== me);
+      fetch(`${SERVER}/users`)
+        .then(res => res.json())
+        .then(data => {
+          const usersArray = data.users || [];
+          const filteredUsers = usersArray.filter(u => u.username !== me);
 
-        fetch(`${SERVER}/videos`)
-          .then(res => res.json())
-          .then(videos => {
-            const filtered = filteredUsers.filter(u =>
-              normalize(u.username).includes(userQuery)
-            );
-
-            if (videoQuery) {
-              const matchedVideos = videos.filter(v =>
-                normalize(v.title).includes(videoQuery)
+          fetch(`${SERVER}/videos`)
+            .then(res => res.json())
+            .then(videos => {
+              const filtered = filteredUsers.filter(u =>
+                normalize(u.username).includes(userQuery)
               );
 
-              const list = matchedVideos.map(v => `
-                <div class="videoCard">
-                  <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}" alt="thumb">
-                  <b>${v.title}</b><br>
-                  ${new Date(v.date).toLocaleString("ja-JP", {
-                    year: "numeric",
-                    month: "2-digit",
-                    day: "2-digit",
-                    hour: "2-digit",
-                    minute: "2-digit"
-                  })}<br>
-                  <div style="display: flex; align-items: center; margin-top: 5px;">
-                    <img src="${SERVER}/icons/${v.username}.jpg"
-                      alt="icon"
-                      style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px; margin-right: 8px;">
-                    <a href="user?name=${encodeURIComponent(v.username)}">
-                      → ${v.username}'s page
-                    </a>
+              if (videoQuery) {
+                const matchedVideos = videos.filter(v =>
+                  normalize(v.title).includes(videoQuery)
+                );
+
+                const list = matchedVideos.map(v => `
+                  <div class="videoCard">
+                    <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}" alt="thumb">
+                    <b>${v.title}</b><br>
+                    ${new Date(v.date).toLocaleString("ja-JP", {
+                      year: "numeric",
+                      month: "2-digit",
+                      day: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit"
+                    })}<br>
+                    <a href="watch?id=${v.id}">watch</a>
+                    <div style="display: flex; align-items: center; margin-top: 5px;">
+                      <img src="${SERVER}/icons/${v.username}.jpg"
+                        alt="icon"
+                        style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px; margin-right: 8px;">
+                      <a href="user?name=${encodeURIComponent(v.username)}">
+                        → ${v.username}'s page
+                      </a>
+                    </div>
                   </div>
-                </div>
-              `).join("");
+                `).join("");
 
-              document.getElementById("userList").innerHTML = list || "No videos found.";
-              return;
-            }
-
-            const lastMap = {};
-            videos.forEach(v => {
-              const time = new Date(v.date).getTime();
-              const prev = lastMap[v.username];
-              if (!prev || time > prev) {
-                lastMap[v.username] = time;
+                document.getElementById("userList").innerHTML = list || "No videos found.";
+                return;
               }
+
+              const lastMap = {};
+              videos.forEach(v => {
+                const time = new Date(v.date).getTime();
+                const prev = lastMap[v.username];
+                if (!prev || time > prev) {
+                  lastMap[v.username] = time;
+                }
+              });
+
+              const matched = filtered.sort((a, b) => {
+                const ta = lastMap[a.username] || 0;
+                const tb = lastMap[b.username] || 0;
+                return sort === "old" ? ta - tb : tb - ta;
+              });
+
+              const list = matched.map(user => {
+                const iconPath = `${SERVER}/icons/${user.username}.jpg`;
+                return `
+                  <div class="userEntry">
+                    <img src="${iconPath}" alt="icon">
+                    <a href="user?name=${encodeURIComponent(user.username)}">${user.username}</a>
+                  </div>`;
+              }).join("");
+
+              document.getElementById("userList").innerHTML = list || "No users found.";
             });
+        });
+    }
 
-            const matched = filtered.sort((a, b) => {
-              const ta = lastMap[a.username] || 0;
-              const tb = lastMap[b.username] || 0;
-              return sort === "old" ? ta - tb : tb - ta;
-            });
-
-            const list = matched.map(user => {
-              const iconPath = `${SERVER}/icons/${user.username}.jpg`;
-              return `
-                <div class="userEntry">
-                  <img src="${iconPath}" alt="icon">
-                  <a href="user?name=${encodeURIComponent(user.username)}">${user.username}</a>
-                </div>`;
-            }).join("");
-
-            document.getElementById("userList").innerHTML = list || "No users found.";
-          });
-      });
-  }
-
-  loadUsers();
-</script>
+    loadUsers();
+  </script>
 </body>
 </html>
