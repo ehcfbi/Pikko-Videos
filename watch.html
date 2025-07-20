@@ -10,6 +10,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <script>const SERVER = "https://pikko1.tcpexposer.com";</script>
   <script src="https://unpkg.com/wavesurfer.js"></script>
+  <script src="js/dark.js"></script>
+  <link rel="stylesheet" href="css/dark.css" type="text/css">
   <style>
     body {
       font-family: sans-serif;
@@ -44,6 +46,7 @@
 </head>
 <body>
   <a href="./"><img src="logo.png" alt="logo" width="200" height="100" /></a>
+  <p><button onclick="toggleTheme()" id="themeBtn">Light Mode</button></p>
   <table>
     <tr>
       <th><input type="button" value="share" onclick="copyUrl()" /></th>
