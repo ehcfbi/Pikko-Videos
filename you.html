@@ -52,194 +52,206 @@
     <option value="asc">oldest first</option>
   </select>
   <div id="list"></div>
-    <script>
-    let me = Storage.getUser();
-    if (!me) location.href = "signin";
-    document.getElementById("currentUser").textContent = me;
-    document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg`;
+  <script>
+  let me = Storage.getUser();
+  if (!me) location.href = "signin";
+  document.getElementById("currentUser").textContent = me;
+  document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg`;
 
-    let sortOrder = "desc"; // 初期値：新着順
+  let sortOrder = "desc";
 
-    function setSortOrder(order) {
-      sortOrder = order;
-      renderVideos();
-    }
+  function setSortOrder(order) {
+    sortOrder = order;
+    renderVideos();
+  }
 
-    function logout() {
+  function logout() {
+    Storage.clearUser();
+    location.href = "https://videos.bird.f5.si";
+  }
+
+  function copyUrl() {
+    const url = `https://videos.bird.f5.si/user?name=${me}`;
+    navigator.clipboard.writeText(url);
+  }
+
+  function removeAccount() {
+    if (!confirm("Do you delete this account?")) return;
+    fetch(`${SERVER}/deleteAccount`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: me })
+    }).then(() => {
       Storage.clearUser();
       location.href = "https://videos.bird.f5.si";
+    });
+  }
+
+  function changeAccount() {
+    const now = document.getElementById("currentPassword").value.trim();
+    const name = document.getElementById("newUsername").value.trim();
+    const pass = document.getElementById("newPassword").value.trim();
+
+    if (!now || !name || !pass) {
+      alert("Enter all.");
+      return;
     }
 
-    function copyUrl() {
-      const url = `https://videos.bird.f5.si/user?name=${me}`;
-      navigator.clipboard.writeText(url);
-    }
-
-    function removeAccount() {
-      if (!confirm("Do you delete this account?")) return;
-      fetch(`${SERVER}/deleteAccount`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: me })
-      }).then(() => {
-        Storage.clearUser();
-        location.href = "https://videos.bird.f5.si";
-      });
-    }
-
-    function changeAccount() {
-      const now = document.getElementById("currentPassword").value.trim();
-      const name = document.getElementById("newUsername").value.trim();
-      const pass = document.getElementById("newPassword").value.trim();
-
-      if (!now || !name || !pass) {
-        alert("Enter all.");
-        return;
-      }
-
-      fetch(`${SERVER}/changeAccount`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          oldUsername: me,
-          currentPassword: now,
-          newUsername: name,
-          newPassword: pass
-        })
+    fetch(`${SERVER}/changeAccount`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        oldUsername: me,
+        currentPassword: now,
+        newUsername: name,
+        newPassword: pass
       })
+    })
+    .then(res => res.ok ? res.json() : Promise.reject())
+    .then(() => {
+      Storage.setUser(name);
+      me = name;
+      document.getElementById("currentUser").textContent = name;
+      document.getElementById("iconPreview").src = `${SERVER}/icons/${name}.jpg`;
+      renderVideos();
+    })
+    .catch(() => alert("Change failed"));
+  }
+
+  function updateIcon() {
+    const input = document.getElementById("iconInput");
+    const file = input.files[0];
+    if (!file) return alert("Select a .jpg image.");
+    if (file.size > 100 * 1024) {
+      alert("Icon file is too large. Please select a .jpg image 100KB or less.");
+      return;
+    }
+
+    const form = new FormData();
+    form.append("username", me);
+    form.append("icon", file);
+    fetch(`${SERVER}/updateIcon`, { method: "POST", body: form })
       .then(res => res.ok ? res.json() : Promise.reject())
       .then(() => {
-        Storage.setUser(name);
-        me = name;
-        document.getElementById("currentUser").textContent = name;
-        document.getElementById("iconPreview").src = `${SERVER}/icons/${name}.jpg`;
-        renderVideos();
+        document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg?${Date.now()}`;
+        input.value = "";
       })
-      .catch(() => alert("Change failed"));
+      .catch(() => alert("Icon update failed. select 600px*600px file."));
+  }
+
+  function upload() {
+    const title = document.getElementById("titleInput").value.trim();
+    const file = document.getElementById("fileInput").files[0];
+    const thumb = document.getElementById("thumbInput").files[0];
+    const description = document.getElementById("description").value.trim();
+
+    if (!title || !file) {
+      alert("Enter the title and video file.");
+      return;
     }
 
-    function updateIcon() {
-      const file = document.getElementById("iconInput").files[0];
-      if (!file) return alert("Select a .jpg image.");
-      const form = new FormData();
-      form.append("username", me);
-      form.append("icon", file);
-      fetch(`${SERVER}/updateIcon`, { method: "POST", body: form })
-        .then(res => res.ok ? res.json() : Promise.reject())
-        .then(() => {
-          document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg?${Date.now()}`;
-        })
-        .catch(() => alert("Icon update failed. select 600px*600px file."));
+    const MAX_SIZE_BYTES = 30 * 1024 * 1024;
+    if (file.size > MAX_SIZE_BYTES) {
+      alert("File size is too large. Please select a file 30mb or less.");
+      return;
     }
 
-    function upload() {
-      const title = document.getElementById("titleInput").value.trim();
-      const file = document.getElementById("fileInput").files[0];
-      const thumb = document.getElementById("thumbInput").files[0];
-      const description = document.getElementById("description").value.trim();
-
-      if (!title || !file) {
-        alert("Enter the title and video file.");
-        return;
-      }
-
-      const MAX_SIZE_BYTES = 30 * 1024 * 1024;
-      if (file.size > MAX_SIZE_BYTES) {
-        alert("File size is too large. Please select a file 30mb or less.");
-        return;
-      }
-
-      const form = new FormData();
-      form.append("username", me);
-      form.append("title", title);
-      form.append("description", description);
-      form.append("video", file);
-      if (thumb) form.append("thumbnail", thumb);
-
-      fetch(`${SERVER}/upload`, { method: "POST", body: form })
-        .then(res => res.json())
-        .then(() => {
-          document.getElementById("titleInput").value = "";
-          document.getElementById("fileInput").value = "";
-          document.getElementById("thumbInput").value = "";
-          document.getElementById("description").value = "";
-          renderVideos();
-        });
+    if (thumb && thumb.size > 130 * 1024) {
+      alert("Thumbnail image is too large. Please select a .jpg image 130KB or less.");
+      return;
     }
 
-    function renderVideos() {
-      fetch(`${SERVER}/videos/user/${me}`)
-        .then(res => res.json())
-        .then(videos => {
-          videos.sort((a, b) => {
-            const ta = new Date(a.date).getTime();
-            const tb = new Date(b.date).getTime();
-            return sortOrder === "asc" ? ta - tb : tb - ta;
-          });
+    const form = new FormData();
+    form.append("username", me);
+    form.append("title", title);
+    form.append("description", description);
+    form.append("video", file);
+    if (thumb) form.append("thumbnail", thumb);
 
-          const list = videos.map(v => `
-            <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
-              <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}" width="200"><br>
-              <b>${v.title}</b><br>
-              ${new Date(v.date).toLocaleString("ja-JP", {
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit"
-              })}<br>
-              <a href="watch?id=${v.id}">watch</a>
-              <button onclick="deleteVideo('${v.id}')">delete</button>
-              <button onclick="showEdit('${v.id}', \`${v.title}\`, \`${v.description || ""}\`)">edit</button>
-              <div id="edit-${v.id}"></div>
-            </div>
-          `).join("");
-          document.getElementById("list").innerHTML = list || "No videos yet.";
-        });
-    }
-
-    function deleteVideo(id) {
-      if (!confirm("Do you delete this video or music?")) return;
-      fetch(`${SERVER}/deleteVideo/${id}`, { method: "DELETE" })
-        .then(() => renderVideos());
-    }
-
-    function showEdit(id, title, description) {
-      const container = document.getElementById(`edit-${id}`);
-      container.innerHTML = `
-        <p>Edit:</p>
-        <input id="title-${id}" value="${title}" style="width: 80%;"><br>
-        <textarea id="desc-${id}" rows="4" style="width: 80%;">${description}</textarea><br>
-        <input id="thumb-${id}" type="file" accept=".jpg"><br>
-        <button onclick="submitEdit('${id}')">save</button>
-        <button onclick="cancelEdit('${id}')">cancel</button>
-      `;
-    }
-
-    function cancelEdit(id) {
-      document.getElementById(`edit-${id}`).innerHTML = "";
-    }
-
-    function submitEdit(id) {
-      const newTitle = document.getElementById(`title-${id}`).value.trim();
-      const newDesc = document.getElementById(`desc-${id}`).value.trim();
-      const newThumb = document.getElementById(`thumb-${id}`).files[0];
-
-      const form = new FormData();
-      form.append("title", newTitle);
-      form.append("description", newDesc);
-      if (newThumb) form.append("thumbnail", newThumb);
-
-      fetch(`${SERVER}/editVideo/${id}`, {
-        method: "PATCH",
-        body: form
-      }).then(() => {
+    fetch(`${SERVER}/upload`, { method: "POST", body: form })
+      .then(res => res.json())
+      .then(() => {
+        document.getElementById("titleInput").value = "";
+        document.getElementById("fileInput").value = "";
+        document.getElementById("thumbInput").value = "";
+        document.getElementById("description").value = "";
         renderVideos();
-        cancelEdit(id);
       });
-    }
+  }
 
-    renderVideos();
-  </script>
+  function renderVideos() {
+    fetch(`${SERVER}/videos/user/${me}`)
+      .then(res => res.json())
+      .then(videos => {
+        videos.sort((a, b) => {
+          const ta = new Date(a.date).getTime();
+          const tb = new Date(b.date).getTime();
+          return sortOrder === "asc" ? ta - tb : tb - ta;
+        });
+
+        const list = videos.map(v => `
+          <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+            <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}" width="200"><br>
+            <b>${v.title}</b><br>
+            ${new Date(v.date).toLocaleString("ja-JP", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit"
+            })}<br>
+            <a href="watch?id=${v.id}">watch</a>
+            <button onclick="deleteVideo('${v.id}')">delete</button>
+            <button onclick="showEdit('${v.id}', \`${v.title}\`, \`${v.description || ""}\`)">edit</button>
+            <div id="edit-${v.id}"></div>
+          </div>
+        `).join("");
+        document.getElementById("list").innerHTML = list || "No videos yet.";
+      });
+  }
+
+  function deleteVideo(id) {
+    if (!confirm("Do you delete this video or music?")) return;
+    fetch(`${SERVER}/deleteVideo/${id}`, { method: "DELETE" })
+      .then(() => renderVideos());
+  }
+
+  function showEdit(id, title, description) {
+    const container = document.getElementById(`edit-${id}`);
+    container.innerHTML = `
+      <p>Edit:</p>
+      <input id="title-${id}" value="${title}" style="width: 80%;"><br>
+      <textarea id="desc-${id}" rows="4" style="width: 80%;">${description}</textarea><br>
+      <input id="thumb-${id}" type="file" accept=".jpg"><br>
+      <button onclick="submitEdit('${id}')">save</button>
+      <button onclick="cancelEdit('${id}')">cancel</button>
+    `;
+  }
+
+  function cancelEdit(id) {
+    document.getElementById(`edit-${id}`).innerHTML = "";
+  }
+
+  function submitEdit(id) {
+    const newTitle = document.getElementById(`title-${id}`).value.trim();
+    const newDesc = document.getElementById(`desc-${id}`).value.trim();
+    const newThumb = document.getElementById(`thumb-${id}`).files[0];
+
+    const form = new FormData();
+    form.append("title", newTitle);
+    form.append("description", newDesc);
+    if (newThumb) form.append("thumbnail", newThumb);
+
+    fetch(`${SERVER}/editVideo/${id}`, {
+      method: "PATCH",
+      body: form
+    }).then(() => {
+      renderVideos();
+      cancelEdit(id);
+    });
+  }
+
+  renderVideos();
+</script>
 </body>
 </html>
