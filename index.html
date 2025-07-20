@@ -24,6 +24,19 @@
       object-fit: cover;
       border-radius: 5px;
     }
+    .videoCard {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      background: #f8f8f8;
+    }
+    .videoCard img {
+      width: 100%;
+      max-width: 320px;
+      border-radius: 5px;
+      margin-bottom: 5px;
+    }
   </style>
 </head>
 <body>
@@ -38,18 +51,15 @@
 
   <h1>channels</h1>
 
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-    <div>
-      <label for="sortSelect">Sort by:</label>
-      <select id="sortSelect" onchange="loadUsers()">
-        <option value="new">Newest first</option>
-        <option value="old">Oldest first</option>
-      </select>
-    </div>
-    <div>
-      <input id="userSearch" placeholder="Search user" oninput="loadUsers()" style="margin-right: 5px;">
-      <input id="videoSearch" placeholder="Search video title" oninput="loadUsers()">
-    </div>
+  <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 10px;">
+    <label for="sortSelect">Sort by:</label>
+    <select id="sortSelect" onchange="loadUsers()">
+      <option value="new">Newest first</option>
+      <option value="old">Oldest first</option>
+    </select>
+
+    <input id="userSearch" placeholder="Search user" oninput="loadUsers()" style="padding: 4px;">
+    <input id="videoSearch" placeholder="Search video title" oninput="loadUsers()" style="padding: 4px;">
   </div>
 
   <div id="userList"></div>
@@ -61,21 +71,54 @@
   }
 
   function loadUsers() {
+    const sort = document.getElementById("sortSelect").value;
+    const userQuery = normalize(document.getElementById("userSearch").value);
+    const videoQuery = normalize(document.getElementById("videoSearch").value);
+
     fetch(`${SERVER}/users`)
       .then(res => res.json())
       .then(data => {
         const usersArray = data.users || [];
-        const sort = document.getElementById("sortSelect").value;
-        const userQuery = normalize(document.getElementById("userSearch").value);
-        const videoQuery = normalize(document.getElementById("videoSearch").value);
-
-        const filtered = usersArray
-          .filter(u => u.username !== me)
-          .filter(u => normalize(u.username).includes(userQuery));
+        const filteredUsers = usersArray.filter(u => u.username !== me);
 
         fetch(`${SERVER}/videos`)
           .then(res => res.json())
           .then(videos => {
+            const filtered = filteredUsers.filter(u =>
+              normalize(u.username).includes(userQuery)
+            );
+
+            if (videoQuery) {
+              const matchedVideos = videos.filter(v =>
+                normalize(v.title).includes(videoQuery)
+              );
+
+              const list = matchedVideos.map(v => `
+                <div class="videoCard">
+                  <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}" alt="thumb">
+                  <b>${v.title}</b><br>
+                  ${new Date(v.date).toLocaleString("ja-JP", {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit"
+                  })}<br>
+                  <div style="display: flex; align-items: center; margin-top: 5px;">
+                    <img src="${SERVER}/icons/${v.username}.jpg"
+                      alt="icon"
+                      style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px; margin-right: 8px;">
+                    <a href="user?name=${encodeURIComponent(v.username)}">
+                      → ${v.username}'s page
+                    </a>
+                  </div>
+                </div>
+              `).join("");
+
+              document.getElementById("userList").innerHTML = list || "No videos found.";
+              return;
+            }
+
             const lastMap = {};
             videos.forEach(v => {
               const time = new Date(v.date).getTime();
@@ -85,19 +128,11 @@
               }
             });
 
-            const matched = filtered
-              .filter(u => {
-                if (!videoQuery) return true;
-                return videos.some(v =>
-                  v.username === u.username &&
-                  normalize(v.title).includes(videoQuery)
-                );
-              })
-              .sort((a, b) => {
-                const ta = lastMap[a.username] || 0;
-                const tb = lastMap[b.username] || 0;
-                return sort === "old" ? ta - tb : tb - ta;
-              });
+            const matched = filtered.sort((a, b) => {
+              const ta = lastMap[a.username] || 0;
+              const tb = lastMap[b.username] || 0;
+              return sort === "old" ? ta - tb : tb - ta;
+            });
 
             const list = matched.map(user => {
               const iconPath = `${SERVER}/icons/${user.username}.jpg`;
