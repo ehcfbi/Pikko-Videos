@@ -47,9 +47,11 @@
   <div id="list"></div>
 
   <script>
-    const params = new URLSearchParams(location.search);
-    const name = params.get("name");
-    if (!name) location.href = "./";
+const params = new URLSearchParams(location.search);
+const name = params.get("name");
+if (!name) location.href = "./";
+
+document.title = `${name} - Pikko Videos`;
 
     document.getElementById("info").innerHTML = `
       <div style="display: flex; align-items: center; margin-bottom: 10px;">
