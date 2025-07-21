@@ -43,15 +43,21 @@
   <button onclick="changeAccount()">change account</button>
 
   <h2>change your icon</h2>
+  <h3>icon(.jpg, 600px*600px, 30kb or less)</h3>
   <input id="iconInput" type="file" accept=".jpg"><br>
   <button onclick="updateIcon()">update icon</button>
 
   <h2>upload a video or music</h2>
+  <h3>title</h3>
   <input id="titleInput" placeholder="title"><br>
+  <h3>video or music(.mp4 or .mp3,.wav, 30mb or less)</h3>
   <input id="fileInput" type="file" accept="video/mp4,audio/mp3,audio/wav"><br>
+  <h3>thumbnail(640*360 or 640*480, 360*640, .jpg, 130kb or less)</h3>
   <input id="thumbInput" type="file" accept=".jpg"><br>
+  <h3>description</h3>
   <textarea id="description" placeholder="description" rows="4" cols="40"></textarea><br>
-  <input type="checkbox" id="lockToggle" onchange="toggleUploadLock()"> lock this video<br>
+  <h3>lock</h3>
+  <input type="checkbox" id="lockToggle" onchange="toggleUploadLock()"> lock this video or music<br>
   <input id="lockPassword" type="password" placeholder="password (if locked)" disabled><br>
   <button onclick="upload()">upload</button>
 
@@ -120,8 +126,7 @@
       <input id="title-${id}" value="${title}" style="width: 80%;"><br>
       <textarea id="desc-${id}" rows="4" style="width: 80%;">${description}</textarea><br>
       <input id="thumb-${id}" type="file" accept=".jpg"><br>
-      <p>lock this video?</p>
-      <input type="checkbox" id="lockToggle-${id}" onchange="toggleEditLock('${id}')"> yes<br>
+      <input type="checkbox" id="lockToggle-${id}" onchange="toggleEditLock('${id}')"> lock this video or music<br>
       <input id="lockPassword-${id}" type="password" placeholder="password (if locked)" disabled><br>
       <button onclick="submitEdit('${id}')">save</button>
       <button onclick="cancelEdit('${id}')">cancel</button>
@@ -220,7 +225,7 @@
     const input = document.getElementById("iconInput");
     const file = input.files[0];
     if (!file) return alert("Select a .jpg image.");
-    if (file.size > 100 * 1024) {
+    if (file.size > 30 * 1024) {
       alert("Icon too big.");
       return;
     }
