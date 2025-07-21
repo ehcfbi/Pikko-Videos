@@ -83,28 +83,62 @@
     <a id="watch" href="#" target="_blank"><img src="logo.png" class="thumb" alt="logo"></a>
   </div>
 
-  <script>
-    const params = new URLSearchParams(location.search);
-    const id = params.get("id");
-    const container = document.getElementById("container");
+<script>
+  const params = new URLSearchParams(location.search);
+  const id = params.get("id");
+  const container = document.getElementById("container");
 
-    if (!id) {
-      container.innerHTML += "<p style='color:white;text-align:center;'>video or music id has not been entered.</p>";
-    } else {
-      fetch(`${SERVER}/videoInfo/${id}`)
-        .then(res => res.ok ? res.json() : null)
-        .then(info => {
-          if (!info || !info.fileName) {
-            container.innerHTML += "<p style='color:white;text-align:center;'>Pikko and Pikko Videos couldn't find this video or music.</p>";
-            return;
-          }
+  if (!id) {
+    container.innerHTML += "<p style='color:white;text-align:center;'>video or music id has not been entered.</p>";
+  } else {
+    fetch(`${SERVER}/videoInfo/${id}`)
+      .then(res => res.ok ? res.json() : null)
+      .then(info => {
+        if (!info || !info.fileName) {
+          container.innerHTML += "<p style='color:white;text-align:center;'>Pikko and Pikko Videos couldn't find this video or music.</p>";
+          return;
+        }
 
-          const ext = info.fileName.split(".").pop().toLowerCase();
-          const isAudio = ext === "mp3" || ext === "wav";
-          const mediaUrl = `${SERVER}/videos/${encodeURIComponent(info.fileName)}`;
-          document.getElementById("watch").href = `watch.html?id=${encodeURIComponent(id)}`;
-          document.getElementById("videoInfoText").textContent = `${info.title} by ${info.username}`;
+        const ext = info.fileName.split(".").pop().toLowerCase();
+        const isAudio = ext === "mp3" || ext === "wav";
+        const mediaUrl = `${SERVER}/videos/${encodeURIComponent(info.fileName)}`;
+        document.getElementById("watch").href = `watch.html?id=${encodeURIComponent(id)}`;
+        document.getElementById("videoInfoText").textContent = `${info.title} by ${info.username}`;
 
+        if (info.hasPassword) {
+          container.innerHTML += `
+            <div style="color:white;text-align:center;">
+              <p>This video or music is locked. Please enter the password.</p>
+              <input type="password" id="embedPassInput" placeholder="Password" style="padding:6px;">
+              <button onclick="verifyEmbedAccess()">Unlock</button>
+              <p id="embedErrorMsg" style="color:red;"></p>
+            </div>
+          `;
+
+          window.verifyEmbedAccess = () => {
+            const password = document.getElementById("embedPassInput").value;
+            fetch(`${SERVER}/checkAccess`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id, password })
+            })
+              .then(res => res.ok ? res.json() : null)
+              .then(result => {
+                if (result?.access) {
+                  showEmbedMedia();
+                } else {
+                  document.getElementById("embedErrorMsg").textContent = "Incorrect password.";
+                }
+              })
+              .catch(() => {
+                document.getElementById("embedErrorMsg").textContent = "Failed to verify password.";
+              });
+          };
+        } else {
+          showEmbedMedia();
+        }
+
+        function showEmbedMedia() {
           if (isAudio) {
             const waveformDiv = document.createElement("div");
             waveformDiv.id = "waveform";
@@ -155,11 +189,12 @@
             video.style.maxHeight = "100%";
             container.appendChild(video);
           }
-        })
-        .catch(() => {
-          container.innerHTML += "<p style='color:white;text-align:center;'>Failed to load media.</p>";
-        });
-    }
-  </script>
+        }
+      })
+      .catch(() => {
+        container.innerHTML += "<p style='color:white;text-align:center;'>Failed to load media.</p>";
+      });
+  }
+</script>
 </body>
 </html>
