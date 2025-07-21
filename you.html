@@ -273,6 +273,15 @@
   }
 
   renderVideos();
+
+  function copyUrl() {
+    const element = document.createElement('input');
+    element.value = `https://videos.bird.f5.si/user?name=${me}`;
+    document.body.appendChild(element);
+    element.select();
+    document.execCommand('copy');
+    document.body.removeChild(element);
+}
 </script>
 </body>
 </html>
