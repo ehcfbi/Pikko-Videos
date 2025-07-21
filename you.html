@@ -128,7 +128,7 @@
               <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}?t=${Date.now()}" width="200"><br>
               <b>
                 ${v.title}
-                ${v.password ? `<img src="lock.svg" alt="locked" class="lockIcon">` : ""}
+                ${v.password ? `<img src="img/lock.svg" alt="locked" class="lockIcon">` : ""}
               </b><br>
               ${new Date(v.date).toLocaleString("ja-JP", {
                 year: "numeric",
