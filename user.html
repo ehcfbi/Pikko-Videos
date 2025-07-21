@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>user - Pikko Videos</title>
+  <title>user page - Pikko Videos</title>
   <meta name="description" content="user page">
   <meta property="og:title" content="Pikko Videos">
   <meta property="og:description" content="user page">
@@ -10,109 +10,76 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <script src="js/config.js"></script>
   <script src="js/dark.js"></script>
-  <link rel="stylesheet" href="css/animation.css" type="text/css">
-  <link rel="stylesheet" href="css/dark.css" type="text/css">
-  <link rel="icon" href="favicon.ico">
+  <link rel="stylesheet" href="css/animation.css">
+  <link rel="stylesheet" href="css/dark.css">
   <style>
+    body {
+      font-family: sans-serif;
+    }
     .videoCard {
       border: 1px solid #ccc;
       padding: 10px;
       margin-bottom: 10px;
+      border-radius: 5px;
+      background: #f8f8f8;
     }
     .videoCard img {
-      width: 320px;
-      height: auto;
-      display: block;
+      width: 100%;
+      max-width: 320px;
+      border-radius: 5px;
       margin-bottom: 5px;
-      border-radius: 5px;
     }
-    .userHeader {
-      display: flex;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-    .userHeader img {
-      width: 60px;
-      height: 60px;
-      margin-right: 10px;
-      border-radius: 5px;
+    .lockIcon {
+      width: 16px;
+      height: 16px;
+      vertical-align: middle;
+      margin-left: 4px;
     }
   </style>
 </head>
 <body class="bg-animation">
   <a href="./"><img src="logo.png" alt="logo" width="200" height="100"></a>
   <p><button onclick="toggleTheme()" id="themeBtn">Light Mode</button></p>
-  <p><input type="button" value="share" onclick="copyUrl()"></p>
-  <select id="sortOrder" onchange="loadVideos()" style="margin-bottom: 10px;">
-    <option value="new">Newest first</option>
-    <option value="old">Oldest first</option>
-  </select>
-  <div id="content"></div>
+  <h1>User page</h1>
+  <div id="info"></div>
+  <h2>videos and musics</h2>
+  <div id="list"></div>
 
   <script>
     const params = new URLSearchParams(location.search);
     const name = params.get("name");
+    if (!name) location.href = "./";
 
-    if (!name) {
-      document.getElementById("content").innerText =
-        "Pikko and Pikko Videos couldn't find this user.";
-    } else {
-      fetch(`${SERVER}/users`)
-        .then(res => res.json())
-        .then(data => {
-          const usersArray = data.users || [];
-          const usernames = usersArray.map(u => u.username);
-          if (!usernames.includes(name)) {
-            document.getElementById("content").innerText =
-              "Pikko and Pikko Videos couldn't find this account.";
-          } else {
-            document.title = `${name} - Pikko Videos`;
-            const iconPath = `${SERVER}/icons/${name}.jpg`;
-            document.getElementById("content").innerHTML = `
-              <div class="userHeader">
-                <img src="${iconPath}" alt="icon">
-                <h1>${name}</h1>
-              </div>
-              <div id="videoList">Loading...</div>`;
-            loadVideos();
-          }
-        });
-    }
+    document.getElementById("info").innerHTML = `
+      <div style="display: flex; align-items: center; margin-bottom: 10px;">
+        <img src="${SERVER}/icons/${name}.jpg" alt="icon" width="60" height="60" style="margin-right: 10px;">
+        <font size="6" color="purple">${name}</font>
+      </div>
+    `;
 
-    function loadVideos() {
-      fetch(`${SERVER}/videos/user/${name}`)
-        .then(res => res.json())
-        .then(videos => {
-          const sort = document.getElementById("sortOrder").value;
-          videos.sort((a, b) => {
-            const timeA = new Date(a.date).getTime();
-            const timeB = new Date(b.date).getTime();
-            return sort === "new" ? timeB - timeA : timeA - timeB;
-          });
-
-          const list = videos.map(v => `
-            <div class="videoCard">
-              <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}" alt="thumb"><br>
-              <b>${v.title}</b><br>
-              ${new Date(v.date).toLocaleString("ja-JP", {
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit"
-              })}<br>
-              <a href="watch?id=${v.id}">watch</a>
-            </div>
-          `).join("");
-
-          document.getElementById("videoList").innerHTML = list || "No videos yet.";
-        });
-    }
-
-    function copyUrl() {
-      const url = location.href;
-      navigator.clipboard.writeText(url);
-    }
+    fetch(`${SERVER}/videos/user/${encodeURIComponent(name)}`)
+      .then(res => res.json())
+      .then(videos => {
+        videos.sort((a, b) => new Date(b.date) - new Date(a.date));
+        const list = videos.map(v => `
+          <div class="videoCard">
+            <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}" alt="thumb"><br>
+            <b>
+              ${v.title}
+              ${v.password ? `<img src="img/lock.svg" alt="locked" class="lockIcon">` : ""}
+            </b><br>
+            ${new Date(v.date).toLocaleString("ja-JP", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit"
+            })}<br>
+            <a href="watch?id=${v.id}">watch</a>
+          </div>
+        `).join("");
+        document.getElementById("list").innerHTML = list || "No videos yet.";
+      });
   </script>
 </body>
 </html>
