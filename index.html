@@ -11,8 +11,8 @@
   <script src="js/config.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/dark.js"></script>
-  <link rel="stylesheet" href="css/animation.css" type="text/css">
-  <link rel="stylesheet" href="css/dark.css" type="text/css">
+  <link rel="stylesheet" href="css/animation.css">
+  <link rel="stylesheet" href="css/dark.css">
   <link rel="icon" href="favicon.ico">
   <style>
     .userEntry {
@@ -39,6 +39,12 @@
       max-width: 320px;
       border-radius: 5px;
       margin-bottom: 5px;
+    }
+    .lockIcon {
+      width: 16px;
+      height: 16px;
+      vertical-align: middle;
+      margin-left: 4px;
     }
   </style>
 </head>
@@ -101,7 +107,10 @@
                 const list = matchedVideos.map(v => `
                   <div class="videoCard">
                     <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}" alt="thumb"><br>
-                    <b>${v.title}</b><br>
+                    <b>
+                      ${v.title}
+                      ${v.password ? `<img src="img/lock.svg" alt="locked" class="lockIcon">` : ""}
+                    </b><br>
                     ${new Date(v.date).toLocaleString("ja-JP", {
                       year: "numeric",
                       month: "2-digit",
