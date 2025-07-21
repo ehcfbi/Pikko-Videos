@@ -123,9 +123,13 @@
     const container = document.getElementById(`edit-${id}`);
     container.innerHTML = `
       <p>Edit:</p>
+      <p>title</p>
       <input id="title-${id}" value="${title}" style="width: 80%;"><br>
+      <p>description</p>
       <textarea id="desc-${id}" rows="4" style="width: 80%;">${description}</textarea><br>
+      <p>thumbnail</p>
       <input id="thumb-${id}" type="file" accept=".jpg"><br>
+      <p>lock</p>
       <input type="checkbox" id="lockToggle-${id}" onchange="toggleEditLock('${id}')"> lock this video or music<br>
       <input id="lockPassword-${id}" type="password" placeholder="password (if locked)" disabled><br>
       <button onclick="submitEdit('${id}')">save</button>
