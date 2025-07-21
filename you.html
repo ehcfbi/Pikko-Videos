@@ -43,21 +43,16 @@
   <button onclick="changeAccount()">change account</button>
 
   <h2>change your icon</h2>
-  <h3>icon(600px*600px / 100KB以下 / .jpg)</h3>
   <input id="iconInput" type="file" accept=".jpg"><br>
   <button onclick="updateIcon()">update icon</button>
 
   <h2>upload a video or music</h2>
-  <h3>title</h3>
   <input id="titleInput" placeholder="title"><br>
-  <h3>video or music(30MB以下)</h3>
   <input id="fileInput" type="file" accept="video/mp4,audio/mp3,audio/wav"><br>
-  <h3>thumbnail(640×360 / 130KB以下 / .jpg)</h3>
   <input id="thumbInput" type="file" accept=".jpg"><br>
   <textarea id="description" placeholder="description" rows="4" cols="40"></textarea><br>
-  <h3>lock this video?</h3>
-  <input type="checkbox" id="lockToggle" onchange="toggleUploadLock()"> yes<br>
-  <input id="lockPassword" type="password" placeholder="password (if locked)"><br>
+  <input type="checkbox" id="lockToggle" onchange="toggleUploadLock()"> lock this video<br>
+  <input id="lockPassword" type="password" placeholder="password (if locked)" disabled><br>
   <button onclick="upload()">upload</button>
 
   <h2>your videos and musics</h2>
@@ -68,88 +63,216 @@
   </select>
   <div id="list"></div>
 
-  <script>
-    let me = Storage.getUser();
-    if (!me) location.href = "signin";
-    document.getElementById("currentUser").textContent = me;
-    document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg`;
+<script>
+  let me = Storage.getUser();
+  if (!me) location.href = "signin";
+  document.getElementById("currentUser").textContent = me;
+  document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg`;
+  let sortOrder = "desc";
 
-    let sortOrder = "desc";
-
-    function setSortOrder(order) {
-      sortOrder = order;
-      renderVideos();
-    }
-
-    function logout() {
-      Storage.clearUser();
-      location.href = "https://videos.bird.f5.si";
-    }
-
-    function copyUrl() {
-      const url = `https://videos.bird.f5.si/user?name=${me}`;
-      navigator.clipboard.writeText(url);
-    }
-
-    function removeAccount() {
-      if (!confirm("Do you delete this account?")) return;
-      fetch(`${SERVER}/deleteAccount`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: me })
-      }).then(() => {
-        Storage.clearUser();
-        location.href = "https://videos.bird.f5.si";
-      });
-    }
-
-    function toggleUploadLock() {
-      const passInput = document.getElementById("lockPassword");
-      passInput.disabled = !document.getElementById("lockToggle").checked;
-    }
-
-    function toggleEditLock(id) {
-      const passInput = document.getElementById(`lockPassword-${id}`);
-      passInput.disabled = !document.getElementById(`lockToggle-${id}`).checked;
-    }
-
-    function renderVideos() {
-      fetch(`${SERVER}/videos/user/${me}`)
-        .then(res => res.json())
-        .then(videos => {
-          videos.sort((a, b) => {
-            const ta = new Date(a.date).getTime();
-            const tb = new Date(b.date).getTime();
-            return sortOrder === "asc" ? ta - tb : tb - ta;
-          });
-
-          const list = videos.map(v => `
-            <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
-              <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}?t=${Date.now()}" width="200"><br>
-              <b>
-                ${v.title}
-                ${v.password ? `<img src="img/lock.svg" alt="locked" class="lockIcon">` : ""}
-              </b><br>
-              ${new Date(v.date).toLocaleString("ja-JP", {
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit"
-              })}<br>
-              <a href="watch?id=${v.id}">watch</a>
-              <button onclick="deleteVideo('${v.id}')">delete</button>
-              <button onclick="showEdit('${v.id}', \`${v.title}\`, \`${v.description || ""}\`)">edit</button>
-              <div id="edit-${v.id}"></div>
-            </div>
-          `).join("");
-          document.getElementById("list").innerHTML = list || "No videos yet.";
-        });
-    }
-
-    // …（他の関数 submitEdit, upload, changeAccount などは元のまま）
-
+  function setSortOrder(order) {
+    sortOrder = order;
     renderVideos();
-  </script>
+  }
+
+  function toggleUploadLock() {
+    document.getElementById("lockPassword").disabled = !document.getElementById("lockToggle").checked;
+  }
+
+  function toggleEditLock(id) {
+    document.getElementById(`lockPassword-${id}`).disabled = !document.getElementById(`lockToggle-${id}`).checked;
+  }
+
+  function renderVideos() {
+    fetch(`${SERVER}/videos/user/${me}`)
+      .then(res => res.json())
+      .then(videos => {
+        videos.sort((a, b) => {
+          const ta = new Date(a.date).getTime();
+          const tb = new Date(b.date).getTime();
+          return sortOrder === "asc" ? ta - tb : tb - ta;
+        });
+
+        const list = videos.map(v => `
+          <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+            <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}?t=${Date.now()}" width="200"><br>
+            <b>
+              ${v.title}
+              ${v.password ? `<img src="img/lock.svg" alt="locked" class="lockIcon">` : ""}
+            </b><br>
+            ${new Date(v.date).toLocaleString("ja-JP", {
+              year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
+            })}<br>
+            <a href="watch?id=${v.id}">watch</a>
+            <button onclick="deleteVideo('${v.id}')">delete</button>
+            <button onclick="showEdit('${v.id}', \`${v.title}\`, \`${v.description || ""}\`)">edit</button>
+            <div id="edit-${v.id}"></div>
+          </div>
+        `).join("");
+        document.getElementById("list").innerHTML = list || "No videos yet.";
+      });
+  }
+
+  function showEdit(id, title, description) {
+    const container = document.getElementById(`edit-${id}`);
+    container.innerHTML = `
+      <p>Edit:</p>
+      <input id="title-${id}" value="${title}" style="width: 80%;"><br>
+      <textarea id="desc-${id}" rows="4" style="width: 80%;">${description}</textarea><br>
+      <input id="thumb-${id}" type="file" accept=".jpg"><br>
+      <p>lock this video?</p>
+      <input type="checkbox" id="lockToggle-${id}" onchange="toggleEditLock('${id}')"> yes<br>
+      <input id="lockPassword-${id}" type="password" placeholder="password (if locked)" disabled><br>
+      <button onclick="submitEdit('${id}')">save</button>
+      <button onclick="cancelEdit('${id}')">cancel</button>
+    `;
+  }
+
+  function cancelEdit(id) {
+    document.getElementById(`edit-${id}`).innerHTML = "";
+  }
+
+  function submitEdit(id) {
+    const newTitle = document.getElementById(`title-${id}`).value.trim();
+    const newDesc = document.getElementById(`desc-${id}`).value.trim();
+    const newThumb = document.getElementById(`thumb-${id}`).files[0];
+    const isLocked = document.getElementById(`lockToggle-${id}`).checked;
+    const password = document.getElementById(`lockPassword-${id}`).value.trim();
+    if (newThumb && newThumb.size > 130 * 1024) {
+      alert("Thumbnail too big."); return;
+    }
+
+    const form = new FormData();
+    form.append("title", newTitle);
+    form.append("description", newDesc);
+    if (newThumb) form.append("thumbnail", newThumb);
+    form.append("lockPassword", isLocked ? password : "");
+
+    fetch(`${SERVER}/editVideo/${id}`, {
+      method: "PATCH",
+      body: form
+    })
+      .then(() => {
+        renderVideos();
+        cancelEdit(id);
+      })
+      .catch(() => alert("Failed to save edits."));
+  }
+
+  function deleteVideo(id) {
+    if (!confirm("Delete this video?")) return;
+    fetch(`${SERVER}/deleteVideo/${id}`, { method: "DELETE" })
+      .then(() => renderVideos());
+  }
+
+  function upload() {
+    const title = document.getElementById("titleInput").value.trim();
+    const file = document.getElementById("fileInput").files[0];
+    const thumb = document.getElementById("thumbInput").files[0];
+    const description = document.getElementById("description").value.trim();
+    const isLocked = document.getElementById("lockToggle").checked;
+    const password = document.getElementById("lockPassword").value.trim();
+
+    if (!title || !file) {
+      alert("Enter title and file.");
+      return;
+    }
+
+    if (file.size > 30 * 1024 * 1024) {
+      alert("File too big.");
+      return;
+    }
+
+    if (thumb && thumb.size > 130 * 1024) {
+      alert("Thumbnail too big.");
+      return;
+    }
+
+    if (isLocked && !password) {
+      alert("Enter password for locked video.");
+      return;
+    }
+
+    const form = new FormData();
+    form.append("username", me);
+    form.append("title", title);
+    form.append("description", description);
+    form.append("video", file);
+    if (thumb) form.append("thumbnail", thumb);
+    form.append("lockPassword", isLocked ? password : "");
+
+    fetch(`${SERVER}/upload`, { method: "POST", body: form })
+      .then(res => res.json())
+      .then(() => {
+        document.getElementById("titleInput").value = "";
+        document.getElementById("fileInput").value = "";
+        document.getElementById("thumbInput").value = "";
+        document.getElementById("description").value = "";
+        document.getElementById("lockToggle").checked = false;
+        document.getElementById("lockPassword").value = "";
+        document.getElementById("lockPassword").disabled = true;
+        renderVideos();
+      })
+      .catch(() => alert("Upload failed."));
+  }
+
+  function updateIcon() {
+    const input = document.getElementById("iconInput");
+    const file = input.files[0];
+    if (!file) return alert("Select a .jpg image.");
+    if (file.size > 100 * 1024) {
+      alert("Icon too big.");
+      return;
+    }
+
+    const form = new FormData();
+    form.append("username", me);
+    form.append("icon", file);
+
+    fetch(`${SERVER}/updateIcon`, {
+      method: "POST",
+      body: form
+    })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(() => {
+        document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg?${Date.now()}`;
+        input.value = "";
+      })
+      .catch(() => alert("Icon update failed."));
+  }
+
+  function changeAccount() {
+    const now = document.getElementById("currentPassword").value.trim();
+    const name = document.getElementById("newUsername").value.trim();
+    const pass = document.getElementById("newPassword").value.trim();
+
+    if (!now || !name || !pass) {
+      alert("Enter all.");
+      return;
+    }
+
+    fetch(`${SERVER}/changeAccount`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        oldUsername: me,
+        currentPassword: now,
+        newUsername: name,
+        newPassword: pass
+      })
+    })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(() => {
+        Storage.setUser(name);
+        me = name;
+        document.getElementById("currentUser").textContent = name;
+        document.getElementById("iconPreview").src = `${SERVER}/icons/${name}.jpg?${Date.now()}`;
+        renderVideos();
+      })
+      .catch(() => alert("Change failed"));
+  }
+
+  renderVideos();
+</script>
 </body>
 </html>
