@@ -56,34 +56,70 @@
   </table>
   <div id="content"></div>
 
-  <script>
-    const id = new URLSearchParams(location.search).get("id");
-    const content = document.getElementById("content");
+<script>
+  const id = new URLSearchParams(location.search).get("id");
+  const content = document.getElementById("content");
 
-    if (!id) {
-      content.innerHTML = `<p class="error">Pikko and Pikko Videos couldn't find this video or music.</p>`;
-    } else {
-      fetch(`${SERVER}/videoInfo/${id}`)
-        .then(res => res.ok ? res.json() : null)
-        .then(info => {
-          if (!info || !info.fileName) {
-            content.innerHTML = `<p class="error">Pikko and Pikko Videos couldn't find this video or music.</p>`;
-            return;
-          }
+  if (!id) {
+    content.innerHTML = `<p class="error">Pikko and Pikko Videos couldn't find this video or music.</p>`;
+  } else {
+    fetch(`${SERVER}/videoInfo/${id}`)
+      .then(res => res.ok ? res.json() : null)
+      .then(info => {
+        if (!info || !info.fileName) {
+          content.innerHTML = `<p class="error">Pikko and Pikko Videos couldn't find this video or music.</p>`;
+          return;
+        }
 
-          document.title = `${info.title} by ${info.username} - Pikko Videos`;
-          const ext = info.fileName.split(".").pop().toLowerCase();
-          const isAudio = ext === "mp3" || ext === "wav";
-          const mediaUrl = `${SERVER}/videos/${info.fileName}`;
+        document.title = `${info.title} by ${info.username} - Pikko Videos`;
+        const ext = info.fileName.split(".").pop().toLowerCase();
+        const isAudio = ext === "mp3" || ext === "wav";
+
+        const mediaUrl = `${SERVER}/videos/${info.fileName}`;
+
+        if (info.hasPassword) {
+          content.innerHTML = `
+            <h1>${info.title} by ${info.username}</h1>
+            <p>This video or music is locked. Please enter the password to watch.</p>
+            <input type="password" id="passInput" placeholder="Password" style="padding: 6px;">
+            <button onclick="checkAccess()">Unlock</button>
+            <p id="errorMsg" class="error"></p>
+          `;
+
+          window.checkAccess = () => {
+            const password = document.getElementById("passInput").value;
+            fetch(`${SERVER}/checkAccess`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id, password })
+            })
+              .then(res => res.ok ? res.json() : null)
+              .then(result => {
+                if (result?.access) {
+                  showMedia();
+                } else {
+                  document.getElementById("errorMsg").textContent = "Incorrect password.";
+                }
+              })
+              .catch(() => {
+                document.getElementById("errorMsg").textContent = "Failed to verify password.";
+              });
+          };
+        } else {
+          showMedia();
+        }
+
+        function showMedia() {
+          const playerHtml = isAudio ? `
+            <div id="waveform"></div>
+            <div id="controls"><button id="togglePlay">play</button></div>
+          ` : `
+            <video id="player" width="480px" height="270px" controls controlsList="nodownload" autoplay playsinline></video>
+          `;
 
           content.innerHTML = `
             <h1>${info.title} by ${info.username}</h1>
-            ${isAudio ? `
-              <div id="waveform"></div>
-              <div id="controls"><button id="togglePlay">play</button></div>
-            ` : `
-              <video id="player" width="480px" height="270px" controls controlsList="nodownload" autoplay playsinline></video>
-            `}
+            ${playerHtml}
             <p style="white-space: pre-wrap; margin-top: 1em;">${info.description}</p>
           `;
 
@@ -124,20 +160,21 @@
                 }
               });
           }
-        })
-        .catch(() => {
-          content.innerHTML = `<p class="error">error</p>`;
-        });
-    }
+        }
+      })
+      .catch(() => {
+        content.innerHTML = `<p class="error">error</p>`;
+      });
+  }
 
-    function copyUrl() {
-      navigator.clipboard.writeText(location.href);
-    }
+  function copyUrl() {
+    navigator.clipboard.writeText(location.href);
+  }
 
-    function copyCode() {
-      const url = `<iframe src="https://videos.bird.f5.si/embed?id=${id}" width="560" height="315" frameborder="0" allowfullscreen></iframe>`;
-      navigator.clipboard.writeText(url);
-    }
-  </script>
+  function copyCode() {
+    const url = `<iframe src="https://videos.bird.f5.si/embed?id=${id}" width="560" height="315" frameborder="0" allowfullscreen></iframe>`;
+    navigator.clipboard.writeText(url);
+  }
+</script>
 </body>
 </html>
