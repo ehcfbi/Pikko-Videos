@@ -4,6 +4,16 @@ function toggleTheme() {
   document.getElementById("themeBtn").textContent = dark ? "Dark Mode" : "Light Mode";
 }
 
+function toggleTheme() {
+  const isDark = document.body.classList.toggle("dark-mode"); // 既存の切り替え処理
+  const logoImg = document.querySelector(".logo");
+
+  if (isDark) {
+    logoImg.src = "./logo_glow.png"; // ダーク用ロゴ
+  } else {
+    logoImg.src = "./logo.png"; // ライト用ロゴ
+  }
+
 // 初期化
 window.addEventListener("DOMContentLoaded", () => {
   const saved = localStorage.getItem("theme");
