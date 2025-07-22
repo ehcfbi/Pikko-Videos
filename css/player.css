@@ -1,0 +1,33 @@
+.custom-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  background: #eee;
+  padding: 10px;
+  border-radius: 6px;
+}
+
+body.dark .custom-controls {
+  background: #222;
+  color: white;
+}
+
+.custom-controls button {
+  background: #0af;
+  border: none;
+  color: white;
+  padding: 8px;
+  font-size: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+body.dark .custom-controls button {
+  background: #444;
+}
+
+.custom-controls input[type="range"] {
+  flex: 1;
+  height: 6px;
+}
