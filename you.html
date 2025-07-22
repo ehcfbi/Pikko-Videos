@@ -52,7 +52,7 @@
   <input id="titleInput" placeholder="title"><br>
   <h3>video or music(.mp4 or .mp3,.wav, 30mb or less)</h3>
   <input id="fileInput" type="file" accept="video/mp4,audio/mp3,audio/wav"><br>
-  <h3>thumbnail(640*360 or 640*480, 360*640, .jpg, 130kb or less)</h3>
+  <h3>thumbnail(640*360 or 640*480, 360*640, .jpg, 50kb or less)</h3>
   <input id="thumbInput" type="file" accept=".jpg"><br>
   <h3>description</h3>
   <textarea id="description" placeholder="description" rows="4" cols="40"></textarea><br>
@@ -147,7 +147,7 @@
     const newThumb = document.getElementById(`thumb-${id}`).files[0];
     const isLocked = document.getElementById(`lockToggle-${id}`).checked;
     const password = document.getElementById(`lockPassword-${id}`).value.trim();
-    if (newThumb && newThumb.size > 130 * 1024) {
+    if (newThumb && newThumb.size > 50 * 1024) {
       alert("Thumbnail too big."); return;
     }
 
