@@ -108,7 +108,6 @@
           }
 
           document.title = `${info.title} - Pikko Videos`;
-
           const ext = info.fileName.split(".").pop().toLowerCase();
           const isAudio = ext === "mp3" || ext === "wav";
           const mediaUrl = `${SERVER}/videos/${info.fileName}`;
@@ -164,7 +163,7 @@
               <div style="font-size: 0.9em;">${postedTime}</div>
               ${isAudio
                 ? `<div id="waveform"></div><div id="controls"><button id="togglePlay">play</button></div>`
-                : `<video id="video" width="480px" height="270px" playsinline></video><div id="customPlayer"></div>`
+                : `<div id="customPlayer" style="width:480px; height:270px;"></div>`
               }
               <p style="white-space: pre-wrap; margin-top: 1em;">${info.description}</p>
             `;
@@ -189,9 +188,7 @@
                 .then(res => res.blob())
                 .then(blob => {
                   const url = URL.createObjectURL(blob);
-                  const video = document.getElementById("video");
-                  video.src = url;
-                  initCustomPlayer(video);
+                  initCustomPlayer(url);
                 })
                 .catch(() => {
                   content.innerHTML += `<p class="error">Failed to load video file.</p>`;
