@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>my page - Pikko Videos</title>
+  <meta name="description" content="my page">
+  <meta property="og:title" content="Pikko Videos">
+  <meta property="og:description" content="my page">
+  <meta property="og:url" content="https://videos.bird.f5.si">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <script src="js/config.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/dark.js"></script>
+  <link rel="stylesheet" href="css/animation.css">
+  <link rel="stylesheet" href="css/dark.css">
+  <style>
+    .lockIcon {
+      width: 16px;
+      height: 16px;
+      vertical-align: middle;
+      margin-left: 4px;
+    }
+    .upload_button {
+      background: lightgreen;
+      color: blue;
+      border: none;
+      padding: 8px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .upload_button:hover {
+      background: #09c;
+    }
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #ccc;
+      border-top: 2px solid blue;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    #uploadStatus, #iconStatus {
+      font-size: 14px;
+      color: #333;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body class="bg-animation">
+  <a href="./"><img class="logo" src="https://videos.bird.f5.si/logo.png" alt="logo" width="200" height="100"></a>
+  <p><button onclick="toggleTheme()" id="themeBtn">Light Mode</button></p>
+  <p><input type="button" value="share" onclick="copyUrl()"></p>
+
+  <h1>My page</h1>
+  <div style="display: flex; align-items: center;">
+    <img id="iconPreview" src="" alt="icon" width="60" height="60" style="margin-right: 10px;">
+    <font size="7" color="purple"><p id="currentUser"></p></font>
+  </div>
+
+  <button onclick="logout()">logout</button>
+  <button onclick="removeAccount()">delete this account</button>
+
+  <h2>change account</h2>
+  <input id="currentPassword" type="password" placeholder="current password"><br>
+  <input id="newUsername" placeholder="new username"><br>
+  <input id="newPassword" type="password" placeholder="new password"><br>
+  <button onclick="changeAccount()">change account</button>
+
+  <h2>change your icon</h2>
+  <h3>icon(.jpg, 600px×600px, 30KB or less)</h3>
+  <input id="iconInput" type="file" accept=".jpg"><br>
+  <button onclick="updateIcon()">update icon</button>
+  <div id="iconStatus"></div>
+
+  <h2>upload a video or music</h2>
+  <h3>title</h3>
+  <input id="titleInput" placeholder="title"><br>
+  <h3>video or music (.mp4 / .mp3 / .wav, 30MB or less)</h3>
+  <input id="fileInput" type="file" accept="video/mp4,audio/mp3,audio/wav"><br>
+  <h3>thumbnail (.jpg, 640×360 / 640×480 / 360×640, 50KB or less)</h3>
+  <input type="checkbox" id="useThumbUpload"> upload custom thumbnail?<br>
+  <input id="thumbInput" type="file" accept=".jpg" disabled><br>
+  <label for="thumbSize">Thumbnail size:</label>
+  <select id="thumbSize" disabled>
+    <option value="640x360">640×360</option>
+    <option value="640x480">640×480</option>
+    <option value="360x640">360×640</option>
+  </select><br>
+  <h3>description</h3>
+  <textarea id="description" placeholder="description" rows="4" cols="40"></textarea><br>
+  <h3>lock</h3>
+  <input type="checkbox" id="lockToggle" onchange="toggleUploadLock()"> lock this video or music<br>
+  <input id="lockPassword" type="password" placeholder="password (if locked)" disabled><br>
+  <button class="upload_button" onclick="upload()">upload</button>
+  <div id="uploadStatus"></div>
+  <h2>your videos and musics</h2>
+<label for="sortSelect">Sort by:</label>
+<select id="sortSelect" onchange="setSortOrder(this.value)">
+  <option value="desc">newest first</option>
+  <option value="asc">oldest first</option>
+</select>
+<div id="list"></div>
+<script>
+let me = Storage.getUser();
+if (!me) location.href = "signin";
+document.getElementById("currentUser").textContent = me;
+document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg`;
+let sortOrder = "desc";
+
+document.getElementById("useThumbUpload").addEventListener("change", () => {
+  const checked = document.getElementById("useThumbUpload").checked;
+  document.getElementById("thumbInput").disabled = !checked;
+  document.getElementById("thumbSize").disabled = !checked;
+});
+
+function setSortOrder(order) {
+  sortOrder = order;
+  renderVideos();
+}
+
+function toggleUploadLock() {
+  document.getElementById("lockPassword").disabled = !document.getElementById("lockToggle").checked;
+}
+
+function toggleEditLock(id) {
+  document.getElementById(`lockPassword-${id}`).disabled = !document.getElementById(`lockToggle-${id}`).checked;
+}
+
+function cropImage(file, width, height, callback) {
+  const img = new Image();
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    img.onload = () => {
+      const ratio = Math.max(width / img.width, height / img.height);
+      const w = img.width * ratio;
+      const h = img.height * ratio;
+      const x = (width - w) / 2;
+      const y = (height - h) / 2;
+      ctx.drawImage(img, x, y, w, h);
+      canvas.toBlob(callback, "image/jpeg");
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderVideos() {
+  fetch(`${SERVER}/videos/user/${me}`)
+    .then(res => res.json())
+    .then(videos => {
+      videos.sort((a, b) => {
+        const ta = new Date(a.date).getTime();
+        const tb = new Date(b.date).getTime();
+        return sortOrder === "asc" ? ta - tb : tb - ta;
+      });
+
+      const list = videos.map(v => `
+        <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+          <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}?t=${Date.now()}" width="200"><br>
+          <b>
+            ${v.title}
+            ${v.password ? `<img src="img/lock.svg" alt="locked" class="lockIcon">` : ""}
+          </b><br>
+          ${new Date(v.date).toLocaleString("ja-JP", {
+            year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
+          })}<br>
+          <a href="watch?id=${v.id}">watch</a>
+          <button onclick="deleteVideo('${v.id}')">delete</button>
+          <button onclick="showEdit('${v.id}', \`${v.title}\`, \`${v.description || ""}\`)">edit</button>
+          <div id="edit-${v.id}"></div>
+        </div>
+      `).join("");
+      document.getElementById("list").innerHTML = list || "No videos yet.";
+    });
+}
+
+function upload() {
+  const title = document.getElementById("titleInput").value.trim();
+  const file = document.getElementById("fileInput").files[0];
+  const thumbChecked = document.getElementById("useThumbUpload").checked;
+  const thumb = document.getElementById("thumbInput").files[0];
+  const thumbSizeValue = document.getElementById("thumbSize").value;
+  const [tw, th] = thumbSizeValue.split("x").map(Number);
+  const description = document.getElementById("description").value.trim();
+  const isLocked = document.getElementById("lockToggle").checked;
+  const password = document.getElementById("lockPassword").value.trim();
+  const status = document.getElementById("uploadStatus");
+
+  if (!title || !file) return alert("Enter title and file.");
+  if (file.size > 30 * 1024 * 1024) return alert("File too big.");
+  if (thumbChecked && !thumb) return alert("Select a thumbnail image.");
+  if (thumbChecked && thumb.size > 130 * 1024) return alert("Thumbnail too big.");
+  if (isLocked && !password) return alert("Enter password.");
+
+  status.innerHTML = `<span class="spinner"></span> Uploading...`;
+
+  const form = new FormData();
+  form.append("username", me);
+  form.append("title", title);
+  form.append("description", description);
+  form.append("video", file);
+  form.append("lockPassword", isLocked ? password : "");
+
+  function submit(formData) {
+    fetch(`${SERVER}/upload`, { method: "POST", body: formData })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(() => {
+        status.textContent = "✅ Upload successful.";
+        renderVideos();
+        resetForm();
+      })
+      .catch(() => {
+        status.textContent = "❌ Upload failed.";
+      });
+  }
+
+  function resetForm() {
+    document.getElementById("titleInput").value = "";
+    document.getElementById("fileInput").value = "";
+    document.getElementById("thumbInput").value = "";
+    document.getElementById("description").value = "";
+    document.getElementById("lockToggle").checked = false;
+    document.getElementById("lockPassword").value = "";
+    document.getElementById("lockPassword").disabled = true;
+    document.getElementById("useThumbUpload").checked = false;
+    document.getElementById("thumbInput").disabled = true;
+    document.getElementById("thumbSize").disabled = true;
+    setTimeout(() => status.textContent = "", 3000);
+  }
+
+  if (thumbChecked) {
+    cropImage(thumb, tw, th, blob => {
+      form.append("thumbnail", blob, "thumb.jpg");
+      submit(form);
+    });
+  } else {
+    submit(form);
+  }
+}
+
+function updateIcon() {
+  const input = document.getElementById("iconInput");
+  const file = input.files[0];
+  const status = document.getElementById("iconStatus");
+  if (!file) return alert("Select a .jpg image.");
+  if (file.size > 30 * 1024) return alert("Icon too big.");
+
+  status.innerHTML = `<span class="spinner"></span> Updating icon...`;
+
+  cropImage(file, 600, 600, blob => {
+    const form = new FormData();
+    form.append("username", me);
+    form.append("icon", blob, "icon.jpg");
+
+    fetch(`${SERVER}/updateIcon`, {
+      method: "POST",
+      body: form
+    })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(() => {
+        document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg?${Date.now()}`;
+        input.value = "";
+        status.textContent = "✅ Icon updated.";
+      })
+      .catch(() => status.textContent = "❌ Icon update failed.")
+      .finally(() => setTimeout(() => status.textContent = "", 3000));
+  });
+}
+
+function deleteVideo(id) {
+  if (!confirm("Delete this video?")) return;
+  fetch(`${SERVER}/deleteVideo/${id}`, { method: "DELETE" })
+    .then(() => renderVideos());
+}
+
+function logout() {
+  Storage.clearUser();
+  location.href = "signin";
+}
+
+function removeAccount() {
+  if (!confirm("Do you want to delete your account?")) return;
+  fetch(`${SERVER}/deleteAccount`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: me })
+  })
+    .then(() => {
+      Storage.clearUser();
+      location.href = "signin";
+    })
+    .catch(() => alert("Failed to delete account."));
+}
+
+function changeAccount() {
+  const now = document.getElementById("currentPassword").value.trim();
+  const name = document.getElementById("newUsername").value.trim();
+  const pass = document.getElementById("newPassword").value.trim();
+  if (!now || !name || !pass) return alert("Enter all.");
+
+  fetch(`${SERVER}/changeAccount`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+    oldUsername: me,
+    currentPassword: now,
+    newUsername: name,
+    newPassword: pass
+  })
+  })
+  .then(res => res.ok ? res.json() : Promise.reject())
+  .then(() => {
+    Storage.setUser(name);
+    me = name;
+    document.getElementById("currentUser").textContent = name;
+    document.getElementById("iconPreview").src = `${SERVER}/icons/${name}.jpg?${Date.now()}`;
+    renderVideos();
+  })
+  .catch(() => alert("Change failed"));
+}
+
+function copyUrl() {
+  const element = document.createElement('input');
+  element.value = `https://videos.bird.f5.si/user?name=${me}`;
+  document.body.appendChild(element);
+  element.select();
+  document.execCommand('copy');
+  document.body.removeChild(element);
+}
+
+renderVideos();
+</script>
+</body>
+</html>
