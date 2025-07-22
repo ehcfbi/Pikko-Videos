@@ -164,7 +164,7 @@
               <div style="font-size: 0.9em;">${postedTime}</div>
               ${isAudio
                 ? `<div id="waveform"></div><div id="controls"><button id="togglePlay">play</button></div>`
-                : `<video id="video" style="display:none;" playsinline></video><div id="customPlayer"></div>`
+                : `<video id="video" style="visibility:hidden;" playsinline></video><div id="customPlayer"></div>`
               }
               <p style="white-space: pre-wrap; margin-top: 1em;">${info.description}</p>
             `;
