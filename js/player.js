@@ -7,6 +7,7 @@ function initCustomPlayer(videoUrl) {
     <div class="custom-controls">
       <input type="range" id="seekBar" value="0" min="0" max="100" />
       <span id="timeText">0:00 / 0:00</span>
+      <button id="fsBtn">⛶</button>
     </div>
   `;
 
@@ -14,27 +15,12 @@ function initCustomPlayer(videoUrl) {
   const overlay = container.querySelector("#playOverlay");
   const seekBar = container.querySelector("#seekBar");
   const timeText = container.querySelector("#timeText");
+  const fsBtn = container.querySelector("#fsBtn");
 
-  overlay.onclick = () => {
-    video.play();
-    overlay.style.display = "none";
-  };
-
-  video.onclick = () => {
-    if (video.paused) {
-      video.play();
-    } else {
-      video.pause();
-    }
-  };
-
-  video.onpause = () => {
-    overlay.style.display = "block";
-  };
-
-  video.onplay = () => {
-    overlay.style.display = "none";
-  };
+  overlay.onclick = () => video.play();
+  video.onclick = () => video.paused ? video.play() : video.pause();
+  video.onpause = () => (overlay.style.display = "block");
+  video.onplay = () => (overlay.style.display = "none");
 
   video.ontimeupdate = () => {
     if (video.duration) {
@@ -48,6 +34,43 @@ function initCustomPlayer(videoUrl) {
       video.currentTime = (seekBar.value / 100) * video.duration;
     }
   };
+
+  fsBtn.onclick = () => {
+    const playerBox = document.getElementById("customPlayer");
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      playerBox.requestFullscreen();
+    }
+  };
+
+  // 🕒 UI自動非表示管理
+  let lastMouseMove = Date.now();
+  let hideTimeout;
+
+  function updateMouseTime() {
+    lastMouseMove = Date.now();
+    showUI();
+    clearTimeout(hideTimeout);
+    hideTimeout = setTimeout(checkIdle, 3000);
+  }
+
+  function checkIdle() {
+    if (Date.now() - lastMouseMove >= 3000) {
+      hideUI();
+    }
+  }
+
+  function showUI() {
+    container.classList.remove("hide-ui");
+  }
+
+  function hideUI() {
+    container.classList.add("hide-ui");
+  }
+
+  container.addEventListener("mousemove", updateMouseTime);
+  hideTimeout = setTimeout(checkIdle, 3000);
 }
 
 function formatTime(t) {
