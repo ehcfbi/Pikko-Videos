@@ -331,6 +331,50 @@ function changeAccount() {
   .catch(() => alert("Change failed"));
 }
 
+  function cancelEdit(id) {
+  document.getElementById(`edit-${id}`).innerHTML = "";
+}
+
+function submitEdit(id) {
+  const newTitle = document.getElementById(`title-${id}`).value.trim();
+  const newDesc = document.getElementById(`desc-${id}`).value.trim();
+  const thumbChecked = document.getElementById(`useThumbEdit-${id}`).checked;
+  const newThumb = document.getElementById(`thumb-${id}`).files[0];
+  const isLocked = document.getElementById(`lockToggle-${id}`).checked;
+  const password = document.getElementById(`lockPassword-${id}`).value.trim();
+
+  if (thumbChecked && !newThumb) return alert("Select a thumbnail image.");
+  if (thumbChecked && newThumb.size > 130 * 1024) return alert("Thumbnail too big.");
+  if (isLocked && !password) return alert("Enter password.");
+
+  const form = new FormData();
+  form.append("title", newTitle);
+  form.append("description", newDesc);
+  form.append("lockPassword", isLocked ? password : "");
+
+  function finishSend(blob) {
+    if (blob) form.append("thumbnail", blob, "thumb.jpg");
+
+    fetch(`${SERVER}/editVideo/${id}`, {
+      method: "PATCH",
+      body: form
+    })
+    .then(res => res.ok ? res.json() : Promise.reject())
+    .then(() => {
+      renderVideos();
+      cancelEdit(id);
+    })
+    .catch(() => alert("Failed to save edits."));
+  }
+
+  if (thumbChecked) {
+    // 既定サイズでクロップ（例：640x360）
+    cropImage(newThumb, 640, 360, finishSend);
+  } else {
+    finishSend(null);
+  }
+}
+
 function copyUrl() {
   const element = document.createElement('input');
   element.value = `https://videos.bird.f5.si/user?name=${me}`;
