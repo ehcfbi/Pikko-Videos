@@ -20,6 +20,18 @@
       vertical-align: middle;
       margin-left: 4px;
     }
+    .upload_button {
+      background: #0af;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    button:hover {
+      background: #09c;
+    }
   </style>
 </head>
 <body class="bg-animation">
@@ -60,7 +72,7 @@
   <h3>lock</h3>
   <input type="checkbox" id="lockToggle" onchange="toggleUploadLock()"> lock this video or music<br>
   <input id="lockPassword" type="password" placeholder="password (if locked)" disabled><br>
-  <button onclick="upload()">upload</button>
+  <button class="upload_button" onclick="upload()">upload</button>
 
   <h2>your videos and musics</h2>
   <label for="sortSelect">Sort by:</label>
