@@ -1,9 +1,8 @@
-function initCustomPlayer(videoOriginal) {
+function initCustomPlayer(videoUrl) {
   const container = document.getElementById("customPlayer");
 
-  // 映像とUIの組み込み
   container.innerHTML = `
-    <video id="videoOverlay" muted playsinline></video>
+    <video id="videoOverlay" src="${videoUrl}" muted playsinline autoplay></video>
     <div id="playOverlay">⏵︎</div>
     <div class="custom-controls">
       <input type="range" id="seekBar" value="0" min="0" max="100" />
@@ -12,17 +11,13 @@ function initCustomPlayer(videoOriginal) {
   `;
 
   const video = container.querySelector("#videoOverlay");
-  video.src = videoOriginal.src;
-  video.currentTime = 0;
-
-  const playOverlay = container.querySelector("#playOverlay");
+  const overlay = container.querySelector("#playOverlay");
   const seekBar = container.querySelector("#seekBar");
   const timeText = container.querySelector("#timeText");
 
-  // 再生オーバーレイクリックで開始
-  playOverlay.onclick = () => {
+  overlay.onclick = () => {
     video.play();
-    playOverlay.style.display = "none";
+    overlay.style.display = "none";
   };
 
   video.onclick = () => {
@@ -34,11 +29,11 @@ function initCustomPlayer(videoOriginal) {
   };
 
   video.onpause = () => {
-    playOverlay.style.display = "block";
+    overlay.style.display = "block";
   };
 
   video.onplay = () => {
-    playOverlay.style.display = "none";
+    overlay.style.display = "none";
   };
 
   video.ontimeupdate = () => {
