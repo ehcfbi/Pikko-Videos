@@ -292,7 +292,7 @@ function showEdit(id, title, description) {
     <input id="thumb-${id}" type="file" accept=".jpg" disabled><br>
     <p>lock</p>
     <input type="checkbox" id="lockToggle-${id}" onchange="toggleEditLock('${id}')"> lock this video or music<br>
-    <input id="lockPassword-${id}-${id}" type="password" placeholder="password (if locked)" disabled><br>
+    <input id="lockPassword-${id}" type="password" placeholder="password (if locked)" disabled><br>
     <button onclick="submitEdit('${id}')">save</button>
     <button onclick="cancelEdit('${id}')">cancel</button>
   `;
@@ -307,12 +307,23 @@ function cancelEdit(id) {
 }
 
 function submitEdit(id) {
-  const newTitle = document.getElementById(`title-${id}`).value.trim();
-  const newDesc = document.getElementById(`desc-${id}`).value.trim();
+  const titleEl = document.getElementById(`title-${id}`);
+  const descEl = document.getElementById(`desc-${id}`);
+  const thumbEl = document.getElementById(`thumb-${id}`);
+  const lockToggle = document.getElementById(`lockToggle-${id}`);
+  const passEl = document.getElementById(`lockPassword-${id}`);
+
+  if (!titleEl || !descEl || !thumbEl || !lockToggle || !passEl) {
+    alert("編集フォームが正しく表示されていません。");
+    return;
+  }
+
+  const newTitle = titleEl.value.trim();
+  const newDesc = descEl.value.trim();
   const thumbChecked = document.getElementById(`useThumbEdit-${id}`).checked;
-  const newThumb = document.getElementById(`thumb-${id}`).files[0];
-  const isLocked = document.getElementById(`lockToggle-${id}`).checked;
-  const password = document.getElementById(`lockPassword-${id}`).value.trim();
+  const newThumb = thumbEl.files[0];
+  const isLocked = lockToggle.checked;
+  const password = passEl.value.trim();
 
   if (thumbChecked && !newThumb) return alert("Select a thumbnail image.");
   if (thumbChecked && newThumb.size > 130 * 1024) return alert("Thumbnail too big.");
@@ -338,7 +349,7 @@ function submitEdit(id) {
   }
 
   if (thumbChecked) {
-    cropImage(newThumb, 640, 360, finishSend); // you can adjust this default size
+    cropImage(newThumb, 640, 360, finishSend); // サイズは自由に調整可能
   } else {
     finishSend(null);
   }
