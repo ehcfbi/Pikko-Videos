@@ -279,6 +279,71 @@ function updateIcon() {
   });
 }
 
+function showEdit(id, title, description) {
+  const container = document.getElementById(`edit-${id}`);
+  container.innerHTML = `
+    <p>Edit:</p>
+    <p>title</p>
+    <input id="title-${id}" value="${title}" style="width: 80%;"><br>
+    <p>description</p>
+    <textarea id="desc-${id}" rows="4" style="width: 80%;">${description}</textarea><br>
+    <p>thumbnail</p>
+    <input type="checkbox" id="useThumbEdit-${id}"> change thumbnail?<br>
+    <input id="thumb-${id}" type="file" accept=".jpg" disabled><br>
+    <p>lock</p>
+    <input type="checkbox" id="lockToggle-${id}" onchange="toggleEditLock('${id}')"> lock this video or music<br>
+    <input id="lockPassword-${id}-${id}" type="password" placeholder="password (if locked)" disabled><br>
+    <button onclick="submitEdit('${id}')">save</button>
+    <button onclick="cancelEdit('${id}')">cancel</button>
+  `;
+
+  document.getElementById(`useThumbEdit-${id}`).addEventListener("change", () => {
+    document.getElementById(`thumb-${id}`).disabled = !document.getElementById(`useThumbEdit-${id}`).checked;
+  });
+}
+
+function cancelEdit(id) {
+  document.getElementById(`edit-${id}`).innerHTML = "";
+}
+
+function submitEdit(id) {
+  const newTitle = document.getElementById(`title-${id}`).value.trim();
+  const newDesc = document.getElementById(`desc-${id}`).value.trim();
+  const thumbChecked = document.getElementById(`useThumbEdit-${id}`).checked;
+  const newThumb = document.getElementById(`thumb-${id}`).files[0];
+  const isLocked = document.getElementById(`lockToggle-${id}`).checked;
+  const password = document.getElementById(`lockPassword-${id}`).value.trim();
+
+  if (thumbChecked && !newThumb) return alert("Select a thumbnail image.");
+  if (thumbChecked && newThumb.size > 130 * 1024) return alert("Thumbnail too big.");
+  if (isLocked && !password) return alert("Enter password.");
+
+  const form = new FormData();
+  form.append("title", newTitle);
+  form.append("description", newDesc);
+  form.append("lockPassword", isLocked ? password : "");
+
+  function finishSend(blob) {
+    if (blob) form.append("thumbnail", blob, "thumb.jpg");
+    fetch(`${SERVER}/editVideo/${id}`, {
+      method: "PATCH",
+      body: form
+    })
+    .then(res => res.ok ? res.json() : Promise.reject())
+    .then(() => {
+      renderVideos();
+      cancelEdit(id);
+    })
+    .catch(() => alert("Failed to save edits."));
+  }
+
+  if (thumbChecked) {
+    cropImage(newThumb, 640, 360, finishSend); // you can adjust this default size
+  } else {
+    finishSend(null);
+  }
+}
+
 function deleteVideo(id) {
   if (!confirm("Delete this video?")) return;
   fetch(`${SERVER}/deleteVideo/${id}`, { method: "DELETE" })
@@ -313,66 +378,22 @@ function changeAccount() {
   fetch(`${SERVER}/changeAccount`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-    oldUsername: me,
-    currentPassword: now,
-    newUsername: name,
-    newPassword: pass
-  })
-  })
-  .then(res => res.ok ? res.json() : Promise.reject())
-  .then(() => {
-    Storage.setUser(name);
-    me = name;
-    document.getElementById("currentUser").textContent = name;
-    document.getElementById("iconPreview").src = `${SERVER}/icons/${name}.jpg?${Date.now()}`;
-    renderVideos();
-  })
-  .catch(() => alert("Change failed"));
-}
-
-  function cancelEdit(id) {
-  document.getElementById(`edit-${id}`).innerHTML = "";
-}
-
-function submitEdit(id) {
-  const newTitle = document.getElementById(`title-${id}`).value.trim();
-  const newDesc = document.getElementById(`desc-${id}`).value.trim();
-  const thumbChecked = document.getElementById(`useThumbEdit-${id}`).checked;
-  const newThumb = document.getElementById(`thumb-${id}`).files[0];
-  const isLocked = document.getElementById(`lockToggle-${id}`).checked;
-  const password = document.getElementById(`lockPassword-${id}`).value.trim();
-
-  if (thumbChecked && !newThumb) return alert("Select a thumbnail image.");
-  if (thumbChecked && newThumb.size > 130 * 1024) return alert("Thumbnail too big.");
-  if (isLocked && !password) return alert("Enter password.");
-
-  const form = new FormData();
-  form.append("title", newTitle);
-  form.append("description", newDesc);
-  form.append("lockPassword", isLocked ? password : "");
-
-  function finishSend(blob) {
-    if (blob) form.append("thumbnail", blob, "thumb.jpg");
-
-    fetch(`${SERVER}/editVideo/${id}`, {
-      method: "PATCH",
-      body: form
+    body: JSON.stringify({
+      oldUsername: me,
+      currentPassword: now,
+      newUsername: name,
+      newPassword: pass
     })
+  })
     .then(res => res.ok ? res.json() : Promise.reject())
     .then(() => {
+      Storage.setUser(name);
+      me = name;
+      document.getElementById("currentUser").textContent = name;
+      document.getElementById("iconPreview").src = `${SERVER}/icons/${name}.jpg?${Date.now()}`;
       renderVideos();
-      cancelEdit(id);
     })
-    .catch(() => alert("Failed to save edits."));
-  }
-
-  if (thumbChecked) {
-    // 既定サイズでクロップ（例：640x360）
-    cropImage(newThumb, 640, 360, finishSend);
-  } else {
-    finishSend(null);
-  }
+    .catch(() => alert("Change failed"));
 }
 
 function copyUrl() {
