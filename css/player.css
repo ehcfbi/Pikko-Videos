@@ -18,7 +18,7 @@
   z-index: 0;
 }
 
-/* ⏵︎ 中央再生ボタン（表示制御） */
+/* ⏵︎ 中央再生ボタン（自動表示/非表示） */
 #playOverlay {
   position: absolute;
   top: 50%;
@@ -26,32 +26,26 @@
   transform: translate(-50%, -50%);
   font-size: 48px;
   color: white;
-  display: none;
+  display: block;
   cursor: pointer;
   z-index: 2;
 }
 
-/* ⏱ 下部コントロール（表示制御） */
+/* ⏱ 下部コントロール（再生バーなど） */
 .custom-controls {
   position: absolute;
   bottom: 0;
   width: 100%;
   padding: 8px;
   background: rgba(0, 0, 0, 0.5);
-  display: none;
+  display: flex;
   gap: 8px;
   align-items: center;
   z-index: 3;
   color: white;
 }
 
-/* 🖱 ホバー時に表示する */
-#customPlayer:hover .custom-controls,
-#customPlayer:hover #playOverlay {
-  display: flex;
-}
-
-/* 📱 シークバーの調整 */
+/* 📱 シークバー */
 .custom-controls input[type="range"] {
   flex: 1;
   height: 6px;
@@ -69,11 +63,32 @@
   max-width: 90px;
 }
 
-/* 🌙 ダークモード補強 */
+/* ⛶ フルスクリーンボタン */
+.custom-controls button#fsBtn {
+  background: #0af;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+body.dark .custom-controls button#fsBtn {
+  background: #444;
+}
+
+/* 🌙 ダークモード強化 */
 body.dark #customPlayer {
   background: #111;
 }
 
 body.dark .custom-controls input[type="range"] {
   background: #555;
+}
+
+/* 🕒 UI自動消去のクラス制御 */
+#customPlayer.hide-ui .custom-controls,
+#customPlayer.hide-ui #playOverlay {
+  display: none !important;
 }
