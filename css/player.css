@@ -9,7 +9,7 @@
   border-radius: 8px;
 }
 
-/* 🎬 映像 */
+/* 🎬 映像の表示 */
 #videoOverlay {
   position: absolute;
   width: 100%;
@@ -18,7 +18,7 @@
   z-index: 0;
 }
 
-/* ⏵︎ 中央再生ボタン */
+/* ⏵︎ 中央再生ボタン（ホバー時表示） */
 #playOverlay {
   position: absolute;
   top: 50%;
@@ -26,12 +26,14 @@
   transform: translate(-50%,-50%);
   font-size: 48px;
   color: white;
-  opacity: 0.85;
+  opacity: 0;
   cursor: pointer;
   z-index: 1;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
 }
 
-/* ⏱ 下部コントロール */
+/* ⏱ 下部コントロール（ホバー時表示） */
 .custom-controls {
   position: absolute;
   bottom: 0;
@@ -43,6 +45,16 @@
   align-items: center;
   z-index: 2;
   color: white;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+/* 🎯 ホバー時に表示 */
+#customPlayer:hover .custom-controls,
+#customPlayer:hover #playOverlay {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 /* 📱 シークバー */
@@ -54,7 +66,15 @@
   border-radius: 4px;
 }
 
-/* 🌙 ダークモード補強 */
+/* ⏱ 時間表示の見切れ防止 */
+.custom-controls span#timeText {
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 🌙 ダークモード強化 */
 body.dark #customPlayer {
   background: #111;
 }
