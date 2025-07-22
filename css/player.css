@@ -1,14 +1,16 @@
 #customPlayer {
   position: relative;
-  width: 480px;
-  height: 270px;
-  border-radius: 8px;
-  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  max-width: 480px;
+  max-height: 270px;
   background: black;
+  overflow: hidden;
+  border-radius: 8px;
 }
 
-/* 🎬 映像の配置 */
-#customPlayer video {
+/* 🎬 映像 */
+#videoOverlay {
   position: absolute;
   width: 100%;
   height: 100%;
@@ -21,12 +23,12 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%,-50%);
   font-size: 48px;
   color: white;
   opacity: 0.85;
   cursor: pointer;
-  z-index: 2;
+  z-index: 1;
 }
 
 /* ⏱ 下部コントロール */
@@ -34,25 +36,29 @@
   position: absolute;
   bottom: 0;
   width: 100%;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   gap: 8px;
-  padding: 8px;
-  z-index: 3;
   align-items: center;
-  background: rgba(0,0,0,0.5);
+  z-index: 2;
   color: white;
 }
 
-/* 🌙 ダークモード強化 */
+/* 📱 シークバー */
+.custom-controls input[type="range"] {
+  flex: 1;
+  height: 6px;
+  background: #ccc;
+  appearance: none;
+  border-radius: 4px;
+}
+
+/* 🌙 ダークモード補強 */
 body.dark #customPlayer {
   background: #111;
 }
 
 body.dark .custom-controls input[type="range"] {
   background: #555;
-}
-
-.custom-controls input[type="range"] {
-  flex: 1;
-  height: 6px;
 }
