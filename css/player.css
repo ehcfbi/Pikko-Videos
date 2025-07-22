@@ -9,7 +9,7 @@
   border-radius: 8px;
 }
 
-/* 🎬 映像の表示 */
+/* 🎬 映像 */
 #videoOverlay {
   position: absolute;
   width: 100%;
@@ -18,46 +18,40 @@
   z-index: 0;
 }
 
-/* ⏵︎ 中央再生ボタン（ホバー時表示） */
+/* ⏵︎ 中央再生ボタン（表示制御） */
 #playOverlay {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%,-50%);
+  transform: translate(-50%, -50%);
   font-size: 48px;
   color: white;
-  opacity: 0;
+  display: none;
   cursor: pointer;
-  z-index: 1;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
+  z-index: 2;
 }
 
-/* ⏱ 下部コントロール（ホバー時表示） */
+/* ⏱ 下部コントロール（表示制御） */
 .custom-controls {
   position: absolute;
   bottom: 0;
   width: 100%;
   padding: 8px;
   background: rgba(0, 0, 0, 0.5);
-  display: flex;
+  display: none;
   gap: 8px;
   align-items: center;
-  z-index: 2;
+  z-index: 3;
   color: white;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
 }
 
-/* 🎯 ホバー時に表示 */
+/* 🖱 ホバー時に表示する */
 #customPlayer:hover .custom-controls,
 #customPlayer:hover #playOverlay {
-  opacity: 1;
-  pointer-events: auto;
+  display: flex;
 }
 
-/* 📱 シークバー */
+/* 📱 シークバーの調整 */
 .custom-controls input[type="range"] {
   flex: 1;
   height: 6px;
@@ -68,13 +62,14 @@
 
 /* ⏱ 時間表示の見切れ防止 */
 .custom-controls span#timeText {
-  font-size: 14px;
+  font-size: 13px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 90px;
 }
 
-/* 🌙 ダークモード強化 */
+/* 🌙 ダークモード補強 */
 body.dark #customPlayer {
   background: #111;
 }
