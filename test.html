@@ -218,11 +218,15 @@ function upload() {
       .then(res => res.ok ? res.json() : Promise.reject())
       .then(() => {
         status.textContent = "✅ Upload successful.";
+        status.className = "success";
+        status.classList.add(document.body.classList.contains("dark") ? "dark" : "light");
         renderVideos();
         resetForm();
       })
       .catch(() => {
         status.textContent = "❌ Upload failed.";
+        status.className = "fail";
+        status.classList.add(document.body.classList.contains("dark") ? "dark" : "light");
       });
   }
 
@@ -237,7 +241,7 @@ function upload() {
     document.getElementById("useThumbUpload").checked = false;
     document.getElementById("thumbInput").disabled = true;
     document.getElementById("thumbSize").disabled = true;
-    setTimeout(() => status.textContent = "", 3000);
+    setTimeout(() => { status.textContent = ""; status.className = ""; }, 3000);
   }
 
   if (thumbChecked) {
@@ -273,9 +277,13 @@ function updateIcon() {
         document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg?${Date.now()}`;
         input.value = "";
         status.textContent = "✅ Icon updated.";
+        status.className = "success";
+        status.classList.add(document.body.classList.contains("dark") ? "dark" : "light");
       })
       .catch(() => status.textContent = "❌ Icon update failed.")
-      .finally(() => setTimeout(() => status.textContent = "", 3000));
+      status.className = "fail";
+      status.classList.add(document.body.classList.contains("dark") ? "dark" : "light");
+      .finally(() => setTimeout(() => { status.textContent = ""; status.className = ""; }, 3000);
   });
 }
 
@@ -314,7 +322,7 @@ function submitEdit(id) {
   const passEl = document.getElementById(`lockPassword-${id}`);
 
   if (!titleEl || !descEl || !thumbEl || !lockToggle || !passEl) {
-    alert("編集フォームが正しく表示されていません。");
+    alert("Edit form does not show correct.");
     return;
   }
 
