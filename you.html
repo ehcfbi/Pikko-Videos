@@ -43,17 +43,18 @@
   <button onclick="changeAccount()">change account</button>
 
   <h2>change your icon</h2>
-  <h3>icon(.jpg, 600px*600px, 30kb or less)</h3>
+  <h3>icon(.jpg, 600px×600px, 30KB or less)</h3>
   <input id="iconInput" type="file" accept=".jpg"><br>
   <button onclick="updateIcon()">update icon</button>
 
   <h2>upload a video or music</h2>
   <h3>title</h3>
   <input id="titleInput" placeholder="title"><br>
-  <h3>video or music(.mp4 or .mp3,.wav, 30mb or less)</h3>
+  <h3>video or music (.mp4 / .mp3 / .wav, 30MB or less)</h3>
   <input id="fileInput" type="file" accept="video/mp4,audio/mp3,audio/wav"><br>
-  <h3>thumbnail(640*360 or 640*480, 360*640, .jpg, 50kb or less)</h3>
-  <input id="thumbInput" type="file" accept=".jpg"><br>
+  <h3>thumbnail (.jpg / 50KB or less)</h3>
+  <input type="checkbox" id="useThumbUpload"> upload custom thumbnail?<br>
+  <input id="thumbInput" type="file" accept=".jpg" disabled><br>
   <h3>description</h3>
   <textarea id="description" placeholder="description" rows="4" cols="40"></textarea><br>
   <h3>lock</h3>
@@ -68,13 +69,16 @@
     <option value="asc">oldest first</option>
   </select>
   <div id="list"></div>
-
 <script>
   let me = Storage.getUser();
   if (!me) location.href = "signin";
   document.getElementById("currentUser").textContent = me;
   document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg`;
   let sortOrder = "desc";
+
+  document.getElementById("useThumbUpload").addEventListener("change", () => {
+    document.getElementById("thumbInput").disabled = !document.getElementById("useThumbUpload").checked;
+  });
 
   function setSortOrder(order) {
     sortOrder = order;
@@ -128,13 +132,18 @@
       <p>description</p>
       <textarea id="desc-${id}" rows="4" style="width: 80%;">${description}</textarea><br>
       <p>thumbnail</p>
-      <input id="thumb-${id}" type="file" accept=".jpg"><br>
+      <input type="checkbox" id="useThumbEdit-${id}"> change thumbnail?<br>
+      <input id="thumb-${id}" type="file" accept=".jpg" disabled><br>
       <p>lock</p>
       <input type="checkbox" id="lockToggle-${id}" onchange="toggleEditLock('${id}')"> lock this video or music<br>
       <input id="lockPassword-${id}" type="password" placeholder="password (if locked)" disabled><br>
       <button onclick="submitEdit('${id}')">save</button>
       <button onclick="cancelEdit('${id}')">cancel</button>
     `;
+
+    document.getElementById(`useThumbEdit-${id}`).addEventListener("change", () => {
+      document.getElementById(`thumb-${id}`).disabled = !document.getElementById(`useThumbEdit-${id}`).checked;
+    });
   }
 
   function cancelEdit(id) {
@@ -144,17 +153,30 @@
   function submitEdit(id) {
     const newTitle = document.getElementById(`title-${id}`).value.trim();
     const newDesc = document.getElementById(`desc-${id}`).value.trim();
+    const thumbChecked = document.getElementById(`useThumbEdit-${id}`).checked;
     const newThumb = document.getElementById(`thumb-${id}`).files[0];
     const isLocked = document.getElementById(`lockToggle-${id}`).checked;
     const password = document.getElementById(`lockPassword-${id}`).value.trim();
-    if (newThumb && newThumb.size > 50 * 1024) {
-      alert("Thumbnail too big."); return;
+
+    if (thumbChecked && !newThumb) {
+      alert("Select a thumbnail image.");
+      return;
+    }
+
+    if (thumbChecked && newThumb.size > 50 * 1024) {
+      alert("Thumbnail too big.");
+      return;
+    }
+
+    if (isLocked && !password) {
+      alert("Enter password for locked video.");
+      return;
     }
 
     const form = new FormData();
     form.append("title", newTitle);
     form.append("description", newDesc);
-    if (newThumb) form.append("thumbnail", newThumb);
+    if (thumbChecked) form.append("thumbnail", newThumb);
     form.append("lockPassword", isLocked ? password : "");
 
     fetch(`${SERVER}/editVideo/${id}`, {
@@ -177,6 +199,7 @@
   function upload() {
     const title = document.getElementById("titleInput").value.trim();
     const file = document.getElementById("fileInput").files[0];
+    const thumbChecked = document.getElementById("useThumbUpload").checked;
     const thumb = document.getElementById("thumbInput").files[0];
     const description = document.getElementById("description").value.trim();
     const isLocked = document.getElementById("lockToggle").checked;
@@ -192,7 +215,12 @@
       return;
     }
 
-    if (thumb && thumb.size > 130 * 1024) {
+    if (thumbChecked && !thumb) {
+      alert("Select a thumbnail image.");
+      return;
+    }
+
+    if (thumbChecked && thumb.size > 130 * 1024) {
       alert("Thumbnail too big.");
       return;
     }
@@ -207,7 +235,7 @@
     form.append("title", title);
     form.append("description", description);
     form.append("video", file);
-    if (thumb) form.append("thumbnail", thumb);
+    if (thumbChecked) form.append("thumbnail", thumb);
     form.append("lockPassword", isLocked ? password : "");
 
     fetch(`${SERVER}/upload`, { method: "POST", body: form })
@@ -220,6 +248,8 @@
         document.getElementById("lockToggle").checked = false;
         document.getElementById("lockPassword").value = "";
         document.getElementById("lockPassword").disabled = true;
+        document.getElementById("useThumbUpload").checked = false;
+        document.getElementById("thumbInput").disabled = true;
         renderVideos();
       })
       .catch(() => alert("Upload failed."));
@@ -260,25 +290,44 @@
       return;
     }
 
-    fetch(`${SERVER}/changeAccount`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        oldUsername: me,
-        currentPassword: now,
-        newUsername: name,
-        newPassword: pass
-      })
+  fetch(`${SERVER}/changeAccount`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      oldUsername: me,
+      currentPassword: now,
+      newUsername: name,
+      newPassword: pass
     })
-      .then(res => res.ok ? res.json() : Promise.reject())
+  })
+    .then(res => res.ok ? res.json() : Promise.reject())
+    .then(() => {
+      Storage.setUser(name);
+      me = name;
+      document.getElementById("currentUser").textContent = name;
+      document.getElementById("iconPreview").src = `${SERVER}/icons/${name}.jpg?${Date.now()}`;
+      renderVideos();
+    })
+    .catch(() => alert("Change failed"));
+  }
+
+  function logout() {
+    Storage.clearUser();
+    location.href = "signin";
+  }
+
+  function removeAccount() {
+    if (!confirm("Do you want to delete your account?")) return;
+    fetch(`${SERVER}/deleteAccount`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: me })
+    })
       .then(() => {
-        Storage.setUser(name);
-        me = name;
-        document.getElementById("currentUser").textContent = name;
-        document.getElementById("iconPreview").src = `${SERVER}/icons/${name}.jpg?${Date.now()}`;
-        renderVideos();
+        Storage.clearUser();
+        location.href = "signin";
       })
-      .catch(() => alert("Change failed"));
+      .catch(() => alert("Failed to delete account."));
   }
 
   renderVideos();
@@ -290,7 +339,7 @@
     element.select();
     document.execCommand('copy');
     document.body.removeChild(element);
-}
+  }
 </script>
 </body>
 </html>
