@@ -19,27 +19,3 @@ body.dark .videoCard {
   padding: 6px 10px;
   font-size: 14px;
 }
-
-:root {
-  --status-success-light: green;
-  --status-fail-light: red;
-  --status-success-dark: #9f6;
-  --status-fail-dark: #f88;
-}
-
-body.light #uploadStatus.success,
-body.light #iconStatus.success {
-  color: var(--status-success-light);
-}
-body.light #uploadStatus.fail,
-body.light #iconStatus.fail {
-  color: var(--status-fail-light);
-}
-body.dark #uploadStatus.success,
-body.dark #iconStatus.success {
-  color: var(--status-success-dark);
-}
-body.dark #uploadStatus.fail,
-body.dark #iconStatus.fail {
-  color: var(--status-fail-dark);
-}
