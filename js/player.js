@@ -1,18 +1,31 @@
-function initCustomPlayer(video) {
+function initCustomPlayer(videoOriginal) {
   const container = document.getElementById("customPlayer");
+
+  // 映像とUIの組み込み
   container.innerHTML = `
+    <video id="videoOverlay" muted playsinline></video>
+    <div id="playOverlay">⏵︎</div>
     <div class="custom-controls">
-      <button id="playBtn">⏵︎</button>
       <input type="range" id="seekBar" value="0" min="0" max="100" />
       <span id="timeText">0:00 / 0:00</span>
     </div>
   `;
 
-  const playBtn = container.querySelector("#playBtn");
+  const video = container.querySelector("#videoOverlay");
+  video.src = videoOriginal.src;
+  video.currentTime = 0;
+
+  const playOverlay = container.querySelector("#playOverlay");
   const seekBar = container.querySelector("#seekBar");
   const timeText = container.querySelector("#timeText");
 
-  playBtn.onclick = () => {
+  // 再生オーバーレイクリックで開始
+  playOverlay.onclick = () => {
+    video.play();
+    playOverlay.style.display = "none";
+  };
+
+  video.onclick = () => {
     if (video.paused) {
       video.play();
     } else {
@@ -20,21 +33,24 @@ function initCustomPlayer(video) {
     }
   };
 
-  video.onplay = () => playBtn.textContent = "⏸︎";
-  video.onpause = () => playBtn.textContent = "⏵︎";
+  video.onpause = () => {
+    playOverlay.style.display = "block";
+  };
+
+  video.onplay = () => {
+    playOverlay.style.display = "none";
+  };
 
   video.ontimeupdate = () => {
     if (video.duration) {
-      const percent = (video.currentTime / video.duration) * 100;
-      seekBar.value = percent;
+      seekBar.value = (video.currentTime / video.duration) * 100;
       timeText.textContent = formatTime(video.currentTime) + " / " + formatTime(video.duration);
     }
   };
 
   seekBar.oninput = () => {
     if (video.duration) {
-      const time = (seekBar.value / 100) * video.duration;
-      video.currentTime = time;
+      video.currentTime = (seekBar.value / 100) * video.duration;
     }
   };
 }
