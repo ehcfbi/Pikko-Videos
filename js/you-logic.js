@@ -9,20 +9,20 @@ function toggleTheme() {
   const body = document.body;
   const btn = document.getElementById("themeBtn");
   const isDark = body.classList.toggle("dark");
-  btn.textContent = isDark ? "Light Mode" : "Dark Mode";
+  if (btn) btn.textContent = isDark ? "Light Mode" : "Dark Mode";
   localStorage.setItem("theme", isDark ? "dark" : "light");
 }
 
-(function applyTheme() {
+window.addEventListener("DOMContentLoaded", () => {
   const saved = localStorage.getItem("theme");
   if (saved === "dark") {
     document.body.classList.add("dark");
     const btn = document.getElementById("themeBtn");
     if (btn) btn.textContent = "Light Mode";
   }
-})();
+});
 
-// ✅ サムネイルアップロード有効化
+// ✅ サムネイル関連UI制御
 document.getElementById("useThumbUpload").addEventListener("change", () => {
   const checked = document.getElementById("useThumbUpload").checked;
   document.getElementById("thumbInput").disabled = !checked;
@@ -77,6 +77,7 @@ function renderVideos() {
 
       const list = videos.map(v => {
         const safeTitle = v.title.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const safeDescription = (v.description || "").replace(/"/g, '&quot;').replace(/\\/g, '\\\\');
         return `
           <div class="video-card">
             <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}?t=${Date.now()}" width="200"><br>
@@ -99,6 +100,7 @@ function renderVideos() {
           </div>
         `;
       }).join("");
+
       document.getElementById("list").innerHTML = list || "No videos yet.";
     });
 }
@@ -203,7 +205,7 @@ function showEdit(id, title, description) {
     <p>title</p>
     <input id="title-${id}" value="${title}" style="width: 80%;"><br>
     <p>description</p>
-    <textarea id="desc-${id}" rows="4" style="width = "80%;">${description}</textarea><br>
+    <textarea id="desc-${id}" rows="4" style="width: 80%;">${description}</textarea><br>
     <p>thumbnail</p>
     <input type="checkbox" id="useThumbEdit-${id}"> change thumbnail?<br>
     <input id="thumb-${id}" type="file" accept=".jpg" disabled><br>
