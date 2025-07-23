@@ -1,5 +1,8 @@
 function initCustomPlayer(videoUrl) {
-  const container = document.getElementById("customPlayer");
+  const containerElement =
+    document.getElementById("container") || document.getElementById("customPlayer");
+  
+  containerElement.requestFullscreen();
   const isEmbed = window.location.pathname.includes("embed");
 
   container.innerHTML = `
