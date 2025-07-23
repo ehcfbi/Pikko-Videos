@@ -19,7 +19,6 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// ✅ ダークモード切替
 function toggleTheme() {
   const body = document.body;
   const themeBtn = document.getElementById("themeBtn");
@@ -28,7 +27,6 @@ function toggleTheme() {
   localStorage.setItem("theme", isDark ? "dark" : "light");
 }
 
-// ✅ UI制御
 document.getElementById("useThumbUpload").addEventListener("change", () => {
   const checked = document.getElementById("useThumbUpload").checked;
   document.getElementById("thumbInput").disabled = !checked;
