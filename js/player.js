@@ -2,7 +2,7 @@ function initCustomPlayer(videoUrl) {
   const container = document.getElementById("customPlayer");
 
   container.innerHTML = `
-    <video id="videoOverlay" src="${videoUrl}" muted playsinline autoplay></video>
+    <video id="videoOverlay" src="${videoUrl}" playsinline autoplay></video>
     <div id="playOverlay">
       <img src="img/play.svg" alt="play" width="64" height="64">
     </div>
