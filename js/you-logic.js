@@ -4,7 +4,7 @@ document.getElementById("currentUser").textContent = me;
 document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg`;
 let sortOrder = "desc";
 
-// ✅ ダークモード初期化（確実に反映）
+// ✅ ダークモード初期化
 window.addEventListener("DOMContentLoaded", () => {
   const savedTheme = localStorage.getItem("theme");
   const body = document.body;
@@ -28,7 +28,7 @@ function toggleTheme() {
   localStorage.setItem("theme", isDark ? "dark" : "light");
 }
 
-// ✅ サムネイル関連UI制御
+// ✅ UI制御
 document.getElementById("useThumbUpload").addEventListener("change", () => {
   const checked = document.getElementById("useThumbUpload").checked;
   document.getElementById("thumbInput").disabled = !checked;
@@ -70,6 +70,7 @@ function cropImage(file, width, height, callback) {
   };
   reader.readAsDataURL(file);
 }
+
 function renderVideos() {
   fetch(`${SERVER}/videos/user/${me}`)
     .then(res => res.json())
@@ -82,7 +83,6 @@ function renderVideos() {
 
       const list = videos.map(v => {
         const safeTitle = v.title.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
         return `
           <div class="video-card">
             <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}?t=${Date.now()}" width="200"><br>
@@ -109,6 +109,7 @@ function renderVideos() {
       document.getElementById("list").innerHTML = list || "No videos yet.";
     });
 }
+
 function upload() {
   const title = document.getElementById("titleInput").value.trim();
   const file = document.getElementById("fileInput").files[0];
@@ -219,11 +220,11 @@ function showEdit(id, title, description) {
     <button onclick="submitEdit('${id}')">save</button>
     <button onclick="cancelEdit('${id}')">cancel</button>
   `;
-
   document.getElementById(`useThumbEdit-${id}`).addEventListener("change", () => {
     document.getElementById(`thumb-${id}`).disabled = !document.getElementById(`useThumbEdit-${id}`).checked;
   });
 }
+
 function cancelEdit(id) {
   document.getElementById(`edit-${id}`).innerHTML = "";
 }
