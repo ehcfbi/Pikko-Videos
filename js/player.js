@@ -3,7 +3,9 @@ function initCustomPlayer(videoUrl) {
 
   container.innerHTML = `
     <video id="videoOverlay" src="${videoUrl}" muted playsinline autoplay></video>
-    <div id="playOverlay">⏵︎</div>
+    <div id="playOverlay">
+      <img src="img/play.svg" alt="play" width="64" height="64">
+    </div>
     <div class="custom-controls">
       <input type="range" id="seekBar" value="0" min="0" max="100" />
       <span id="timeText">0:00 / 0:00</span>
