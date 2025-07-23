@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>watch - Pikko Videos</title>
@@ -20,20 +20,9 @@
   <link rel="stylesheet" href="css/player.css">
 
   <style>
-    body {
-      font-family: sans-serif;
-    }
-    .error {
-      color: red;
-      font-weight: bold;
-      margin-top: 1em;
-    }
-    .lockIcon {
-      width: 16px;
-      height: 16px;
-      vertical-align: middle;
-      margin-left: 4px;
-    }
+    body { font-family: sans-serif; }
+    .error { color: red; font-weight: bold; margin-top: 1em; }
+    .lockIcon { width: 16px; height: 16px; vertical-align: middle; margin-left: 4px; }
     .author {
       display: flex;
       align-items: center;
@@ -53,9 +42,7 @@
       background: #f0f0f0;
       margin-top: 20px;
     }
-    #controls {
-      margin-top: 10px;
-    }
+    #controls { margin-top: 10px; }
     button {
       background: #0af;
       color: white;
@@ -65,9 +52,7 @@
       cursor: pointer;
       border-radius: 4px;
     }
-    button:hover {
-      background: #09c;
-    }
+    button:hover { background: #09c; }
   </style>
 </head>
 <body class="bg-animation dark">
@@ -94,6 +79,22 @@
     function copyCode() {
       const url = `<iframe src="https://videos.bird.f5.si/embed?id=${id}" width="560" height="315" frameborder="0" allowfullscreen></iframe>`;
       navigator.clipboard.writeText(url);
+    }
+
+    function rewriteDescription(desc) {
+      const temp = document.createElement("div");
+      temp.innerHTML = desc;
+
+      const anchors = temp.querySelectorAll("a[href]");
+      anchors.forEach(a => {
+        const original = a.getAttribute("href");
+        const encoded = encodeURIComponent(original);
+        a.setAttribute("href", `redirect.html?url=${encoded}`);
+        a.setAttribute("target", "_blank");
+        a.setAttribute("rel", "noopener");
+      });
+
+      return temp.innerHTML;
     }
 
     if (!id) {
@@ -137,23 +138,25 @@
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ id, password })
               })
-                .then(res => res.ok ? res.json() : null)
-                .then(result => {
-                  if (result?.access) {
-                    showMedia(info, mediaUrl, isAudio, lockIcon, postedTime);
-                  } else {
-                    document.getElementById("errorMsg").textContent = "Incorrect password.";
-                  }
-                })
-                .catch(() => {
-                  document.getElementById("errorMsg").textContent = "Failed to verify password.";
-                });
+              .then(res => res.ok ? res.json() : null)
+              .then(result => {
+                if (result?.access) {
+                  showMedia(info, mediaUrl, isAudio, lockIcon, postedTime);
+                } else {
+                  document.getElementById("errorMsg").textContent = "Incorrect password.";
+                }
+              })
+              .catch(() => {
+                document.getElementById("errorMsg").textContent = "Failed to verify password.";
+              });
             };
           } else {
             showMedia(info, mediaUrl, isAudio, lockIcon, postedTime);
           }
 
           function showMedia(info, mediaUrl, isAudio, lockIcon, postedTime) {
+            const rewritten = rewriteDescription(info.description);
+
             content.innerHTML = `
               <h1>${info.title} ${lockIcon}</h1>
               <div class="author">
@@ -163,9 +166,9 @@
               <div style="font-size: 0.9em;">${postedTime}</div>
               ${isAudio
                 ? `<div id="waveform"></div><div id="controls"><button id="togglePlay">play</button></div>`
-                : `<div id="customPlayer" style="width:480px; height:270px;"></div>`
+                : `<div id="container"><div id="customPlayer" style="width:480px; height:270px;"></div></div>`
               }
-              <p style="white-space: pre-wrap; margin-top: 1em;">${info.description}</p>
+              <p style="white-space: pre-wrap; margin-top: 1em;" id="descriptionBox">${rewritten}</p>
             `;
 
             if (isAudio) {
