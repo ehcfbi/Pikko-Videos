@@ -4,23 +4,29 @@ document.getElementById("currentUser").textContent = me;
 document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg`;
 let sortOrder = "desc";
 
-// ✅ ダークモード機能
-function toggleTheme() {
-  const body = document.body;
-  const btn = document.getElementById("themeBtn");
-  const isDark = body.classList.toggle("dark");
-  if (btn) btn.textContent = isDark ? "Light Mode" : "Dark Mode";
-  localStorage.setItem("theme", isDark ? "dark" : "light");
-}
-
+// ✅ ダークモード初期化（テーマ状態を正しく読み込み＆表示）
 window.addEventListener("DOMContentLoaded", () => {
-  const saved = localStorage.getItem("theme");
-  if (saved === "dark") {
-    document.body.classList.add("dark");
-    const btn = document.getElementById("themeBtn");
-    if (btn) btn.textContent = "Light Mode";
+  const savedTheme = localStorage.getItem("theme");
+  const body = document.body;
+  const themeBtn = document.getElementById("themeBtn");
+
+  if (savedTheme === "dark") {
+    body.classList.add("dark");
+    if (themeBtn) themeBtn.textContent = "Light Mode";
+  } else {
+    body.classList.remove("dark");
+    if (themeBtn) themeBtn.textContent = "Dark Mode";
   }
 });
+
+// ✅ ダークモード切替
+function toggleTheme() {
+  const body = document.body;
+  const themeBtn = document.getElementById("themeBtn");
+  const isDark = body.classList.toggle("dark");
+  if (themeBtn) themeBtn.textContent = isDark ? "Light Mode" : "Dark Mode";
+  localStorage.setItem("theme", isDark ? "dark" : "light");
+}
 
 // ✅ サムネイル関連UI制御
 document.getElementById("useThumbUpload").addEventListener("change", () => {
@@ -64,7 +70,6 @@ function cropImage(file, width, height, callback) {
   };
   reader.readAsDataURL(file);
 }
-
 function renderVideos() {
   fetch(`${SERVER}/videos/user/${me}`)
     .then(res => res.json())
@@ -77,7 +82,7 @@ function renderVideos() {
 
       const list = videos.map(v => {
         const safeTitle = v.title.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        const safeDescription = (v.description || "").replace(/"/g, '&quot;').replace(/\\/g, '\\\\');
+
         return `
           <div class="video-card">
             <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}?t=${Date.now()}" width="200"><br>
@@ -104,7 +109,6 @@ function renderVideos() {
       document.getElementById("list").innerHTML = list || "No videos yet.";
     });
 }
-
 function upload() {
   const title = document.getElementById("titleInput").value.trim();
   const file = document.getElementById("fileInput").files[0];
@@ -220,7 +224,6 @@ function showEdit(id, title, description) {
     document.getElementById(`thumb-${id}`).disabled = !document.getElementById(`useThumbEdit-${id}`).checked;
   });
 }
-
 function cancelEdit(id) {
   document.getElementById(`edit-${id}`).innerHTML = "";
 }
