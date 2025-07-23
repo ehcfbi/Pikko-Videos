@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>embed - Pikko Videos</title>
+  <script>const SERVER = "https://pikko1.tcpexposer.com";</script>
+  <script src="https://unpkg.com/wavesurfer.js"></script>
+  <script src="js/player.js"></script>
+  <link rel="stylesheet" href="css/player.css">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background-color: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .media-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      max-width: 960px;
+      aspect-ratio: 16/9;
+      margin: auto;
+    }
+    .info-overlay {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      background-color: rgba(0, 0, 0, 0.5);
+      color: white;
+      font-size: 15px;
+      font-family: sans-serif;
+      padding: 6px 10px;
+      border-radius: 6px;
+      z-index: 5;
+      pointer-events: none;
+    }
+    .overlay {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      z-index: 5;
+    }
+    .thumb {
+      width: 120px;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="media-container" id="container">
+    <div class="info-overlay" id="videoInfoText">Loading...</div>
+    <div id="customPlayer" style="width:100%; height:100%;"></div>
+  </div>
+  <div class="overlay">
+    <a id="watch" href="#" target="_blank"><img src="logo.png" class="thumb" alt="logo"></a>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const id = params.get("id");
+    const container = document.getElementById("container");
+    const infoOverlay = document.getElementById("videoInfoText");
+
+    if (!id) {
+      infoOverlay.textContent = "Missing video ID.";
+    } else {
+      fetch(`${SERVER}/videoInfo/${id}`)
+        .then(res => res.ok ? res.json() : null)
+        .then(info => {
+          if (!info || !info.fileName) {
+            infoOverlay.textContent = "Video not found.";
+            return;
+          }
+
+          const ext = info.fileName.split(".").pop().toLowerCase();
+          const isAudio = ext === "mp3" || ext === "wav";
+          const mediaUrl = `${SERVER}/videos/${encodeURIComponent(info.fileName)}`;
+          document.getElementById("watch").href = `watch.html?id=${encodeURIComponent(id)}`;
+          infoOverlay.textContent = `${info.title} by ${info.username}`;
+
+          if (info.hasPassword) {
+            const authDiv = document.createElement("div");
+            authDiv.style = "position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:white; text-align:center;";
+            authDiv.innerHTML = `
+              <p>This video is locked. Please enter the password:</p>
+              <input type="password" id="embedPassInput" style="padding:6px;">
+              <button id="unlockBtn">Unlock</button>
+              <p id="embedErrorMsg" style="color:red;"></p>
+            `;
+            container.appendChild(authDiv);
+
+            document.getElementById("unlockBtn").addEventListener("click", () => {
+              const password = document.getElementById("embedPassInput").value;
+              fetch(`${SERVER}/checkAccess`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id, password })
+              })
+                .then(res => res.ok ? res.json() : null)
+                .then(result => {
+                  if (result?.access) {
+                    authDiv.remove();
+                    showEmbedMedia();
+                  } else {
+                    document.getElementById("embedErrorMsg").textContent = "Incorrect password.";
+                  }
+                })
+                .catch(() => {
+                  document.getElementById("embedErrorMsg").textContent = "Failed to check password.";
+                });
+            });
+          } else {
+            showEmbedMedia();
+          }
+
+          function showEmbedMedia() {
+            if (isAudio) {
+              // 音声プレイヤーの処理（省略可）
+              infoOverlay.textContent = info.title + " (Audio)";
+            } else {
+              fetch(mediaUrl)
+                .then(res => res.blob())
+                .then(blob => {
+                  const url = URL.createObjectURL(blob);
+                  initCustomPlayer(url); // ✅ 保存文化UI構築
+                })
+                .catch(() => {
+                  infoOverlay.textContent = "Failed to load video file.";
+                });
+            }
+          }
+        })
+        .catch(() => {
+          infoOverlay.textContent = "Failed to load data.";
+        });
+    }
+  </script>
+</body>
+</html>
