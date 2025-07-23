@@ -14,24 +14,30 @@
   position: absolute;
   width: 100%;
   height: 100%;
-  object-fit: contain; /* ← 変更点 */
+  object-fit: contain;
+  background-color: black;
   z-index: 0;
 }
 
-/* ⏵︎ 中央再生ボタン（自動表示/非表示） */
+/* ▶️ 中央再生ボタン（SVG） */
 #playOverlay {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 48px;
-  color: white;
-  display: block;
-  cursor: pointer;
   z-index: 2;
+  cursor: pointer;
+  display: block;
 }
 
-/* ⏱ 下部コントロール（再生バーなど） */
+#playOverlay img {
+  width: 64px;
+  height: 64px;
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+/* ⏱ 再生位置バー＋時間＋フルスクリーン */
 .custom-controls {
   position: absolute;
   bottom: 0;
@@ -40,6 +46,7 @@
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   gap: 8px;
+  justify-content: space-between;
   align-items: center;
   z-index: 3;
   color: white;
@@ -52,15 +59,15 @@
   background: #ccc;
   appearance: none;
   border-radius: 4px;
+  margin-right: 8px;
 }
 
-/* ⏱ 時間表示の見切れ防止 */
+/* ⏱ 時間表示（見切れ防止） */
 .custom-controls span#timeText {
-  font-size: 13px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 90px;
+  font-size: 14px;
+  min-width: 100px;
+  text-align: right;
+  flex-shrink: 0;
 }
 
 /* ⛶ フルスクリーンボタン */
@@ -87,7 +94,7 @@ body.dark .custom-controls input[type="range"] {
   background: #555;
 }
 
-/* 🕒 UI自動消去のクラス制御 */
+/* 🕒 UI自動消去（3秒静止時） */
 #customPlayer.hide-ui .custom-controls,
 #customPlayer.hide-ui #playOverlay {
   display: none !important;
