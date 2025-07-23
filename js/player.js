@@ -1,8 +1,9 @@
 function initCustomPlayer(videoUrl) {
   const container = document.getElementById("customPlayer");
+  const isEmbed = window.location.pathname.includes("embed");
 
   container.innerHTML = `
-    <video id="videoOverlay" src="${videoUrl}" playsinline autoplay></video>
+    <video id="videoOverlay" src="${videoUrl}" ${isEmbed ? "" : "autoplay"} muted playsinline></video>
     <div id="playOverlay">
       <img src="img/play.svg" alt="play" width="64" height="64">
     </div>
@@ -19,7 +20,11 @@ function initCustomPlayer(videoUrl) {
   const timeText = container.querySelector("#timeText");
   const fsBtn = container.querySelector("#fsBtn");
 
-  overlay.onclick = () => video.play();
+  overlay.onclick = () => {
+    video.muted = false;
+    video.play();
+  };
+
   video.onclick = () => video.paused ? video.play() : video.pause();
   video.onpause = () => (overlay.style.display = "block");
   video.onplay = () => (overlay.style.display = "none");
@@ -38,15 +43,15 @@ function initCustomPlayer(videoUrl) {
   };
 
   fsBtn.onclick = () => {
-    const playerBox = document.getElementById("customPlayer");
+    const container = document.getElementById("container");
     if (document.fullscreenElement) {
       document.exitFullscreen();
     } else {
-      playerBox.requestFullscreen();
+      container.requestFullscreen();
     }
   };
 
-  // 🕒 UI自動非表示管理
+  // ⏱ UI非表示ロジック（静止で消える）
   let lastMouseMove = Date.now();
   let hideTimeout;
 
@@ -58,9 +63,7 @@ function initCustomPlayer(videoUrl) {
   }
 
   function checkIdle() {
-    if (Date.now() - lastMouseMove >= 3000) {
-      hideUI();
-    }
+    if (Date.now() - lastMouseMove >= 3000) hideUI();
   }
 
   function showUI() {
