@@ -169,6 +169,7 @@ function renderVideos() {
       const list = videos.map(v => {
         const titleStr = JSON.stringify(v.title ?? "");
         const descStr = JSON.stringify(v.description ?? "");
+        
         return `
           <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
             <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}?t=${Date.now()}" width="200"><br>
