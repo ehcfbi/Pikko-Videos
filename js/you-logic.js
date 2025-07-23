@@ -81,6 +81,10 @@ function renderVideos() {
 
       const list = videos.map(v => {
         const safeTitle = v.title.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const safeId = v.id;
+        const titleStr = JSON.stringify(v.title ?? "");
+        const descStr = JSON.stringify(v.description ?? "");
+
         return `
           <div class="video-card">
             <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}?t=${Date.now()}" width="200"><br>
@@ -95,11 +99,11 @@ function renderVideos() {
               })}
             </div>
             <div class="video-actions">
-              <a href="watch?id=${v.id}">watch</a>
-              <button onclick="deleteVideo('${v.id}')">delete</button>
-              <button onclick="showEdit('${v.id}', ${JSON.stringify(v.title)}, ${JSON.stringify(v.description ?? "")})">edit</button>
+              <a href="watch?id=${safeId}">watch</a>
+              <button onclick="deleteVideo('${safeId}')">delete</button>
+              <button onclick="showEdit('${safeId}', ${titleStr}, ${descStr})">edit</button>
             </div>
-            <div id="edit-${v.id}"></div>
+            <div id="edit-${safeId}"></div>
           </div>
         `;
       }).join("");
