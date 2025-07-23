@@ -207,12 +207,17 @@ function updateIcon() {
 
 function showEdit(id, title, description) {
   const container = document.getElementById(`edit-${id}`);
+
+  // 🔒 HTML構文安全にするためのエスケープ処理
+  const safeTitle = String(title).replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const safeDesc = String(description).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
   container.innerHTML = `
     <p>Edit:</p>
     <p>title</p>
-    <input id="title-${id}" value="${title}" style="width: 80%;"><br>
+    <input id="title-${id}" value="${safeTitle}" style="width: 80%;"><br>
     <p>description</p>
-    <textarea id="desc-${id}" rows="4" style="width: 80%;">${description}</textarea><br>
+    <textarea id="desc-${id}" rows="4" style="width: 80%;">${safeDesc}</textarea><br>
     <p>thumbnail</p>
     <input type="checkbox" id="useThumbEdit-${id}"> change thumbnail?<br>
     <input id="thumb-${id}" type="file" accept=".jpg" disabled><br>
@@ -222,6 +227,8 @@ function showEdit(id, title, description) {
     <button onclick="submitEdit('${id}')">save</button>
     <button onclick="cancelEdit('${id}')">cancel</button>
   `;
+
+  // ✅ サムネイル切替の有効化
   document.getElementById(`useThumbEdit-${id}`).addEventListener("change", () => {
     document.getElementById(`thumb-${id}`).disabled = !document.getElementById(`useThumbEdit-${id}`).checked;
   });
