@@ -4,7 +4,7 @@ document.getElementById("currentUser").textContent = me;
 document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg`;
 let sortOrder = "desc";
 
-// ✅ ダークモード初期化（テーマ状態を正しく読み込み＆表示）
+// ✅ ダークモード初期化（確実に反映）
 window.addEventListener("DOMContentLoaded", () => {
   const savedTheme = localStorage.getItem("theme");
   const body = document.body;
