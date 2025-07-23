@@ -69,7 +69,13 @@
       background: #09c;
     }
 
-    /* 🎮 中央再生・一時停止ボタン */
+    .videoWrapper {
+      position: relative;
+      width: 480px;
+      height: 270px;
+      margin-top: 10px;
+    }
+
     .centerPlayPause {
       position: absolute;
       top: 50%;
@@ -79,17 +85,6 @@
       height: 64px;
       cursor: pointer;
       z-index: 10;
-      display: none;
-    }
-
-    .videoWrapper {
-      position: relative;
-      width: 480px;
-      height: 270px;
-      margin-top: 10px;
-    }
-
-    .videoWrapper:hover .centerPlayPause {
       display: block;
     }
 
@@ -299,11 +294,7 @@
           });
 
           video.addEventListener("click", () => {
-            if (video.requestFullscreen) {
-              video.requestFullscreen();
-            } else if (video.webkitEnterFullscreen) {
-              video.webkitEnterFullscreen(); // iOS Safari
-            }
+            btn.style.display = btn.style.display === "none" ? "block" : "none";
           });
 
           video.addEventListener("ended", () => {
