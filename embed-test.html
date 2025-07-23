@@ -11,19 +11,23 @@
     html, body {
       margin: 0;
       padding: 0;
+      width: 100%;
       height: 100%;
       background-color: #000;
       display: flex;
       justify-content: center;
       align-items: center;
+      font-family: sans-serif;
     }
     .media-container {
       position: relative;
       width: 100%;
       height: 100%;
-      max-width: 960px;
-      aspect-ratio: 16/9;
-      margin: auto;
+      overflow: hidden;
+    }
+    #customPlayer {
+      width: 100%;
+      height: 100%;
     }
     .info-overlay {
       position: absolute;
@@ -31,113 +35,158 @@
       left: 16px;
       background-color: rgba(0, 0, 0, 0.5);
       color: white;
+      padding: 6px 12px;
       font-size: 15px;
-      font-family: sans-serif;
-      padding: 6px 10px;
       border-radius: 6px;
       z-index: 5;
       pointer-events: none;
     }
     .overlay {
       position: absolute;
-      bottom: 16px;
+      top: 16px;
       right: 16px;
       z-index: 5;
     }
     .thumb {
-      width: 120px;
+      width: 100px;
       opacity: 0.7;
+    }
+    #waveform {
+      width: 90%;
+      height: 80px;
+      background: #111;
+      margin: 20px auto 10px;
+    }
+    #controls {
+      text-align: center;
+    }
+    button {
+      background: #0af;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    button:hover {
+      background: #09c;
     }
   </style>
 </head>
 <body>
   <div class="media-container" id="container">
     <div class="info-overlay" id="videoInfoText">Loading...</div>
-    <div id="customPlayer" style="width:100%; height:100%;"></div>
+    <div id="customPlayer"></div>
   </div>
   <div class="overlay">
-    <a id="watch" href="#" target="_blank"><img src="logo.png" class="thumb" alt="logo"></a>
+    <a id="watch" href="#"><img src="logo.png" class="thumb" alt="logo"></a>
   </div>
 
-  <script>
-    const params = new URLSearchParams(location.search);
-    const id = params.get("id");
-    const container = document.getElementById("container");
-    const infoOverlay = document.getElementById("videoInfoText");
+<script>
+const params = new URLSearchParams(location.search);
+const id = params.get("id");
+const container = document.getElementById("container");
 
-    if (!id) {
-      infoOverlay.textContent = "Missing video ID.";
-    } else {
-      fetch(`${SERVER}/videoInfo/${id}`)
-        .then(res => res.ok ? res.json() : null)
-        .then(info => {
-          if (!info || !info.fileName) {
-            infoOverlay.textContent = "Video not found.";
-            return;
-          }
+if (!id) {
+  container.innerHTML += "<p style='color:white;text-align:center;'>video ID not provided.</p>";
+} else {
+  fetch(`${SERVER}/videoInfo/${id}`)
+    .then(res => res.ok ? res.json() : null)
+    .then(info => {
+      if (!info || !info.fileName) {
+        container.innerHTML += "<p style='color:white;text-align:center;'>Video not found.</p>";
+        return;
+      }
 
-          const ext = info.fileName.split(".").pop().toLowerCase();
-          const isAudio = ext === "mp3" || ext === "wav";
-          const mediaUrl = `${SERVER}/videos/${encodeURIComponent(info.fileName)}`;
-          document.getElementById("watch").href = `watch.html?id=${encodeURIComponent(id)}`;
-          infoOverlay.textContent = `${info.title} by ${info.username}`;
+      const ext = info.fileName.split(".").pop().toLowerCase();
+      const isAudio = ext === "mp3" || ext === "wav";
+      const mediaUrl = `${SERVER}/videos/${encodeURIComponent(info.fileName)}`;
+      document.getElementById("watch").href = `watch.html?id=${encodeURIComponent(id)}`;
+      document.getElementById("videoInfoText").textContent = `${info.title} by ${info.username}`;
 
-          if (info.hasPassword) {
-            const authDiv = document.createElement("div");
-            authDiv.style = "position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:white; text-align:center;";
-            authDiv.innerHTML = `
-              <p>This video is locked. Please enter the password:</p>
-              <input type="password" id="embedPassInput" style="padding:6px;">
-              <button id="unlockBtn">Unlock</button>
-              <p id="embedErrorMsg" style="color:red;"></p>
-            `;
-            container.appendChild(authDiv);
+      if (info.hasPassword) {
+        const authDiv = document.createElement("div");
+        authDiv.style = "position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:white; text-align:center;";
+        authDiv.innerHTML = `
+          <p>This video is locked. Please enter the password:</p>
+          <input type="password" id="embedPassInput" style="padding:6px;">
+          <button id="unlockBtn">Unlock</button>
+          <p id="embedErrorMsg" style="color:red;"></p>
+        `;
+        container.appendChild(authDiv);
 
-            document.getElementById("unlockBtn").addEventListener("click", () => {
-              const password = document.getElementById("embedPassInput").value;
-              fetch(`${SERVER}/checkAccess`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id, password })
-              })
-                .then(res => res.ok ? res.json() : null)
-                .then(result => {
-                  if (result?.access) {
-                    authDiv.remove();
-                    showEmbedMedia();
-                  } else {
-                    document.getElementById("embedErrorMsg").textContent = "Incorrect password.";
-                  }
-                })
-                .catch(() => {
-                  document.getElementById("embedErrorMsg").textContent = "Failed to check password.";
-                });
+        document.getElementById("unlockBtn").addEventListener("click", () => {
+          const password = document.getElementById("embedPassInput").value;
+          fetch(`${SERVER}/checkAccess`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, password })
+          })
+            .then(res => res.ok ? res.json() : null)
+            .then(result => {
+              if (result?.access) {
+                authDiv.remove();
+                showEmbedMedia();
+              } else {
+                document.getElementById("embedErrorMsg").textContent = "Incorrect password.";
+              }
+            })
+            .catch(() => {
+              document.getElementById("embedErrorMsg").textContent = "Failed to verify password.";
             });
-          } else {
-            showEmbedMedia();
-          }
-
-          function showEmbedMedia() {
-            if (isAudio) {
-              // 音声プレイヤーの処理（省略可）
-              infoOverlay.textContent = info.title + " (Audio)";
-            } else {
-              fetch(mediaUrl)
-                .then(res => res.blob())
-                .then(blob => {
-                  const url = URL.createObjectURL(blob);
-                  initCustomPlayer(url); // ✅ 保存文化UI構築
-                })
-                .catch(() => {
-                  infoOverlay.textContent = "Failed to load video file.";
-                });
-            }
-          }
-        })
-        .catch(() => {
-          infoOverlay.textContent = "Failed to load data.";
         });
-    }
-  </script>
+      } else {
+        showEmbedMedia();
+      }
+
+      function showEmbedMedia() {
+        if (isAudio) {
+          const waveformDiv = document.createElement("div");
+          waveformDiv.id = "waveform";
+
+          const controls = document.createElement("div");
+          controls.id = "controls";
+
+          const btn = document.createElement("button");
+          btn.id = "togglePlay";
+          btn.textContent = "play";
+          controls.appendChild(btn);
+
+          container.appendChild(waveformDiv);
+          container.appendChild(controls);
+
+          const wavesurfer = WaveSurfer.create({
+            container: '#waveform',
+            waveColor: '#555',
+            progressColor: '#0af',
+            height: 80,
+            barWidth: 2,
+            responsive: true
+          });
+
+          wavesurfer.load(mediaUrl);
+
+          btn.addEventListener("click", () => wavesurfer.playPause());
+          wavesurfer.on("play", () => { btn.textContent = "pause"; });
+          wavesurfer.on("pause", () => { btn.textContent = "play"; });
+        } else {
+          fetch(mediaUrl)
+            .then(res => res.blob())
+            .then(blob => {
+              const url = URL.createObjectURL(blob);
+              initCustomPlayer(url);
+            })
+            .catch(() => {
+              container.innerHTML += "<p style='color:white;text-align:center;'>Failed to load video.</p>";
+            });
+        }
+      }
+    })
+    .catch(() => {
+      container.innerHTML += "<p style='color:white;text-align:center;'>Error loading video info.</p>";
+    });
+}
+</script>
 </body>
 </html>
