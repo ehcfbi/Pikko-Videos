@@ -82,7 +82,6 @@
   </table>
 
   <div id="content"></div>
-
   <script>
     const id = new URLSearchParams(location.search).get("id");
     const content = document.getElementById("content");
@@ -94,6 +93,29 @@
     function copyCode() {
       const url = `<iframe src="https://videos.bird.f5.si/embed?id=${id}" width="560" height="315" frameborder="0" allowfullscreen></iframe>`;
       navigator.clipboard.writeText(url);
+    }
+
+    function rewriteDescription(desc) {
+      const temp = document.createElement("div");
+      temp.innerHTML = desc;
+
+      const urls = temp.querySelectorAll("url");
+      urls.forEach(node => {
+        const parts = node.textContent.split("|");
+        const raw = parts[0]?.trim();
+        const text = parts[1]?.trim() || raw;
+        const encoded = encodeURIComponent(raw);
+
+        const a = document.createElement("a");
+        a.href = `redirect.html?url=${encoded}`;
+        a.textContent = text;
+        a.target = "_blank";
+        a.rel = "noopener";
+
+        node.replaceWith(a);
+      });
+
+      return temp.innerHTML;
     }
 
     if (!id) {
@@ -154,6 +176,7 @@
           }
 
           function showMedia(info, mediaUrl, isAudio, lockIcon, postedTime) {
+            const rewritten = rewriteDescription(info.description);
             content.innerHTML = `
               <h1>${info.title} ${lockIcon}</h1>
               <div class="author">
@@ -165,7 +188,10 @@
                 ? `<div id="waveform"></div><div id="controls"><button id="togglePlay">play</button></div>`
                 : `<div id="customPlayer" style="width:480px; height:270px;"></div>`
               }
-              <p style="white-space: pre-wrap; margin-top: 1em;">${info.description}</p>
+              ${rewritten
+                ? `<p style="white-space: pre-wrap; margin-top: 1em;">${rewritten}</p>`
+                : ""
+              }
             `;
 
             if (isAudio) {
