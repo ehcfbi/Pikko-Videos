@@ -112,103 +112,8 @@ function renderVideos() {
     });
 }
 
-function upload() {
-  const title = document.getElementById("titleInput").value.trim();
-  const file = document.getElementById("fileInput").files[0];
-  const thumbChecked = document.getElementById("useThumbUpload").checked;
-  const thumb = document.getElementById("thumbInput").files[0];
-  const thumbSizeValue = document.getElementById("thumbSize").value;
-  const [tw, th] = thumbSizeValue.split("x").map(Number);
-  const description = document.getElementById("description").value.trim();
-  const isLocked = document.getElementById("lockToggle").checked;
-  const password = document.getElementById("lockPassword").value.trim();
-  const status = document.getElementById("uploadStatus");
-
-  if (!title || !file) return alert("Enter title and file.");
-  if (file.size > 30 * 1024 * 1024) return alert("File too big.");
-  if (thumbChecked && !thumb) return alert("Select a thumbnail image.");
-  if (thumbChecked && thumb.size > 130 * 1024) return alert("Thumbnail too big.");
-  if (isLocked && !password) return alert("Enter password.");
-
-  status.innerHTML = `<span class="spinner"></span> Uploading...`;
-
-  const form = new FormData();
-  form.append("username", me);
-  form.append("title", title);
-  form.append("description", description);
-  form.append("video", file);
-  form.append("lockPassword", isLocked ? password : "");
-
-  function submit(formData) {
-    fetch(`${SERVER}/upload`, { method: "POST", body: formData })
-      .then(res => res.ok ? res.json() : Promise.reject())
-      .then(() => {
-        status.textContent = "✅ Upload successful.";
-        renderVideos();
-        resetForm();
-      })
-      .catch(() => {
-        status.textContent = "❌ Upload failed.";
-      });
-  }
-
-  function resetForm() {
-    document.getElementById("titleInput").value = "";
-    document.getElementById("fileInput").value = "";
-    document.getElementById("thumbInput").value = "";
-    document.getElementById("description").value = "";
-    document.getElementById("lockToggle").checked = false;
-    document.getElementById("lockPassword").value = "";
-    document.getElementById("lockPassword").disabled = true;
-    document.getElementById("useThumbUpload").checked = false;
-    document.getElementById("thumbInput").disabled = true;
-    document.getElementById("thumbSize").disabled = true;
-    setTimeout(() => status.textContent = "", 3000);
-  }
-
-  if (thumbChecked) {
-    cropImage(thumb, tw, th, blob => {
-      form.append("thumbnail", blob, "thumb.jpg");
-      submit(form);
-    });
-  } else {
-    submit(form);
-  }
-}
-
-function updateIcon() {
-  const input = document.getElementById("iconInput");
-  const file = input.files[0];
-  const status = document.getElementById("iconStatus");
-  if (!file) return alert("Select a .jpg image.");
-  if (file.size > 30 * 1024) return alert("Icon too big.");
-
-  status.innerHTML = `<span class="spinner"></span> Updating icon...`;
-
-  cropImage(file, 600, 600, blob => {
-    const form = new FormData();
-    form.append("username", me);
-    form.append("icon", blob, "icon.jpg");
-
-    fetch(`${SERVER}/updateIcon`, {
-      method: "POST",
-      body: form
-    })
-      .then(res => res.ok ? res.json() : Promise.reject())
-      .then(() => {
-        document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg?${Date.now()}`;
-        input.value = "";
-        status.textContent = "✅ Icon updated.";
-      })
-      .catch(() => status.textContent = "❌ Icon update failed.")
-      .finally(() => setTimeout(() => status.textContent = "", 3000));
-  });
-}
-
 function showEdit(id, title, description) {
   const container = document.getElementById(`edit-${id}`);
-
-  // 🔒 HTML構文安全にするためのエスケープ処理
   const safeTitle = String(title).replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const safeDesc = String(description).replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -228,7 +133,6 @@ function showEdit(id, title, description) {
     <button onclick="cancelEdit('${id}')">cancel</button>
   `;
 
-  // ✅ サムネイル切替の有効化
   document.getElementById(`useThumbEdit-${id}`).addEventListener("change", () => {
     document.getElementById(`thumb-${id}`).disabled = !document.getElementById(`useThumbEdit-${id}`).checked;
   });
