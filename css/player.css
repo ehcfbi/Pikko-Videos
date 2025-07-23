@@ -1,84 +1,32 @@
-#customPlayer {
+/* 🎮 動画プレイヤー用ラッパー（中央ボタン配置用） */
+.videoWrapper {
   position: relative;
-  width: 100%;
-  height: 100%;
-  background: black;
-  overflow: hidden;
+  width: 480px;
+  height: 270px;
+  margin-top: 10px;
 }
 
-/* 映像エリア */
-#videoOverlay {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  background-color: black;
-  z-index: 0;
-}
-
-/* 再生ボタン（SVG） */
-#playOverlay {
+/* ▶️⏸️ 再生・一時停止の中央操作ボタン */
+.centerPlayPause {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 2;
-  cursor: pointer;
-  display: block;
-}
-#playOverlay img {
   width: 64px;
   height: 64px;
-  opacity: 0.9;
-  pointer-events: none;
-}
-
-/* 下部コントロール */
-.custom-controls {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  padding: 8px;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  gap: 8px;
-  justify-content: space-between;
-  align-items: center;
-  z-index: 3;
-  color: white;
-}
-
-/* シークバー */
-.custom-controls input[type="range"] {
-  flex: 1;
-  height: 6px;
-  background: #ccc;
-  appearance: none;
-  border-radius: 4px;
-  margin-right: 8px;
-}
-
-/* 時間表示（見切れ防止） */
-.custom-controls span#timeText {
-  font-size: 14px;
-  min-width: 100px;
-  text-align: right;
-  flex-shrink: 0;
-}
-
-/* フルスクリーンボタン */
-.custom-controls button#fsBtn {
-  background: #0af;
-  color: white;
-  border: none;
-  padding: 6px 10px;
-  font-size: 14px;
-  border-radius: 4px;
   cursor: pointer;
+  z-index: 10;
+  display: block;
 }
 
-/* UI自動消去 */
-#customPlayer.hide-ui .custom-controls,
-#customPlayer.hide-ui #playOverlay {
-  display: none !important;
+/* SVGスタイル（色やサイズ調整） */
+.centerPlayPause svg {
+  width: 100%;
+  height: 100%;
+  fill: white;
+}
+
+/* ホバー時やタップ時に中央ボタンを表示切替する場合 */
+.videoWrapper:hover .centerPlayPause {
+  display: block;
 }
