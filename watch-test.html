@@ -93,6 +93,17 @@
       height: 100%;
       fill: white;
     }
+
+    .videoControls {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .videoControls input[type="range"] {
+      width: 200px;
+    }
   </style>
 </head>
 <body class="bg-animation dark">
@@ -230,6 +241,11 @@
                 <div class="videoWrapper">
                   <video id="videoPlayer" width="480" height="270" playsinline></video>
                   <div id="centerPlayPause" class="centerPlayPause"></div>
+                  <div class="videoControls">
+                    <input type="range" id="seekBar" min="0" value="0">
+                    <input type="range" id="volumeBar" min="0" max="1" step="0.01" value="1">
+                    <button id="fullscreenBtn">fullscreen</button>
+                  </div>
                 </div>
               `
             }
@@ -272,6 +288,9 @@
           const btn = document.getElementById("centerPlayPause");
           const playIcon = document.getElementById("playIcon").content.cloneNode(true);
           const pauseIcon = document.getElementById("pauseIcon").content.cloneNode(true);
+          const seekBar = document.getElementById("seekBar");
+          const volumeBar = document.getElementById("volumeBar");
+          const fullscreenBtn = document.getElementById("fullscreenBtn");
 
           video.src = url;
           video.controls = false;
@@ -300,6 +319,25 @@
           video.addEventListener("ended", () => {
             btn.innerHTML = "";
             btn.appendChild(playIcon);
+          });
+
+          video.addEventListener("timeupdate", () => {
+            seekBar.max = video.duration;
+            seekBar.value = video.currentTime;
+          });
+
+          seekBar.addEventListener("input", () => {
+            video.currentTime = seekBar.value;
+          });
+
+          volumeBar.addEventListener("input", () => {
+            video.volume = volumeBar.value;
+          });
+
+          fullscreenBtn.addEventListener("click", () => {
+            if (video.requestFullscreen) {
+              video.requestFullscreen();
+            }
           });
         }
       })
