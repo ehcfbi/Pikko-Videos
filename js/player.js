@@ -3,7 +3,7 @@ function initCustomPlayer(videoUrl) {
   const isEmbed = window.location.pathname.includes("embed");
 
   container.innerHTML = `
-    <video id="videoOverlay" src="${videoUrl}" ${isEmbed ? "" : "autoplay"} playsinline></video>
+    <video id="videoOverlay" src="${videoUrl}" ${isEmbed ? "" : "autoplay"} muted playsinline></video>
     <div id="playOverlay">
       <img src="img/play.svg" alt="play" width="64" height="64">
     </div>
@@ -20,7 +20,6 @@ function initCustomPlayer(videoUrl) {
   const timeText = container.querySelector("#timeText");
   const fsBtn = container.querySelector("#fsBtn");
 
-  // ▶️ 再生制御
   overlay.onclick = () => {
     video.muted = false;
     video.play();
@@ -43,10 +42,15 @@ function initCustomPlayer(videoUrl) {
     }
   };
 
-  // ⛶ フルスクリーン切替（安定化）
+  // ✅ フルスクリーンの安定化
   fsBtn.onclick = () => {
-    if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement) {
-      // ⏎ フルスクリーン解除
+    const target = document.getElementById("container") || container;
+    const fullscreenElement =
+      document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.mozFullScreenElement;
+
+    if (fullscreenElement) {
       if (document.exitFullscreen) {
         document.exitFullscreen();
       } else if (document.webkitExitFullscreen) {
@@ -55,8 +59,6 @@ function initCustomPlayer(videoUrl) {
         document.mozCancelFullScreen();
       }
     } else {
-      // ⛶ フルスクリーン開始
-      const target = document.getElementById("container") || container;
       if (target.requestFullscreen) {
         target.requestFullscreen();
       } else if (target.webkitRequestFullscreen) {
@@ -67,7 +69,7 @@ function initCustomPlayer(videoUrl) {
     }
   };
 
-  // 🕒 UI自動非表示
+  // 🕒 UI非表示
   let lastMouseMove = Date.now();
   let hideTimeout;
 
