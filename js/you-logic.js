@@ -97,7 +97,7 @@ function renderVideos() {
             <div class="video-actions">
               <a href="watch?id=${v.id}">watch</a>
               <button onclick="deleteVideo('${v.id}')">delete</button>
-              <button onclick="showEdit('${v.id}', ${JSON.stringify(v.title)}, ${JSON.stringify(v.description || "")})">edit</button>
+              <button onclick="showEdit('${v.id}', ${JSON.stringify(v.title)}, ${JSON.stringify(v.description ?? "")})">edit</button>
             </div>
             <div id="edit-${v.id}"></div>
           </div>
