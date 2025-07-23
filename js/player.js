@@ -3,6 +3,9 @@ export function initCustomPlayer(url, options = {}) {
   const btn = document.getElementById("centerPlayPause");
   const playIcon = document.getElementById("playIcon").content.cloneNode(true);
   const pauseIcon = document.getElementById("pauseIcon").content.cloneNode(true);
+  const seekBar = document.getElementById("seekBar");
+  const volumeBar = document.getElementById("volumeBar");
+  const fullscreenBtn = document.getElementById("fullscreenBtn");
 
   video.src = url;
   video.controls = false;
@@ -31,6 +34,25 @@ export function initCustomPlayer(url, options = {}) {
   video.addEventListener("ended", () => {
     btn.innerHTML = "";
     btn.appendChild(playIcon);
+  });
+
+  video.addEventListener("timeupdate", () => {
+    seekBar.max = video.duration;
+    seekBar.value = video.currentTime;
+  });
+
+  seekBar.addEventListener("input", () => {
+    video.currentTime = seekBar.value;
+  });
+
+  volumeBar.addEventListener("input", () => {
+    video.volume = volumeBar.value;
+  });
+
+  fullscreenBtn.addEventListener("click", () => {
+    if (video.requestFullscreen) {
+      video.requestFullscreen();
+    }
   });
 
   if (options?.onReady) {
