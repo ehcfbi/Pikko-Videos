@@ -3,7 +3,7 @@ function initCustomPlayer(videoUrl) {
   const isEmbed = window.location.pathname.includes("embed");
 
   container.innerHTML = `
-    <video id="videoOverlay" src="${videoUrl}" ${isEmbed ? "" : "autoplay"} muted playsinline></video>
+    <video id="videoOverlay" src="${videoUrl}" ${isEmbed ? "" : "autoplay"} playsinline></video>
     <div id="playOverlay">
       <img src="img/play.svg" alt="play" width="64" height="64">
     </div>
