@@ -3,7 +3,7 @@ function initCustomPlayer(videoUrl) {
   const isEmbed = window.location.pathname.includes("embed");
 
   container.innerHTML = `
-    <video id="videoOverlay" src="${videoUrl}" ${isEmbed ? "" : "autoplay"} playsinline></video>
+    <video id="videoOverlay" src="${videoUrl}" ${isEmbed ? "" : "autoplay"} muted playsinline></video>
     <div id="playOverlay">
       <img src="img/play.svg" alt="play" width="64" height="64">
     </div>
@@ -20,7 +20,7 @@ function initCustomPlayer(videoUrl) {
   const timeText = container.querySelector("#timeText");
   const fsBtn = container.querySelector("#fsBtn");
 
-  // 🖱 再生操作
+  // ▶️ 再生制御
   overlay.onclick = () => {
     video.muted = false;
     video.play();
@@ -30,7 +30,6 @@ function initCustomPlayer(videoUrl) {
   video.onpause = () => (overlay.style.display = "block");
   video.onplay = () => (overlay.style.display = "none");
 
-  // ⏱ 再生位置＆時間表示
   video.ontimeupdate = () => {
     if (video.duration) {
       seekBar.value = (video.currentTime / video.duration) * 100;
@@ -44,15 +43,31 @@ function initCustomPlayer(videoUrl) {
     }
   };
 
-  // ⛶ フルスクリーン切替（安全）
+  // ⛶ フルスクリーン切替（安定化）
   fsBtn.onclick = () => {
-    const target = document.getElementById("container") || document.getElementById("customPlayer");
-    if (target && target.requestFullscreen) {
-      target.requestFullscreen();
+    if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement) {
+      // ⏎ フルスクリーン解除
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen();
+      }
+    } else {
+      // ⛶ フルスクリーン開始
+      const target = document.getElementById("container") || container;
+      if (target.requestFullscreen) {
+        target.requestFullscreen();
+      } else if (target.webkitRequestFullscreen) {
+        target.webkitRequestFullscreen();
+      } else if (target.mozRequestFullScreen) {
+        target.mozRequestFullScreen();
+      }
     }
   };
 
-  // 🕒 UI自動非表示ロジック
+  // 🕒 UI自動非表示
   let lastMouseMove = Date.now();
   let hideTimeout;
 
