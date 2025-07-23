@@ -116,24 +116,23 @@
       navigator.clipboard.writeText(url);
     }
 
-    function sanitizeHTML(str) {
-      return str.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    }
-
     function rewriteDescription(desc) {
       const temp = document.createElement("div");
-      temp.innerHTML = sanitizeHTML(desc);
+      temp.innerHTML = desc;
 
-      // aタグ処理（旧仕様）
-      temp.querySelectorAll("a[href]").forEach(a => {
-        const href = encodeURIComponent(a.getAttribute("href"));
-        a.href = `redirect.html?url=${href}`;
-        a.target = "_blank";
-        a.rel = "noopener";
+      // aタグのリダイレクト処理（旧仕様）
+      const anchors = temp.querySelectorAll("a[href]");
+      anchors.forEach(a => {
+        const original = a.getAttribute("href");
+        const encoded = encodeURIComponent(original);
+        a.setAttribute("href", `redirect.html?url=${encoded}`);
+        a.setAttribute("target", "_blank");
+        a.setAttribute("rel", "noopener");
       });
 
-      // <url> タグ（新仕様）
-      temp.querySelectorAll("url[href]").forEach(node => {
+      // <url href="...">text</url> を変換（新仕様）
+      const urls = temp.querySelectorAll("url[href]");
+      urls.forEach(node => {
         const raw = node.getAttribute("href");
         const encoded = encodeURIComponent(raw);
         const text = node.textContent || raw;
@@ -222,7 +221,7 @@
               <div style="font-size: 0.9em;">${postedTime}</div>
               ${isAudio
                 ? `<div id="waveform"></div><div id="controls"><button id="togglePlay">play</button></div>`
-                : `<div id="container"><div id="customPlayer" style="width:480px; height:270px;"></div></div>`
+                : `<div id="container"><div id="customPlayer" style="width:100%; height:auto;"></div></div>`
               }
               ${rewritten
                 ? `<p style="white-space: pre-wrap; margin-top: 1em;" id="descriptionBox">${rewritten}</p>`
