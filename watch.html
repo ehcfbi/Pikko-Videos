@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
   <meta charset="UTF-8" />
   <title>watch - Pikko Videos</title>
@@ -85,6 +85,7 @@
       const temp = document.createElement("div");
       temp.innerHTML = desc;
 
+      // aタグのリダイレクト処理（旧仕様）
       const anchors = temp.querySelectorAll("a[href]");
       anchors.forEach(a => {
         const original = a.getAttribute("href");
@@ -92,6 +93,22 @@
         a.setAttribute("href", `redirect.html?url=${encoded}`);
         a.setAttribute("target", "_blank");
         a.setAttribute("rel", "noopener");
+      });
+
+      // <url href="...">text</url> を変換（新仕様）
+      const urls = temp.querySelectorAll("url[href]");
+      urls.forEach(node => {
+        const raw = node.getAttribute("href");
+        const encoded = encodeURIComponent(raw);
+        const text = node.textContent || raw;
+
+        const a = document.createElement("a");
+        a.href = `redirect.html?url=${encoded}`;
+        a.textContent = text;
+        a.target = "_blank";
+        a.rel = "noopener";
+
+        node.replaceWith(a);
       });
 
       return temp.innerHTML;
