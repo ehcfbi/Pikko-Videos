@@ -12,17 +12,33 @@
   <script>const SERVER = "https://pikko1.tcpexposer.com";</script>
 
   <script src="https://unpkg.com/wavesurfer.js"></script>
-  <script src="js/dark.js"></script>
   <script src="js/player.js"></script>
+  <script src="js/dark.js"></script>
 
   <link rel="stylesheet" href="css/animation.css">
   <link rel="stylesheet" href="css/dark.css">
   <link rel="stylesheet" href="css/player.css">
 
   <style>
-    body { font-family: sans-serif; }
+    body {
+      font-family: sans-serif;
+      background: #f5f5f5;
+      color: #222;
+    }
+    body.dark {
+      background: #111;
+      color: #eee;
+    }
+    h1, h2 {
+      color: inherit;
+    }
     .error { color: red; font-weight: bold; margin-top: 1em; }
-    .lockIcon { width: 16px; height: 16px; vertical-align: middle; margin-left: 4px; }
+    .lockIcon {
+      width: 16px;
+      height: 16px;
+      vertical-align: middle;
+      margin-left: 4px;
+    }
     .author {
       display: flex;
       align-items: center;
@@ -55,7 +71,7 @@
     button:hover { background: #09c; }
   </style>
 </head>
-<body class="bg-animation dark">
+<body class="bg-animation">
   <a href="./"><img class="logo" src="logo.png" alt="logo" width="200" height="100" /></a>
   <p><button onclick="toggleTheme()" id="themeBtn">Light Mode</button></p>
 
@@ -69,35 +85,55 @@
   <div id="content"></div>
 
   <script>
-    const id = new URLSearchParams(location.search).get("id");
-    const content = document.getElementById("content");
+    window.addEventListener("DOMContentLoaded", () => {
+      const saved = localStorage.getItem("theme");
+      const btn = document.getElementById("themeBtn");
+      const body = document.body;
+      if (saved === "dark") {
+        body.classList.add("dark");
+        if (btn) btn.textContent = "Light Mode";
+      } else {
+        body.classList.remove("dark");
+        if (btn) btn.textContent = "Dark Mode";
+      }
+    });
+
+    function toggleTheme() {
+      const body = document.body;
+      const btn = document.getElementById("themeBtn");
+      const isDark = body.classList.toggle("dark");
+      if (btn) btn.textContent = isDark ? "Light Mode" : "Dark Mode";
+      localStorage.setItem("theme", isDark ? "dark" : "light");
+    }
 
     function copyUrl() {
       navigator.clipboard.writeText(location.href);
     }
 
     function copyCode() {
+      const id = new URLSearchParams(location.search).get("id");
       const url = `<iframe src="https://videos.bird.f5.si/embed?id=${id}" width="560" height="315" frameborder="0" allowfullscreen></iframe>`;
       navigator.clipboard.writeText(url);
     }
 
+    function sanitizeHTML(str) {
+      return str.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
     function rewriteDescription(desc) {
       const temp = document.createElement("div");
-      temp.innerHTML = desc;
+      temp.innerHTML = sanitizeHTML(desc);
 
-      // aタグのリダイレクト処理（旧仕様）
-      const anchors = temp.querySelectorAll("a[href]");
-      anchors.forEach(a => {
-        const original = a.getAttribute("href");
-        const encoded = encodeURIComponent(original);
-        a.setAttribute("href", `redirect.html?url=${encoded}`);
-        a.setAttribute("target", "_blank");
-        a.setAttribute("rel", "noopener");
+      // aタグ処理（旧仕様）
+      temp.querySelectorAll("a[href]").forEach(a => {
+        const href = encodeURIComponent(a.getAttribute("href"));
+        a.href = `redirect.html?url=${href}`;
+        a.target = "_blank";
+        a.rel = "noopener";
       });
 
-      // <url href="...">text</url> を変換（新仕様）
-      const urls = temp.querySelectorAll("url[href]");
-      urls.forEach(node => {
+      // <url> タグ（新仕様）
+      temp.querySelectorAll("url[href]").forEach(node => {
         const raw = node.getAttribute("href");
         const encoded = encodeURIComponent(raw);
         const text = node.textContent || raw;
@@ -113,6 +149,9 @@
 
       return temp.innerHTML;
     }
+
+    const id = new URLSearchParams(location.search).get("id");
+    const content = document.getElementById("content");
 
     if (!id) {
       content.innerHTML = `<p class="error">Pikko and Pikko Videos couldn't find this video or music.</p>`;
@@ -131,7 +170,8 @@
           const mediaUrl = `${SERVER}/videos/${info.fileName}`;
           const lockIcon = info.hasPassword ? `<img src="img/lock.svg" alt="locked" class="lockIcon">` : "";
           const postedTime = new Date(info.date).toLocaleString("ja-JP", {
-            year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
+            year: "numeric", month: "2-digit", day: "2-digit",
+            hour: "2-digit", minute: "2-digit"
           });
 
           if (info.hasPassword) {
@@ -173,7 +213,6 @@
 
           function showMedia(info, mediaUrl, isAudio, lockIcon, postedTime) {
             const rewritten = rewriteDescription(info.description);
-
             content.innerHTML = `
               <h1>${info.title} ${lockIcon}</h1>
               <div class="author">
@@ -185,7 +224,10 @@
                 ? `<div id="waveform"></div><div id="controls"><button id="togglePlay">play</button></div>`
                 : `<div id="container"><div id="customPlayer" style="width:480px; height:270px;"></div></div>`
               }
-              <p style="white-space: pre-wrap; margin-top: 1em;" id="descriptionBox">${rewritten}</p>
+              ${rewritten
+                ? `<p style="white-space: pre-wrap; margin-top: 1em;" id="descriptionBox">${rewritten}</p>`
+                : ""
+              }
             `;
 
             if (isAudio) {
@@ -208,16 +250,20 @@
                 .then(res => res.blob())
                 .then(blob => {
                   const url = URL.createObjectURL(blob);
-                  initCustomPlayer(url);
+                  if (typeof initCustomPlayer === "function") {
+                    initCustomPlayer(url);
+                  } else {
+                    document.getElementById("container").innerHTML += `<p class="error">Player not available.</p>`;
+                  }
                 })
                 .catch(() => {
-                  content.innerHTML += `<p class="error">Failed to load video file.</p>`;
+                  document.getElementById("container").innerHTML += `<p class="error">Failed to load video file.</p>`;
                 });
             }
           }
         })
         .catch(() => {
-          content.innerHTML = `<p class="error">error</p>`;
+          content.innerHTML = `<p class="error">Unexpected error occurred.</p>`;
         });
     }
   </script>
