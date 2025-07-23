@@ -1,12 +1,9 @@
 function initCustomPlayer(videoUrl) {
-  const containerElement =
-    document.getElementById("container") || document.getElementById("customPlayer");
-  
-  containerElement.requestFullscreen();
+  const container = document.getElementById("customPlayer");
   const isEmbed = window.location.pathname.includes("embed");
 
   container.innerHTML = `
-    <video id="videoOverlay" src="${videoUrl}" ${isEmbed ? "" : "autoplay"} playsinline></video>
+    <video id="videoOverlay" src="${videoUrl}" ${isEmbed ? "" : "autoplay"} muted playsinline></video>
     <div id="playOverlay">
       <img src="img/play.svg" alt="play" width="64" height="64">
     </div>
@@ -23,6 +20,7 @@ function initCustomPlayer(videoUrl) {
   const timeText = container.querySelector("#timeText");
   const fsBtn = container.querySelector("#fsBtn");
 
+  // 🖱 再生操作
   overlay.onclick = () => {
     video.muted = false;
     video.play();
@@ -32,6 +30,7 @@ function initCustomPlayer(videoUrl) {
   video.onpause = () => (overlay.style.display = "block");
   video.onplay = () => (overlay.style.display = "none");
 
+  // ⏱ 再生位置＆時間表示
   video.ontimeupdate = () => {
     if (video.duration) {
       seekBar.value = (video.currentTime / video.duration) * 100;
@@ -45,16 +44,15 @@ function initCustomPlayer(videoUrl) {
     }
   };
 
+  // ⛶ フルスクリーン切替（安全）
   fsBtn.onclick = () => {
-    const container = document.getElementById("container");
-    if (document.fullscreenElement) {
-      document.exitFullscreen();
-    } else {
-      container.requestFullscreen();
+    const target = document.getElementById("container") || document.getElementById("customPlayer");
+    if (target && target.requestFullscreen) {
+      target.requestFullscreen();
     }
   };
 
-  // ⏱ UI非表示ロジック（静止で消える）
+  // 🕒 UI自動非表示ロジック
   let lastMouseMove = Date.now();
   let hideTimeout;
 
