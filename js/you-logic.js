@@ -10,6 +10,24 @@ document.getElementById("useThumbUpload").addEventListener("change", () => {
   document.getElementById("thumbSize").disabled = !checked;
 });
 
+// ✅ ダークモード機能（完全復元）
+function toggleTheme() {
+  const body = document.body;
+  const btn = document.getElementById("themeBtn");
+  const isDark = body.classList.toggle("dark");
+  btn.textContent = isDark ? "Light Mode" : "Dark Mode";
+  localStorage.setItem("theme", isDark ? "dark" : "light");
+}
+
+(function applyTheme() {
+  const saved = localStorage.getItem("theme");
+  if (saved === "dark") {
+    document.body.classList.add("dark");
+    const btn = document.getElementById("themeBtn");
+    if (btn) btn.textContent = "Light Mode";
+  }
+})();
+
 function setSortOrder(order) {
   sortOrder = order;
   renderVideos();
@@ -57,26 +75,29 @@ function renderVideos() {
       });
 
       const list = videos.map(v => {
+        const titleEscaped = v.title.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const descEscaped = (v.description || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         return `
-        <div class="video-card">
-          <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}?t=${Date.now()}" width="200"><br>
-          <div style="font-size: 16px; font-weight: bold;">
-            ${v.title}
-            ${v.password ? `<img src="img/lock.svg" alt="locked" class="lockIcon">` : ""}
+          <div class="video-card">
+            <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}?t=${Date.now()}" width="200"><br>
+            <div style="font-size: 16px; font-weight: bold;">
+              ${titleEscaped}
+              ${v.password ? `<img src="img/lock.svg" alt="locked" class="lockIcon">` : ""}
+            </div>
+            <div class="video-info">
+              ${new Date(v.date).toLocaleString("ja-JP", {
+                year: "numeric", month: "2-digit", day: "2-digit",
+                hour: "2-digit", minute: "2-digit"
+              })}
+            </div>
+            <div class="video-actions">
+              <a href="watch?id=${v.id}">watch</a>
+              <button onclick="deleteVideo('${v.id}')">delete</button>
+              <button onclick="showEdit('${v.id}', \`${v.title}\`, \`${v.description || ""}\`)">edit</button>
+            </div>
+            <div style="margin-top:6px; font-size:14px; color:#555;">${descEscaped}</div>
+            <div id="edit-${v.id}"></div>
           </div>
-          <div class="video-info">
-            ${new Date(v.date).toLocaleString("ja-JP", {
-              year: "numeric", month: "2-digit", day: "2-digit",
-              hour: "2-digit", minute: "2-digit"
-            })}
-          </div>
-          <div class="video-actions">
-            <a href="watch?id=${v.id}">watch</a>
-            <button onclick="deleteVideo('${v.id}')">delete</button>
-            <button onclick="showEdit('${v.id}', \`${v.title}\`, \`${v.description || ""}\`)">edit</button>
-          </div>
-          <div id="edit-${v.id}"></div>
-        </div>
         `;
       }).join("");
       document.getElementById("list").innerHTML = list || "No videos yet.";
@@ -182,21 +203,21 @@ function showEdit(id, title, description) {
     <p>Edit:</p>
     <p>title</p>
     <input id="title-${id}" value="${title}" style="width: 80%;"><br>
-    <p>description</p>
-    <textarea id="desc-${id}" rows="4" style="width: 80%;">${description}</textarea><br>
-    <p>thumbnail</p>
-    <input type="checkbox" id="useThumbEdit-${id}"> change thumbnail?<br>
-    <input id="thumb-${id}" type="file" accept=".jpg" disabled><br>
-    <p>lock</p>
-    <input type="checkbox" id="lockToggle-${id}" onchange="toggleEditLock('${id}')"> lock this file<br>
-    <input id="lockPassword-${id}" type="password" placeholder="password (if locked)" disabled><br>
-    <button onclick="submitEdit('${id}')">save</button>
-    <button onclick="cancelEdit('${id}')">cancel</button>
-  `;
+      <p>description</p>
+  <textarea id="desc-${id}" rows="4" style="width: 80%;">${description}</textarea><br>
+  <p>thumbnail</p>
+  <input type="checkbox" id="useThumbEdit-${id}"> change thumbnail?<br>
+  <input id="thumb-${id}" type="file" accept=".jpg" disabled><br>
+  <p>lock</p>
+  <input type="checkbox" id="lockToggle-${id}" onchange="toggleEditLock('${id}')"> lock this file<br>
+  <input id="lockPassword-${id}" type="password" placeholder="password (if locked)" disabled><br>
+  <button onclick="submitEdit('${id}')">save</button>
+  <button onclick="cancelEdit('${id}')">cancel</button>
+`;
 
   document.getElementById(`useThumbEdit-${id}`).addEventListener("change", () => {
     document.getElementById(`thumb-${id}`).disabled = !document.getElementById(`useThumbEdit-${id}`).checked;
-   });
+  });
 }
 
 function cancelEdit(id) {
@@ -209,11 +230,6 @@ function submitEdit(id) {
   const thumbEl = document.getElementById(`thumb-${id}`);
   const lockToggle = document.getElementById(`lockToggle-${id}`);
   const passEl = document.getElementById(`lockPassword-${id}`);
-
-  if (!titleEl || !descEl || !thumbEl || !lockToggle || !passEl) {
-    alert("編集フォームが正しく表示されていません。");
-    return;
-  }
 
   const newTitle = titleEl.value.trim();
   const newDesc = descEl.value.trim();
@@ -237,12 +253,12 @@ function submitEdit(id) {
       method: "PATCH",
       body: form
     })
-    .then(res => res.ok ? res.json() : Promise.reject())
-    .then(() => {
-      renderVideos();
-      cancelEdit(id);
-    })
-    .catch(() => alert("Failed to save edits."));
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(() => {
+        renderVideos();
+        cancelEdit(id);
+      })
+      .catch(() => alert("Failed to save edits."));
   }
 
   if (thumbChecked) {
@@ -305,11 +321,11 @@ function changeAccount() {
 }
 
 function copyUrl() {
-  const element = document.createElement('input');
+  const element = document.createElement("input");
   element.value = `https://videos.bird.f5.si/user?name=${me}`;
   document.body.appendChild(element);
   element.select();
-  document.execCommand('copy');
+  document.execCommand("copy");
   document.body.removeChild(element);
 }
 
