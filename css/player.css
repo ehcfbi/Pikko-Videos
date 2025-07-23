@@ -1,4 +1,4 @@
-/* 🎮 動画プレイヤー用ラッパー（中央ボタン配置用） */
+/* 🎬 動画プレイヤーのラッパー（相対配置） */
 .videoWrapper {
   position: relative;
   width: 480px;
@@ -6,7 +6,7 @@
   margin-top: 10px;
 }
 
-/* ▶️⏸️ 再生・一時停止の中央操作ボタン */
+/* ▶️⏸️ 中央再生・一時停止ボタン */
 .centerPlayPause {
   position: absolute;
   top: 50%;
@@ -19,14 +19,37 @@
   display: block;
 }
 
-/* SVGスタイル（色やサイズ調整） */
+/* SVGアイコンのスタイル */
 .centerPlayPause svg {
   width: 100%;
   height: 100%;
   fill: white;
 }
 
-/* ホバー時やタップ時に中央ボタンを表示切替する場合 */
-.videoWrapper:hover .centerPlayPause {
-  display: block;
+/* 💡 下部の独自コントロールバー（シークバー・音量・フルスクリーン） */
+.videoControls {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* シークバーと音量バーのサイズ調整 */
+.videoControls input[type="range"] {
+  width: 200px;
+}
+
+/* フルスクリーンボタンの見た目統一 */
+.videoControls button {
+  background: #0af;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.videoControls button:hover {
+  background: #09c;
 }
