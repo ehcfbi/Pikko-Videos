@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>redirect</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      background: #111;
+      color: white;
+      font-family: sans-serif;
+      text-align: center;
+      padding: 60px 20px;
+    }
+    a {
+      background: #0af;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 16px;
+      display: inline-block;
+      margin-top: 24px;
+    }
+    a:hover {
+      background: #09c;
+    }
+  </style>
+</head>
+<body>
+  <h2>This site is most likely not a Pikko Videos site. Would you like to visit this site?</h2>
+  <p id="linkText"></p>
+  <a id="proceedLink" href="#" target="_blank" rel="noopener">visit</a>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const url = decodeURIComponent(params.get("url") || "");
+
+    if (url.startsWith("http")) {
+      document.getElementById("linkText").textContent = url;
+      document.getElementById("proceedLink").href = url;
+    } else {
+      document.body.innerHTML = "<p>Invalid link.</p>";
+    }
+  </script>
+</body>
+</html>
