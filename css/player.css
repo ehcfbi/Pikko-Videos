@@ -2,14 +2,11 @@
   position: relative;
   width: 100%;
   height: 100%;
-  max-width: 480px;
-  max-height: 270px;
   background: black;
   overflow: hidden;
-  border-radius: 8px;
 }
 
-/* 🎬 映像 */
+/* 映像エリア */
 #videoOverlay {
   position: absolute;
   width: 100%;
@@ -19,7 +16,7 @@
   z-index: 0;
 }
 
-/* ▶️ 中央再生ボタン（SVG） */
+/* 再生ボタン（SVG） */
 #playOverlay {
   position: absolute;
   top: 50%;
@@ -29,7 +26,6 @@
   cursor: pointer;
   display: block;
 }
-
 #playOverlay img {
   width: 64px;
   height: 64px;
@@ -37,7 +33,7 @@
   pointer-events: none;
 }
 
-/* ⏱ 再生位置バー＋時間＋フルスクリーン */
+/* 下部コントロール */
 .custom-controls {
   position: absolute;
   bottom: 0;
@@ -52,7 +48,7 @@
   color: white;
 }
 
-/* 📱 シークバー */
+/* シークバー */
 .custom-controls input[type="range"] {
   flex: 1;
   height: 6px;
@@ -62,7 +58,7 @@
   margin-right: 8px;
 }
 
-/* ⏱ 時間表示（見切れ防止） */
+/* 時間表示（見切れ防止） */
 .custom-controls span#timeText {
   font-size: 14px;
   min-width: 100px;
@@ -70,7 +66,7 @@
   flex-shrink: 0;
 }
 
-/* ⛶ フルスクリーンボタン */
+/* フルスクリーンボタン */
 .custom-controls button#fsBtn {
   background: #0af;
   color: white;
@@ -81,20 +77,7 @@
   cursor: pointer;
 }
 
-body.dark .custom-controls button#fsBtn {
-  background: #444;
-}
-
-/* 🌙 ダークモード強化 */
-body.dark #customPlayer {
-  background: #111;
-}
-
-body.dark .custom-controls input[type="range"] {
-  background: #555;
-}
-
-/* 🕒 UI自動消去（3秒静止時） */
+/* UI自動消去 */
 #customPlayer.hide-ui .custom-controls,
 #customPlayer.hide-ui #playOverlay {
   display: none !important;
