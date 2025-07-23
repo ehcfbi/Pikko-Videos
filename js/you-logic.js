@@ -80,14 +80,14 @@ function renderVideos() {
       });
 
       const list = videos.map(v => {
-        const safeTitle = v.title.replace(/</g, "&lt;").replace(/>/g, "&gt;");
         const safeId = v.id;
+        const safeTitle = v.title.replace(/</g, "&lt;").replace(/>/g, "&gt;");
         const titleStr = JSON.stringify(v.title ?? "");
         const descStr = JSON.stringify(v.description ?? "");
 
         return `
           <div class="video-card">
-            <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}?t=${Date.now()}" width="200"><br>
+            <img src="${SERVER}/thumbnails/${v.thumbnail || `${safeId}.jpg`}?t=${Date.now()}" width="200"><br>
             <div style="font-size: 16px; font-weight: bold;">
               ${safeTitle}
               ${v.password ? `<img src="img/lock.svg" alt="locked" class="lockIcon">` : ""}
