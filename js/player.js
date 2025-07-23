@@ -1,4 +1,4 @@
-export function initCustomPlayer(url, options = {}) {
+function initCustomPlayer(url, options = {}) {
   const video = document.getElementById("videoPlayer");
   const btn = document.getElementById("centerPlayPause");
   const playIcon = document.getElementById("playIcon").content.cloneNode(true);
