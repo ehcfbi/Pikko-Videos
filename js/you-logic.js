@@ -4,13 +4,7 @@ document.getElementById("currentUser").textContent = me;
 document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg`;
 let sortOrder = "desc";
 
-document.getElementById("useThumbUpload").addEventListener("change", () => {
-  const checked = document.getElementById("useThumbUpload").checked;
-  document.getElementById("thumbInput").disabled = !checked;
-  document.getElementById("thumbSize").disabled = !checked;
-});
-
-// ✅ ダークモード機能（完全復元）
+// ✅ ダークモード機能
 function toggleTheme() {
   const body = document.body;
   const btn = document.getElementById("themeBtn");
@@ -27,6 +21,13 @@ function toggleTheme() {
     if (btn) btn.textContent = "Light Mode";
   }
 })();
+
+// ✅ サムネイルアップロード有効化
+document.getElementById("useThumbUpload").addEventListener("change", () => {
+  const checked = document.getElementById("useThumbUpload").checked;
+  document.getElementById("thumbInput").disabled = !checked;
+  document.getElementById("thumbSize").disabled = !checked;
+});
 
 function setSortOrder(order) {
   sortOrder = order;
@@ -75,13 +76,12 @@ function renderVideos() {
       });
 
       const list = videos.map(v => {
-        const titleEscaped = v.title.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        const descEscaped = (v.description || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const safeTitle = v.title.replace(/</g, "&lt;").replace(/>/g, "&gt;");
         return `
           <div class="video-card">
             <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}?t=${Date.now()}" width="200"><br>
             <div style="font-size: 16px; font-weight: bold;">
-              ${titleEscaped}
+              ${safeTitle}
               ${v.password ? `<img src="img/lock.svg" alt="locked" class="lockIcon">` : ""}
             </div>
             <div class="video-info">
@@ -93,9 +93,8 @@ function renderVideos() {
             <div class="video-actions">
               <a href="watch?id=${v.id}">watch</a>
               <button onclick="deleteVideo('${v.id}')">delete</button>
-              <button onclick="showEdit('${v.id}', \`${v.title}\`, \`${v.description || ""}\`)">edit</button>
+              <button onclick="showEdit('${v.id}', ${JSON.stringify(v.title)}, ${JSON.stringify(v.description || "")})">edit</button>
             </div>
-            <div style="margin-top:6px; font-size:14px; color:#555;">${descEscaped}</div>
             <div id="edit-${v.id}"></div>
           </div>
         `;
@@ -203,17 +202,17 @@ function showEdit(id, title, description) {
     <p>Edit:</p>
     <p>title</p>
     <input id="title-${id}" value="${title}" style="width: 80%;"><br>
-      <p>description</p>
-  <textarea id="desc-${id}" rows="4" style="width: 80%;">${description}</textarea><br>
-  <p>thumbnail</p>
-  <input type="checkbox" id="useThumbEdit-${id}"> change thumbnail?<br>
-  <input id="thumb-${id}" type="file" accept=".jpg" disabled><br>
-  <p>lock</p>
-  <input type="checkbox" id="lockToggle-${id}" onchange="toggleEditLock('${id}')"> lock this file<br>
-  <input id="lockPassword-${id}" type="password" placeholder="password (if locked)" disabled><br>
-  <button onclick="submitEdit('${id}')">save</button>
-  <button onclick="cancelEdit('${id}')">cancel</button>
-`;
+    <p>description</p>
+    <textarea id="desc-${id}" rows="4" style="width = "80%;">${description}</textarea><br>
+    <p>thumbnail</p>
+    <input type="checkbox" id="useThumbEdit-${id}"> change thumbnail?<br>
+    <input id="thumb-${id}" type="file" accept=".jpg" disabled><br>
+    <p>lock</p>
+    <input type="checkbox" id="lockToggle-${id}" onchange="toggleEditLock('${id}')"> lock this file<br>
+    <input id="lockPassword-${id}" type="password" placeholder="password (if locked)" disabled><br>
+    <button onclick="submitEdit('${id}')">save</button>
+    <button onclick="cancelEdit('${id}')">cancel</button>
+  `;
 
   document.getElementById(`useThumbEdit-${id}`).addEventListener("change", () => {
     document.getElementById(`thumb-${id}`).disabled = !document.getElementById(`useThumbEdit-${id}`).checked;
