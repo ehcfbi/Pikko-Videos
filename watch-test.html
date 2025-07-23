@@ -106,7 +106,7 @@
         const text = node.textContent || raw;
 
         const a = document.createElement("a");
-        a.href = `redirect.html?url=${encoded}`;
+        a.href = `redirect?url=${encoded}`;
         a.textContent = text;
         a.target = "_blank";
         a.rel = "noopener";
