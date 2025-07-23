@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>watch - Pikko Videos</title>
@@ -99,17 +99,19 @@
       const temp = document.createElement("div");
       temp.innerHTML = desc;
 
-      const urls = temp.querySelectorAll("url[href]");
+      const urls = temp.querySelectorAll("url");
       urls.forEach(node => {
-        const raw = node.getAttribute("href");
+        const parts = node.textContent.split("|");
+        const raw = parts[0]?.trim();
+        const text = parts[1]?.trim() || raw;
         const encoded = encodeURIComponent(raw);
-        const text = node.textContent || raw;
 
         const a = document.createElement("a");
-        a.href = `redirect?url=${encoded}`;
+        a.href = `redirect.html?url=${encoded}`;
         a.textContent = text;
         a.target = "_blank";
         a.rel = "noopener";
+
         node.replaceWith(a);
       });
 
