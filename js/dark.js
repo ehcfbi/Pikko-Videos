@@ -1,35 +1,29 @@
-// 初期設定：localStorageの値に基づいてテーマを反映
-const savedTheme = localStorage.getItem("theme");
-const body = document.body;
-const themeBtn = document.getElementById("themeBtn");
-
-if (savedTheme === "dark") {
-  body.classList.add("dark");
-  if (themeBtn) themeBtn.textContent = "Light Mode";
-} else {
-  body.classList.remove("dark");
-  if (themeBtn) themeBtn.textContent = "Dark Mode";
-}
-
-// テーマ切り替え関数
 function toggleTheme() {
-  const body = document.body;
-  const themeBtn = document.getElementById("themeBtn");
+  const dark = document.body.classList.toggle("dark");
+  localStorage.setItem("theme", dark ? "dark" : "light");
 
-  if (body.classList.contains("dark")) {
-    body.classList.remove("dark");
-    localStorage.setItem("theme", "light");
-    if (themeBtn) themeBtn.textContent = "Dark Mode";
-  } else {
-    body.classList.add("dark");
-    localStorage.setItem("theme", "dark");
-    if (themeBtn) themeBtn.textContent = "Light Mode";
+  const themeBtn = document.getElementById("themeBtn");
+  if (themeBtn) {
+    themeBtn.textContent = dark ? "Dark Mode" : "Light Mode";
   }
 
-  // 💡 シークバー更新（存在する場合）
-  if (window.updateSeekBarColor) {
-    setTimeout(() => {
-      updateSeekBarColor();
-    }, 50);
+  const logoImg = document.querySelector(".logo");
+  if (logoImg) {
+    logoImg.src = dark ? "./logo_glow.png" : "./logo.png";
   }
 }
+
+window.addEventListener("DOMContentLoaded", () => {
+  const saved = localStorage.getItem("theme");
+  const themeBtn = document.getElementById("themeBtn");
+  const logoImg = document.querySelector(".logo");
+
+  if (saved === "dark") {
+    document.body.classList.add("dark");
+    if (themeBtn) themeBtn.textContent = "Dark Mode";
+    if (logoImg) logoImg.src = "./logo_glow.png";
+  } else {
+    if (themeBtn) themeBtn.textContent = "Light Mode";
+    if (logoImg) logoImg.src = "./logo.png";
+  }
+});
