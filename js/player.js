@@ -16,7 +16,7 @@ function initCustomPlayer(url, options = {}) {
 
   updateSeekBarColor();
 
-  // 🔘 タップでコントロール表示／非表示の切り替え
+  // 🔘 タップで UI 表示／非表示の切り替え
   video.addEventListener("click", () => {
     if (wrapper.classList.contains("hide-controls")) {
       wrapper.classList.remove("hide-controls");
@@ -27,7 +27,7 @@ function initCustomPlayer(url, options = {}) {
     }
   });
 
-  // 🖱️ ホバー時に表示→3秒後に自動非表示
+  // 🖱️ ホバー時に表示し、3秒後に自動非表示
   wrapper.addEventListener("mouseenter", () => {
     wrapper.classList.remove("hide-controls");
     resetControlTimeout();
@@ -62,6 +62,7 @@ function initCustomPlayer(url, options = {}) {
       video.pause();
       setPlayIcon();
     }
+    resetControlTimeout(); // 再操作時にも自動非表示のタイマー再設定
   });
 
   fullscreenBtn.addEventListener("click", () => {
@@ -70,11 +71,13 @@ function initCustomPlayer(url, options = {}) {
     } else {
       wrapper.requestFullscreen();
     }
+    resetControlTimeout();
   });
 
   seekBar.addEventListener("input", () => {
     video.currentTime = seekBar.value;
     updateSeekBarColor();
+    resetControlTimeout();
   });
 
   video.addEventListener("timeupdate", () => {
@@ -83,8 +86,16 @@ function initCustomPlayer(url, options = {}) {
     updateSeekBarColor();
   });
 
-  video.addEventListener("play", setPauseIcon);
-  video.addEventListener("pause", setPlayIcon);
+  video.addEventListener("play", () => {
+    setPauseIcon();
+    resetControlTimeout();
+  });
+
+  video.addEventListener("pause", () => {
+    setPlayIcon();
+    resetControlTimeout();
+  });
+
   video.addEventListener("ended", setPlayIcon);
 
   function updateSeekBarColor() {
@@ -103,10 +114,11 @@ function initCustomPlayer(url, options = {}) {
     video.addEventListener("loadeddata", options.onReady);
   }
 
-  // 初期表示の中央ボタンアイコン
   if (video.paused) {
     setPlayIcon();
   } else {
     setPauseIcon();
   }
+
+  resetControlTimeout(); // 初期表示時にも自動消失タイマーを開始
 }
