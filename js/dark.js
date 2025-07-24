@@ -1,35 +1,35 @@
 // 初期設定：localStorageの値に基づいてテーマを反映
 const savedTheme = localStorage.getItem("theme");
+const body = document.body;
+const themeBtn = document.getElementById("themeBtn");
+
 if (savedTheme === "dark") {
-  document.body.classList.add("dark");
-  document.getElementById("themeBtn").textContent = "Light Mode";
+  body.classList.add("dark");
+  if (themeBtn) themeBtn.textContent = "Light Mode";
 } else {
-  document.body.classList.remove("dark");
-  document.getElementById("themeBtn").textContent = "Dark Mode";
+  body.classList.remove("dark");
+  if (themeBtn) themeBtn.textContent = "Dark Mode";
 }
 
-// 切り替えボタン
+// テーマ切り替え関数
 function toggleTheme() {
   const body = document.body;
   const themeBtn = document.getElementById("themeBtn");
 
   if (body.classList.contains("dark")) {
     body.classList.remove("dark");
-    themeBtn.textContent = "Dark Mode";
     localStorage.setItem("theme", "light");
+    if (themeBtn) themeBtn.textContent = "Dark Mode";
   } else {
     body.classList.add("dark");
-    themeBtn.textContent = "Light Mode";
     localStorage.setItem("theme", "dark");
+    if (themeBtn) themeBtn.textContent = "Light Mode";
   }
 
-  // 💡 シークバーの色を即座に更新
-  const video = document.getElementById("videoPlayer");
-  const seekBar = document.getElementById("seekBar");
-  if (video && seekBar) {
-    const percent = (video.currentTime / video.duration) * 100;
-    const fillColor = body.classList.contains("dark") ? "#a03070" : "#ff0";
-    const bgColor = body.classList.contains("dark") ? "#666" : "#ccc";
-    seekBar.style.background = `linear-gradient(to right, ${fillColor} 0%, ${fillColor} ${percent}%, ${bgColor} ${percent}%)`;
+  // 💡 シークバー更新（存在する場合）
+  if (window.updateSeekBarColor) {
+    setTimeout(() => {
+      updateSeekBarColor();
+    }, 50);
   }
 }
