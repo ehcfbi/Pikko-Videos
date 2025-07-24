@@ -23,23 +23,27 @@
     body {
       font-family: sans-serif;
     }
+
     .error {
       color: red;
       font-weight: bold;
       margin-top: 1em;
     }
+
     .lockIcon {
       width: 16px;
       height: 16px;
       vertical-align: middle;
       margin-left: 4px;
     }
+
     .author {
       display: flex;
       align-items: center;
       margin-top: 4px;
       margin-bottom: 6px;
     }
+
     .author img {
       width: 40px;
       height: 40px;
@@ -47,6 +51,7 @@
       margin-right: 8px;
       object-fit: cover;
     }
+
     button {
       background: #0af;
       color: white;
@@ -56,17 +61,19 @@
       cursor: pointer;
       border-radius: 4px;
     }
+
     button:hover {
       background: #09c;
     }
 
-    /* 🎮 独自プレイヤーコントロール用スタイル */
+    /* 🎬 独自プレイヤー UI */
     .videoWrapper {
       position: relative;
       width: 480px;
       height: 270px;
       margin-top: 10px;
     }
+
     #videoPlayer {
       width: 100%;
       height: 100%;
@@ -82,7 +89,11 @@
       cursor: pointer;
       z-index: 10;
       display: block;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease;
     }
+
     .centerPlayPause svg {
       width: 100%;
       height: 100%;
@@ -98,6 +109,9 @@
       justify-content: space-between;
       align-items: center;
       z-index: 10;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease;
     }
 
     .seekWrapper {
@@ -119,7 +133,7 @@
       appearance: none;
       width: 12px;
       height: 12px;
-      background: #90ee90; /* ライトモード: 黄緑 */
+      background: #90ee90;
       border-radius: 50%;
       cursor: pointer;
       position: relative;
@@ -144,38 +158,24 @@
       cursor: pointer;
     }
 
-    /* ダークモード用カラーテーマ */
-    body.dark input[type="range"].seekBar {
-      background: #666;
-    }
-    body.dark input[type="range"].seekBar::-webkit-slider-thumb {
-      background: #ff8080; /* 明るい赤+黒要素 */
-    }
-    body.dark input[type="range"].seekBar::-moz-range-thumb {
-      background: #ff8080;
-    }
-
-    /* ライトモードのバー色（見終わった部分）に黄色系追加予定 */
-    input[type="range"].seekBar.light-complete {
-      background: linear-gradient(to right, #ff0 0%, #ccc 0%);
-    }
-    /* ダークモードのバー色（見終わった部分）に暗フクシャ色追加予定 */
-    body.dark input[type="range"].seekBar.dark-complete {
-      background: linear-gradient(to right, #a03070 0%, #666 0%);
-    }
-
-    /* カーソル表示時にコントロールを見せる */
+    /* ホバー時に表示 */
     .videoWrapper:hover .videoControls,
     .videoWrapper:hover .centerPlayPause {
       opacity: 1;
       visibility: visible;
     }
 
-    .videoControls,
-    .centerPlayPause {
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.3s ease;
+    /* ダークモード */
+    body.dark input[type="range"].seekBar {
+      background: #666;
+    }
+
+    body.dark input[type="range"].seekBar::-webkit-slider-thumb {
+      background: #ff8080;
+    }
+
+    body.dark input[type="range"].seekBar::-moz-range-thumb {
+      background: #ff8080;
     }
   </style>
 </head>
@@ -345,72 +345,6 @@
                   content.innerHTML += `<p class="error">Failed to load video file.</p>`;
                 });
             }
-          }
-
-          function initCustomPlayer(url) {
-            const video = document.getElementById("videoPlayer");
-            const playIcon = document.getElementById("playIcon").content.cloneNode(true);
-            const pauseIcon = document.getElementById("pauseIcon").content.cloneNode(true);
-            const btn = document.getElementById("centerPlayPause");
-            const seekBar = document.getElementById("seekBar");
-            const fullscreenBtn = document.getElementById("fullscreenBtn");
-
-            video.src = url;
-            video.controls = false;
-            video.autoplay = true;
-            video.playsInline = true;
-
-            btn.innerHTML = "";
-            btn.appendChild(pauseIcon);
-
-            btn.addEventListener("click", () => {
-              if (video.paused) {
-                video.play();
-                btn.innerHTML = "";
-                btn.appendChild(pauseIcon);
-              } else {
-                video.pause();
-                btn.innerHTML = "";
-                btn.appendChild(playIcon);
-              }
-            });
-
-            video.addEventListener("timeupdate", () => {
-              seekBar.max = video.duration;
-              seekBar.value = video.currentTime;
-              const percent = (video.currentTime / video.duration) * 100;
-              const thumbColor = document.body.classList.contains("dark") ? "#ff8080" : "#90ee90";
-              const fillColor = document.body.classList.contains("dark") ? "#a03070" : "#ff0";
-              const bgColor = document.body.classList.contains("dark") ? "#666" : "#ccc";
-              seekBar.style.background = `linear-gradient(to right, ${fillColor} 0%, ${fillColor} ${percent}%, ${bgColor} ${percent}%)`;
-            });
-
-            seekBar.addEventListener("input", () => {
-              video.currentTime = seekBar.value;
-            });
-
-            fullscreenBtn.addEventListener("click", () => {
-              if (document.fullscreenElement) {
-                document.exitFullscreen();
-              } else {
-                video.closest(".videoWrapper").requestFullscreen();
-              }
-            });
-
-            video.addEventListener("ended", () => {
-              btn.innerHTML = "";
-              btn.appendChild(playIcon);
-            });
-
-            video.addEventListener("play", () => {
-              btn.innerHTML = "";
-              btn.appendChild(pauseIcon);
-            });
-
-            video.addEventListener("pause", () => {
-              btn.innerHTML = "";
-              btn.appendChild(playIcon);
-            });
           }
         })
         .catch(() => {
