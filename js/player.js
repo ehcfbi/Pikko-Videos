@@ -5,49 +5,44 @@ function initCustomPlayer(url, options = {}) {
   const btn = document.getElementById("centerPlayPause");
   const seekBar = document.getElementById("seekBar");
   const fullscreenBtn = document.getElementById("fullscreenBtn");
-
-  video.addEventListener("click", () => {
   const wrapper = video.closest(".videoWrapper");
-  wrapper.classList.toggle("hide-controls");
-});
+
+  let controlTimeout;
+
   video.src = url;
   video.controls = false;
   video.autoplay = true;
   video.playsInline = true;
 
-  const wrapper = video.closest(".videoWrapper");
-let controlTimeout;
+  updateSeekBarColor();
 
-// ホバー時に表示し、数秒後に自動非表示
-wrapper.addEventListener("mouseenter", () => {
-  wrapper.classList.remove("hide-controls");
-  resetControlTimeout();
-});
+  // 🔘 タップでコントロール表示／非表示の切り替え
+  video.addEventListener("click", () => {
+    if (wrapper.classList.contains("hide-controls")) {
+      wrapper.classList.remove("hide-controls");
+      resetControlTimeout();
+    } else {
+      wrapper.classList.add("hide-controls");
+      clearTimeout(controlTimeout);
+    }
+  });
 
-wrapper.addEventListener("mouseleave", () => {
-  resetControlTimeout();
-});
-
-// 動画タップによるトグルは既存のまま（以下に追加）
-video.addEventListener("click", () => {
-  if (wrapper.classList.contains("hide-controls")) {
+  // 🖱️ ホバー時に表示→3秒後に自動非表示
+  wrapper.addEventListener("mouseenter", () => {
     wrapper.classList.remove("hide-controls");
     resetControlTimeout();
-  } else {
-    wrapper.classList.add("hide-controls");
+  });
+
+  wrapper.addEventListener("mouseleave", () => {
+    resetControlTimeout();
+  });
+
+  function resetControlTimeout() {
     clearTimeout(controlTimeout);
+    controlTimeout = setTimeout(() => {
+      wrapper.classList.add("hide-controls");
+    }, 3000);
   }
-});
-
-// 自動非表示タイマー
-function resetControlTimeout() {
-  clearTimeout(controlTimeout);
-  controlTimeout = setTimeout(() => {
-    wrapper.classList.add("hide-controls");
-  }, 3000); // 表示後3秒で非表示
-}
-
-  updateSeekBarColor();
 
   function setPlayIcon() {
     btn.innerHTML = "";
@@ -70,7 +65,6 @@ function resetControlTimeout() {
   });
 
   fullscreenBtn.addEventListener("click", () => {
-    const wrapper = video.closest(".videoWrapper");
     if (document.fullscreenElement) {
       document.exitFullscreen();
     } else {
@@ -103,14 +97,13 @@ function resetControlTimeout() {
     seekBar.style.background = `linear-gradient(to right, ${fillColor} 0%, ${fillColor} ${percent}%, ${bgColor} ${percent}%)`;
   }
 
-  // 外部からモード切替後に色更新したい場合
   window.updateSeekBarColor = updateSeekBarColor;
 
   if (options?.onReady) {
     video.addEventListener("loadeddata", options.onReady);
   }
 
-  // 初期表示時にアイコンをセット
+  // 初期表示の中央ボタンアイコン
   if (video.paused) {
     setPlayIcon();
   } else {
