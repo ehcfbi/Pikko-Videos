@@ -1,84 +1,110 @@
-#customPlayer {
+.videoWrapper {
   position: relative;
-  width: 100%;
-  height: 100%;
-  background: black;
-  overflow: hidden;
+  width: 480px;
+  height: 270px;
+  margin-top: 10px;
 }
 
-/* 映像エリア */
-#videoOverlay {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  background-color: black;
-  z-index: 0;
-}
-
-/* 再生ボタン（SVG） */
-#playOverlay {
+/* 中央再生／一時停止ボタン */
+.centerPlayPause {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 2;
-  cursor: pointer;
-  display: block;
-}
-#playOverlay img {
   width: 64px;
   height: 64px;
-  opacity: 0.9;
-  pointer-events: none;
+  cursor: pointer;
+  z-index: 10;
+  display: block;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease;
+}
+.centerPlayPause svg {
+  width: 100%;
+  height: 100%;
+  fill: white;
 }
 
-/* 下部コントロール */
-.custom-controls {
+/* 下部のコントロールバー */
+.videoControls {
   position: absolute;
-  bottom: 0;
-  width: 100%;
-  padding: 8px;
-  background: rgba(0, 0, 0, 0.5);
+  bottom: 8px;
+  left: 8px;
+  right: 8px;
   display: flex;
-  gap: 8px;
   justify-content: space-between;
   align-items: center;
-  z-index: 3;
-  color: white;
+  z-index: 10;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease;
 }
-
-/* シークバー */
-.custom-controls input[type="range"] {
+.seekWrapper {
   flex: 1;
-  height: 6px;
-  background: #ccc;
-  appearance: none;
-  border-radius: 4px;
-  margin-right: 8px;
+  margin-right: 10px;
 }
 
-/* 時間表示（見切れ防止） */
-.custom-controls span#timeText {
-  font-size: 14px;
-  min-width: 100px;
-  text-align: right;
-  flex-shrink: 0;
+input[type="range"].seekBar {
+  width: 100%;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: #ccc;
+  position: relative;
+  overflow: hidden;
+}
+input[type="range"].seekBar::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  background: #90ee90;
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+}
+input[type="range"].seekBar::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  background: #90ee90;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
 }
 
 /* フルスクリーンボタン */
-.custom-controls button#fsBtn {
-  background: #0af;
+.fullscreenBtn {
+  background: rgba(0,0,0,0.4);
   color: white;
-  border: none;
-  padding: 6px 10px;
-  font-size: 14px;
+  font-size: 13px;
+  padding: 4px 10px;
   border-radius: 4px;
   cursor: pointer;
 }
 
-/* UI自動消去 */
-#customPlayer.hide-ui .custom-controls,
-#customPlayer.hide-ui #playOverlay {
-  display: none !important;
+/* ホバー・カーソル表示時にUI表示 */
+.videoWrapper:hover .videoControls,
+.videoWrapper:hover .centerPlayPause {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ダークモードの色調整 */
+body.dark input[type="range"].seekBar {
+  background: #666;
+}
+body.dark input[type="range"].seekBar::-webkit-slider-thumb {
+  background: #ff8080;
+}
+body.dark input[type="range"].seekBar::-moz-range-thumb {
+  background: #ff8080;
+}
+
+/* シークバーの再生進行に応じた背景（設定はJSで行う） */
+input[type="range"].seekBar.light-complete {
+  background: linear-gradient(to right, #ff0 0%, #ccc 0%);
+}
+body.dark input[type="range"].seekBar.dark-complete {
+  background: linear-gradient(to right, #a03070 0%, #666 0%);
 }
