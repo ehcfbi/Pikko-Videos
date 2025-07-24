@@ -108,3 +108,9 @@ input[type="range"].seekBar.light-complete {
 body.dark input[type="range"].seekBar.dark-complete {
   background: linear-gradient(to right, #a03070 0%, #666 0%);
 }
+
+.hide-controls .centerPlayPause,
+.hide-controls .videoControls {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
