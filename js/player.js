@@ -11,33 +11,26 @@ function initCustomPlayer(url, options = {}) {
   video.autoplay = true;
   video.playsInline = true;
 
-  btn.innerHTML = "";
-  btn.appendChild(pauseIcon);
+  updateSeekBarColor();
+
+  function setPlayIcon() {
+    btn.innerHTML = "";
+    btn.appendChild(playIcon.cloneNode(true));
+  }
+
+  function setPauseIcon() {
+    btn.innerHTML = "";
+    btn.appendChild(pauseIcon.cloneNode(true));
+  }
 
   btn.addEventListener("click", () => {
     if (video.paused) {
       video.play();
-      btn.innerHTML = "";
-      btn.appendChild(pauseIcon);
+      setPauseIcon();
     } else {
       video.pause();
-      btn.innerHTML = "";
-      btn.appendChild(playIcon);
+      setPlayIcon();
     }
-  });
-
-  video.addEventListener("timeupdate", () => {
-    seekBar.max = video.duration;
-    seekBar.value = video.currentTime;
-    const percent = (video.currentTime / video.duration) * 100;
-    const thumbColor = document.body.classList.contains("dark") ? "#ff8080" : "#90ee90";
-    const fillColor = document.body.classList.contains("dark") ? "#a03070" : "#ff0";
-    const bgColor = document.body.classList.contains("dark") ? "#666" : "#ccc";
-    seekBar.style.background = `linear-gradient(to right, ${fillColor} 0%, ${fillColor} ${percent}%, ${bgColor} ${percent}%)`;
-  });
-
-  seekBar.addEventListener("input", () => {
-    video.currentTime = seekBar.value;
   });
 
   fullscreenBtn.addEventListener("click", () => {
@@ -49,22 +42,42 @@ function initCustomPlayer(url, options = {}) {
     }
   });
 
-  video.addEventListener("ended", () => {
-    btn.innerHTML = "";
-    btn.appendChild(playIcon);
+  seekBar.addEventListener("input", () => {
+    video.currentTime = seekBar.value;
+    updateSeekBarColor();
   });
 
-  video.addEventListener("play", () => {
-    btn.innerHTML = "";
-    btn.appendChild(pauseIcon);
+  video.addEventListener("timeupdate", () => {
+    seekBar.max = video.duration;
+    seekBar.value = video.currentTime;
+    updateSeekBarColor();
   });
 
-  video.addEventListener("pause", () => {
-    btn.innerHTML = "";
-    btn.appendChild(playIcon);
-  });
+  video.addEventListener("play", setPauseIcon);
+  video.addEventListener("pause", setPlayIcon);
+  video.addEventListener("ended", setPlayIcon);
+
+  function updateSeekBarColor() {
+    if (!seekBar || !video || !video.duration) return;
+
+    const percent = (video.currentTime / video.duration) * 100;
+    const isDark = document.body.classList.contains("dark");
+    const fillColor = isDark ? "#a03070" : "#ff0";
+    const bgColor = isDark ? "#666" : "#ccc";
+    seekBar.style.background = `linear-gradient(to right, ${fillColor} 0%, ${fillColor} ${percent}%, ${bgColor} ${percent}%)`;
+  }
+
+  // 外部からモード切替後に色更新したい場合
+  window.updateSeekBarColor = updateSeekBarColor;
 
   if (options?.onReady) {
     video.addEventListener("loadeddata", options.onReady);
+  }
+
+  // 初期表示時にアイコンをセット
+  if (video.paused) {
+    setPlayIcon();
+  } else {
+    setPauseIcon();
   }
 }
