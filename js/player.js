@@ -1,103 +1,70 @@
-function initCustomPlayer(videoUrl) {
-  const container = document.getElementById("customPlayer");
-  const isEmbed = window.location.pathname.includes("embed");
+function initCustomPlayer(url, options = {}) {
+  const video = document.getElementById("videoPlayer");
+  const playIcon = document.getElementById("playIcon").content.cloneNode(true);
+  const pauseIcon = document.getElementById("pauseIcon").content.cloneNode(true);
+  const btn = document.getElementById("centerPlayPause");
+  const seekBar = document.getElementById("seekBar");
+  const fullscreenBtn = document.getElementById("fullscreenBtn");
 
-  container.innerHTML = `
-    <video id="videoOverlay" src="${videoUrl}" ${isEmbed ? "" : "autoplay"} playsinline></video>
-    <div id="playOverlay">
-      <img src="img/play.svg" alt="play" width="64" height="64">
-    </div>
-    <div class="custom-controls">
-      <input type="range" id="seekBar" value="0" min="0" max="100" />
-      <span id="timeText">0:00 / 0:00</span>
-      <button id="fsBtn">⛶</button>
-    </div>
-  `;
+  video.src = url;
+  video.controls = false;
+  video.autoplay = true;
+  video.playsInline = true;
 
-  const video = container.querySelector("#videoOverlay");
-  const overlay = container.querySelector("#playOverlay");
-  const seekBar = container.querySelector("#seekBar");
-  const timeText = container.querySelector("#timeText");
-  const fsBtn = container.querySelector("#fsBtn");
+  btn.innerHTML = "";
+  btn.appendChild(pauseIcon);
 
-  overlay.onclick = () => {
-    video.muted = false;
-    video.play();
-  };
-
-  video.onclick = () => video.paused ? video.play() : video.pause();
-  video.onpause = () => (overlay.style.display = "block");
-  video.onplay = () => (overlay.style.display = "none");
-
-  video.ontimeupdate = () => {
-    if (video.duration) {
-      seekBar.value = (video.currentTime / video.duration) * 100;
-      timeText.textContent = formatTime(video.currentTime) + " / " + formatTime(video.duration);
-    }
-  };
-
-  seekBar.oninput = () => {
-    if (video.duration) {
-      video.currentTime = (seekBar.value / 100) * video.duration;
-    }
-  };
-
-  // ✅ フルスクリーンの安定化
-  fsBtn.onclick = () => {
-    const target = document.getElementById("container") || container;
-    const fullscreenElement =
-      document.fullscreenElement ||
-      document.webkitFullscreenElement ||
-      document.mozFullScreenElement;
-
-    if (fullscreenElement) {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
-      } else if (document.mozCancelFullScreen) {
-        document.mozCancelFullScreen();
-      }
+  btn.addEventListener("click", () => {
+    if (video.paused) {
+      video.play();
+      btn.innerHTML = "";
+      btn.appendChild(pauseIcon);
     } else {
-      if (target.requestFullscreen) {
-        target.requestFullscreen();
-      } else if (target.webkitRequestFullscreen) {
-        target.webkitRequestFullscreen();
-      } else if (target.mozRequestFullScreen) {
-        target.mozRequestFullScreen();
-      }
+      video.pause();
+      btn.innerHTML = "";
+      btn.appendChild(playIcon);
     }
-  };
+  });
 
-  // 🕒 UI非表示
-  let lastMouseMove = Date.now();
-  let hideTimeout;
+  video.addEventListener("timeupdate", () => {
+    seekBar.max = video.duration;
+    seekBar.value = video.currentTime;
+    const percent = (video.currentTime / video.duration) * 100;
+    const thumbColor = document.body.classList.contains("dark") ? "#ff8080" : "#90ee90";
+    const fillColor = document.body.classList.contains("dark") ? "#a03070" : "#ff0";
+    const bgColor = document.body.classList.contains("dark") ? "#666" : "#ccc";
+    seekBar.style.background = `linear-gradient(to right, ${fillColor} 0%, ${fillColor} ${percent}%, ${bgColor} ${percent}%)`;
+  });
 
-  function updateMouseTime() {
-    lastMouseMove = Date.now();
-    showUI();
-    clearTimeout(hideTimeout);
-    hideTimeout = setTimeout(checkIdle, 3000);
+  seekBar.addEventListener("input", () => {
+    video.currentTime = seekBar.value;
+  });
+
+  fullscreenBtn.addEventListener("click", () => {
+    const wrapper = video.closest(".videoWrapper");
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      wrapper.requestFullscreen();
+    }
+  });
+
+  video.addEventListener("ended", () => {
+    btn.innerHTML = "";
+    btn.appendChild(playIcon);
+  });
+
+  video.addEventListener("play", () => {
+    btn.innerHTML = "";
+    btn.appendChild(pauseIcon);
+  });
+
+  video.addEventListener("pause", () => {
+    btn.innerHTML = "";
+    btn.appendChild(playIcon);
+  });
+
+  if (options?.onReady) {
+    video.addEventListener("loadeddata", options.onReady);
   }
-
-  function checkIdle() {
-    if (Date.now() - lastMouseMove >= 3000) hideUI();
-  }
-
-  function showUI() {
-    container.classList.remove("hide-ui");
-  }
-
-  function hideUI() {
-    container.classList.add("hide-ui");
-  }
-
-  container.addEventListener("mousemove", updateMouseTime);
-  hideTimeout = setTimeout(checkIdle, 3000);
-}
-
-function formatTime(t) {
-  const m = Math.floor(t / 60);
-  const s = Math.floor(t % 60).toString().padStart(2, "0");
-  return `${m}:${s}`;
 }
