@@ -3,63 +3,50 @@
 <head>
   <meta charset="UTF-8" />
   <title>embed - Pikko Videos</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Embedding video player.">
+  <meta property="og:title" content="Embed - Pikko Videos">
+  <meta property="og:description" content="Embedding video player.">
+  <meta property="og:url" content="https://videos.bird.f5.si">
+
   <script>const SERVER = "https://pikko1.tcpexposer.com";</script>
   <script src="https://unpkg.com/wavesurfer.js"></script>
-  <script src="js/player.js"></script>
-  <link rel="stylesheet" href="css/player.css">
+
   <style>
-    html, body {
+    body {
       margin: 0;
-      padding: 0;
+      font-family: sans-serif;
+      background: #000;
+      color: #fff;
+    }
+
+    .embedWrapper {
+      position: relative;
       width: 100%;
-      height: 100%;
-      background-color: #000;
+      height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      font-family: sans-serif;
     }
-    .media-container {
-      position: relative;
+
+    .videoArea {
+      max-width: 560px;
       width: 100%;
-      height: 100%;
-      overflow: hidden;
     }
-    #customPlayer {
+
+    video {
       width: 100%;
-      height: 100%;
+      height: auto;
+      background: #000;
     }
-    .info-overlay {
-      position: absolute;
-      top: 16px;
-      left: 16px;
-      background-color: rgba(0, 0, 0, 0.5);
-      color: white;
-      padding: 6px 12px;
-      font-size: 15px;
-      border-radius: 6px;
-      z-index: 5;
-      pointer-events: none;
-    }
-    .overlay {
-      position: absolute;
-      top: 16px;
-      right: 16px;
-      z-index: 5;
-    }
-    .thumb {
-      width: 100px;
-      opacity: 0.7;
-    }
+
     #waveform {
-      width: 90%;
-      height: 80px;
-      background: #111;
-      margin: 20px auto 10px;
+      width: 100%;
+      height: 100px;
+      background: #222;
+      margin-bottom: 20px;
     }
-    #controls {
-      text-align: center;
-    }
+
     button {
       background: #0af;
       color: white;
@@ -69,124 +56,130 @@
       cursor: pointer;
       border-radius: 4px;
     }
+
     button:hover {
       background: #09c;
+    }
+
+    .topInfo {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      right: 8px;
+      display: flex;
+      justify-content: space-between;
+      color: rgba(255,255,255,0.5);
+      font-size: 0.9em;
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    .topInfo a {
+      pointer-events: auto;
+      color: rgba(255,255,255,0.6);
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .error {
+      color: #f55;
+      font-weight: bold;
+      margin-top: 1em;
     }
   </style>
 </head>
 <body>
-  <div class="media-container" id="container">
-    <div class="info-overlay" id="videoInfoText">Loading...</div>
-    <div id="customPlayer"></div>
-  </div>
-  <div class="overlay">
-    <a id="watch" href="#"><img src="logo.png" class="thumb" alt="logo"></a>
+  <div class="embedWrapper">
+    <div class="videoArea" id="embedContainer"></div>
   </div>
 
-<script>
-const params = new URLSearchParams(location.search);
-const id = params.get("id");
-const container = document.getElementById("container");
+  <script>
+    const id = new URLSearchParams(location.search).get("id");
+    const container = document.getElementById("embedContainer");
 
-if (!id) {
-  container.innerHTML += "<p style='color:white;text-align:center;'>video ID not provided.</p>";
-} else {
-  fetch(`${SERVER}/videoInfo/${id}`)
-    .then(res => res.ok ? res.json() : null)
-    .then(info => {
-      if (!info || !info.fileName) {
-        container.innerHTML += "<p style='color:white;text-align:center;'>Video not found.</p>";
-        return;
-      }
+    if (!id) {
+      container.innerHTML = `<p class="error">No media found.</p>`;
+    } else {
+      fetch(`${SERVER}/videoInfo/${id}`)
+        .then(res => res.ok ? res.json() : null)
+        .then(info => {
+          if (!info || !info.fileName) {
+            container.innerHTML = `<p class="error">Media not found.</p>`;
+            return;
+          }
 
-      const ext = info.fileName.split(".").pop().toLowerCase();
-      const isAudio = ext === "mp3" || ext === "wav";
-      const mediaUrl = `${SERVER}/videos/${encodeURIComponent(info.fileName)}`;
-      document.getElementById("watch").href = `watch.html?id=${encodeURIComponent(id)}`;
-      document.getElementById("videoInfoText").textContent = `${info.title} by ${info.username}`;
+          const ext = info.fileName.split(".").pop().toLowerCase();
+          const isAudio = ext === "mp3" || ext === "wav";
+          const mediaUrl = `${SERVER}/videos/${info.fileName}`;
 
-      if (info.hasPassword) {
-        const authDiv = document.createElement("div");
-        authDiv.style = "position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:white; text-align:center;";
-        authDiv.innerHTML = `
-          <p>This video is locked. Please enter the password:</p>
-          <input type="password" id="embedPassInput" style="padding:6px;">
-          <button id="unlockBtn">Unlock</button>
-          <p id="embedErrorMsg" style="color:red;"></p>
-        `;
-        container.appendChild(authDiv);
+          const titleInfo = `
+            <div class="topInfo">
+              <div>${info.title} by 「${info.username}」</div>
+              <a href="user?name=${encodeURIComponent(info.username)}">
+                <img src="${SERVER}/icons/${info.username}.jpg" alt="icon" width="32" height="32" style="border-radius:50%;">
+              </a>
+            </div>
+          `;
 
-        document.getElementById("unlockBtn").addEventListener("click", () => {
-          const password = document.getElementById("embedPassInput").value;
-          fetch(`${SERVER}/checkAccess`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id, password })
-          })
-            .then(res => res.ok ? res.json() : null)
-            .then(result => {
-              if (result?.access) {
-                authDiv.remove();
-                showEmbedMedia();
-              } else {
-                document.getElementById("embedErrorMsg").textContent = "Incorrect password.";
-              }
-            })
-            .catch(() => {
-              document.getElementById("embedErrorMsg").textContent = "Failed to verify password.";
-            });
+          if (info.hasPassword) {
+            container.innerHTML = `
+              ${titleInfo}
+              <p>This media is locked. Please enter the password to view.</p>
+              <input type="password" id="passInput" placeholder="Password" style="padding:6px;">
+              <button onclick="checkAccess()">Unlock</button>
+              <p id="errorMsg" class="error"></p>
+            `;
+
+            window.checkAccess = () => {
+              const password = document.getElementById("passInput").value;
+              fetch(`${SERVER}/checkAccess`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id, password })
+              })
+                .then(res => res.ok ? res.json() : null)
+                .then(result => {
+                  if (result?.access) {
+                    showMedia(mediaUrl, isAudio, titleInfo);
+                  } else {
+                    document.getElementById("errorMsg").textContent = "Incorrect password.";
+                  }
+                })
+                .catch(() => {
+                  document.getElementById("errorMsg").textContent = "Failed to verify password.";
+                });
+            };
+          } else {
+            showMedia(mediaUrl, isAudio, titleInfo);
+          }
+
+          function showMedia(mediaUrl, isAudio, titleInfo) {
+            container.innerHTML = titleInfo;
+
+            if (isAudio) {
+              container.innerHTML += `<div id="waveform"></div><button id="togglePlay">play</button>`;
+              const wavesurfer = WaveSurfer.create({
+                container: '#waveform',
+                waveColor: '#888',
+                progressColor: '#0af',
+                height: 100,
+                responsive: true
+              });
+              wavesurfer.load(mediaUrl);
+              const btn = document.getElementById("togglePlay");
+              btn.addEventListener("click", () => wavesurfer.playPause());
+              wavesurfer.on("play", () => { btn.textContent = "pause"; });
+              wavesurfer.on("pause", () => { btn.textContent = "play"; });
+            } else {
+              container.innerHTML += `<video src="${mediaUrl}" playsinline controls></video>`;
+              // autoplay removed per request
+            }
+          }
+        })
+        .catch(() => {
+          container.innerHTML = `<p class="error">error</p>`;
         });
-      } else {
-        showEmbedMedia();
-      }
-
-      function showEmbedMedia() {
-        if (isAudio) {
-          const waveformDiv = document.createElement("div");
-          waveformDiv.id = "waveform";
-
-          const controls = document.createElement("div");
-          controls.id = "controls";
-
-          const btn = document.createElement("button");
-          btn.id = "togglePlay";
-          btn.textContent = "play";
-          controls.appendChild(btn);
-
-          container.appendChild(waveformDiv);
-          container.appendChild(controls);
-
-          const wavesurfer = WaveSurfer.create({
-            container: '#waveform',
-            waveColor: '#555',
-            progressColor: '#0af',
-            height: 80,
-            barWidth: 2,
-            responsive: true
-          });
-
-          wavesurfer.load(mediaUrl);
-
-          btn.addEventListener("click", () => wavesurfer.playPause());
-          wavesurfer.on("play", () => { btn.textContent = "pause"; });
-          wavesurfer.on("pause", () => { btn.textContent = "play"; });
-        } else {
-          fetch(mediaUrl)
-            .then(res => res.blob())
-            .then(blob => {
-              const url = URL.createObjectURL(blob);
-              initCustomPlayer(url);
-            })
-            .catch(() => {
-              container.innerHTML += "<p style='color:white;text-align:center;'>Failed to load video.</p>";
-            });
-        }
-      }
-    })
-    .catch(() => {
-      container.innerHTML += "<p style='color:white;text-align:center;'>Error loading video info.</p>";
-    });
-}
-</script>
+    }
+  </script>
 </body>
 </html>
