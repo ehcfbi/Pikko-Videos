@@ -18,7 +18,7 @@
   display: block;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 .centerPlayPause svg {
   width: 100%;
@@ -38,7 +38,7 @@
   z-index: 10;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 .seekWrapper {
   flex: 1;
@@ -83,11 +83,11 @@ input[type="range"].seekBar::-moz-range-thumb {
   cursor: pointer;
 }
 
-/* ホバー・カーソル表示時にUI表示 */
+/* ホバー時に強制表示（!importantで .hide-controls を上書き） */
 .videoWrapper:hover .videoControls,
 .videoWrapper:hover .centerPlayPause {
-  opacity: 1;
-  visibility: visible;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 /* ダークモードの色調整 */
@@ -109,9 +109,10 @@ body.dark input[type="range"].seekBar.dark-complete {
   background: linear-gradient(to right, #a03070 0%, #666 0%);
 }
 
+/* hide-controls による強制非表示 */
 .hide-controls .centerPlayPause,
 .hide-controls .videoControls {
   opacity: 0 !important;
   visibility: hidden !important;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
 }
