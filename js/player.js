@@ -6,6 +6,10 @@ function initCustomPlayer(url, options = {}) {
   const seekBar = document.getElementById("seekBar");
   const fullscreenBtn = document.getElementById("fullscreenBtn");
 
+  video.addEventListener("click", () => {
+  const wrapper = video.closest(".videoWrapper");
+  wrapper.classList.toggle("hide-controls");
+});
   video.src = url;
   video.controls = false;
   video.autoplay = true;
@@ -81,8 +85,3 @@ function initCustomPlayer(url, options = {}) {
     setPauseIcon();
   }
 }
-
-video.addEventListener("click", () => {
-  const wrapper = video.closest(".videoWrapper");
-  wrapper.classList.toggle("hide-controls");
-});
