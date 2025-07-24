@@ -109,9 +109,14 @@ body.dark input[type="range"].seekBar.dark-complete {
   background: linear-gradient(to right, #a03070 0%, #666 0%);
 }
 
-/* hide-controls による強制非表示 */
 .videoWrapper:hover:not(.hide-controls) .centerPlayPause,
 .videoWrapper:hover:not(.hide-controls) .videoControls {
   opacity: 1 !important;
   visibility: visible !important;
+}
+
+.hide-controls .centerPlayPause,
+.hide-controls .videoControls {
+  opacity: 0 !important;
+  visibility: hidden !important;
 }
