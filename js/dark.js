@@ -11,6 +11,11 @@ function toggleTheme() {
   if (logoImg) {
     logoImg.src = dark ? "./logo_glow.png" : "./logo.png";
   }
+
+  // 🎨 シークバー色更新（プレイヤーが存在する場合のみ）
+  if (window.updateSeekBarColor) {
+    setTimeout(() => updateSeekBarColor(), 50);
+  }
 }
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -25,5 +30,10 @@ window.addEventListener("DOMContentLoaded", () => {
   } else {
     if (themeBtn) themeBtn.textContent = "Light Mode";
     if (logoImg) logoImg.src = "./logo.png";
+  }
+
+  // 🎨 初期表示時にもシークバー色を即反映
+  if (window.updateSeekBarColor) {
+    setTimeout(() => updateSeekBarColor(), 50);
   }
 });
