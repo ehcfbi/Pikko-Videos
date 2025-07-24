@@ -15,6 +15,38 @@ function initCustomPlayer(url, options = {}) {
   video.autoplay = true;
   video.playsInline = true;
 
+  const wrapper = video.closest(".videoWrapper");
+let controlTimeout;
+
+// ホバー時に表示し、数秒後に自動非表示
+wrapper.addEventListener("mouseenter", () => {
+  wrapper.classList.remove("hide-controls");
+  resetControlTimeout();
+});
+
+wrapper.addEventListener("mouseleave", () => {
+  resetControlTimeout();
+});
+
+// 動画タップによるトグルは既存のまま（以下に追加）
+video.addEventListener("click", () => {
+  if (wrapper.classList.contains("hide-controls")) {
+    wrapper.classList.remove("hide-controls");
+    resetControlTimeout();
+  } else {
+    wrapper.classList.add("hide-controls");
+    clearTimeout(controlTimeout);
+  }
+});
+
+// 自動非表示タイマー
+function resetControlTimeout() {
+  clearTimeout(controlTimeout);
+  controlTimeout = setTimeout(() => {
+    wrapper.classList.add("hide-controls");
+  }, 3000); // 表示後3秒で非表示
+}
+
   updateSeekBarColor();
 
   function setPlayIcon() {
