@@ -81,3 +81,8 @@ function initCustomPlayer(url, options = {}) {
     setPauseIcon();
   }
 }
+
+video.addEventListener("click", () => {
+  const wrapper = video.closest(".videoWrapper");
+  wrapper.classList.toggle("hide-controls");
+});
