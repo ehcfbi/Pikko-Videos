@@ -47,15 +47,6 @@
       margin-right: 8px;
       object-fit: cover;
     }
-    #waveform {
-      width: 100%;
-      height: 100px;
-      background: #f0f0f0;
-      margin-top: 20px;
-    }
-    #controls {
-      margin-top: 10px;
-    }
     button {
       background: #0af;
       color: white;
@@ -67,6 +58,124 @@
     }
     button:hover {
       background: #09c;
+    }
+
+    /* 🎮 独自プレイヤーコントロール用スタイル */
+    .videoWrapper {
+      position: relative;
+      width: 480px;
+      height: 270px;
+      margin-top: 10px;
+    }
+    #videoPlayer {
+      width: 100%;
+      height: 100%;
+    }
+
+    .centerPlayPause {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 64px;
+      height: 64px;
+      cursor: pointer;
+      z-index: 10;
+      display: block;
+    }
+    .centerPlayPause svg {
+      width: 100%;
+      height: 100%;
+      fill: white;
+    }
+
+    .videoControls {
+      position: absolute;
+      bottom: 8px;
+      left: 8px;
+      right: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .seekWrapper {
+      flex: 1;
+      margin-right: 10px;
+    }
+
+    input[type="range"].seekBar {
+      width: 100%;
+      appearance: none;
+      height: 6px;
+      border-radius: 3px;
+      background: #ccc;
+      position: relative;
+      overflow: hidden;
+    }
+
+    input[type="range"].seekBar::-webkit-slider-thumb {
+      appearance: none;
+      width: 12px;
+      height: 12px;
+      background: #90ee90; /* ライトモード: 黄緑 */
+      border-radius: 50%;
+      cursor: pointer;
+      position: relative;
+      z-index: 2;
+    }
+
+    input[type="range"].seekBar::-moz-range-thumb {
+      width: 12px;
+      height: 12px;
+      background: #90ee90;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .fullscreenBtn {
+      background: rgba(0,0,0,0.4);
+      color: white;
+      font-size: 13px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    /* ダークモード用カラーテーマ */
+    body.dark input[type="range"].seekBar {
+      background: #666;
+    }
+    body.dark input[type="range"].seekBar::-webkit-slider-thumb {
+      background: #ff8080; /* 明るい赤+黒要素 */
+    }
+    body.dark input[type="range"].seekBar::-moz-range-thumb {
+      background: #ff8080;
+    }
+
+    /* ライトモードのバー色（見終わった部分）に黄色系追加予定 */
+    input[type="range"].seekBar.light-complete {
+      background: linear-gradient(to right, #ff0 0%, #ccc 0%);
+    }
+    /* ダークモードのバー色（見終わった部分）に暗フクシャ色追加予定 */
+    body.dark input[type="range"].seekBar.dark-complete {
+      background: linear-gradient(to right, #a03070 0%, #666 0%);
+    }
+
+    /* カーソル表示時にコントロールを見せる */
+    .videoWrapper:hover .videoControls,
+    .videoWrapper:hover .centerPlayPause {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .videoControls,
+    .centerPlayPause {
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease;
     }
   </style>
 </head>
@@ -82,6 +191,20 @@
   </table>
 
   <div id="content"></div>
+
+  <template id="playIcon">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="white">
+      <polygon points="20,16 20,48 48,32" />
+    </svg>
+  </template>
+
+  <template id="pauseIcon">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="white">
+      <rect x="18" y="16" width="10" height="32" rx="2"/>
+      <rect x="36" y="16" width="10" height="32" rx="2"/>
+    </svg>
+  </template>
+
   <script>
     const id = new URLSearchParams(location.search).get("id");
     const content = document.getElementById("content");
@@ -98,23 +221,19 @@
     function rewriteDescription(desc) {
       const temp = document.createElement("div");
       temp.innerHTML = desc;
-
       const urls = temp.querySelectorAll("url");
       urls.forEach(node => {
         const parts = node.textContent.split("|");
         const raw = parts[0]?.trim();
         const text = parts[1]?.trim() || raw;
         const encoded = encodeURIComponent(raw);
-
         const a = document.createElement("a");
         a.href = `redirect?url=${encoded}`;
         a.textContent = text;
         a.target = "_blank";
         a.rel = "noopener";
-
         node.replaceWith(a);
       });
-
       return temp.innerHTML;
     }
 
@@ -151,7 +270,6 @@
               <button onclick="checkAccess()">Unlock</button>
               <p id="errorMsg" class="error"></p>
             `;
-
             window.checkAccess = () => {
               const password = document.getElementById("passInput").value;
               fetch(`${SERVER}/checkAccess`, {
@@ -159,17 +277,17 @@
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ id, password })
               })
-                .then(res => res.ok ? res.json() : null)
-                .then(result => {
-                  if (result?.access) {
-                    showMedia(info, mediaUrl, isAudio, lockIcon, postedTime);
-                  } else {
-                    document.getElementById("errorMsg").textContent = "Incorrect password.";
-                  }
-                })
-                .catch(() => {
-                  document.getElementById("errorMsg").textContent = "Failed to verify password.";
-                });
+              .then(res => res.ok ? res.json() : null)
+              .then(result => {
+                if (result?.access) {
+                  showMedia(info, mediaUrl, isAudio, lockIcon, postedTime);
+                } else {
+                  document.getElementById("errorMsg").textContent = "Incorrect password.";
+                }
+              })
+              .catch(() => {
+                document.getElementById("errorMsg").textContent = "Failed to verify password.";
+              });
             };
           } else {
             showMedia(info, mediaUrl, isAudio, lockIcon, postedTime);
@@ -184,14 +302,23 @@
                 <a href="user?name=${encodeURIComponent(info.username)}">${info.username}</a>
               </div>
               <div style="font-size: 0.9em;">${postedTime}</div>
-              ${isAudio
-                ? `<div id="waveform"></div><div id="controls"><button id="togglePlay">play</button></div>`
-                : `<div id="customPlayer" style="width:480px; height:270px;"></div>`
+              ${
+                isAudio
+                  ? `<div id="waveform"></div><div id="controls"><button id="togglePlay">play</button></div>`
+                  : `
+                    <div class="videoWrapper">
+                      <video id="videoPlayer" autoplay muted playsinline></video>
+                      <div id="centerPlayPause" class="centerPlayPause"></div>
+                      <div class="videoControls">
+                        <div class="seekWrapper">
+                          <input type="range" id="seekBar" class="seekBar" min="0" value="0">
+                        </div>
+                        <button id="fullscreenBtn" class="fullscreenBtn">⛶</button>
+                      </div>
+                    </div>
+                  `
               }
-              ${rewritten
-                ? `<p style="white-space: pre-wrap; margin-top: 1em;">${rewritten}</p>`
-                : ""
-              }
+              ${rewritten ? `<p style="white-space: pre-wrap; margin-top: 1em;">${rewritten}</p>` : ""}
             `;
 
             if (isAudio) {
@@ -202,9 +329,7 @@
                 height: 100,
                 responsive: true
               });
-
               wavesurfer.load(mediaUrl);
-
               const btn = document.getElementById("togglePlay");
               btn.addEventListener("click", () => wavesurfer.playPause());
               wavesurfer.on("play", () => { btn.textContent = "pause"; });
@@ -220,6 +345,72 @@
                   content.innerHTML += `<p class="error">Failed to load video file.</p>`;
                 });
             }
+          }
+
+          function initCustomPlayer(url) {
+            const video = document.getElementById("videoPlayer");
+            const playIcon = document.getElementById("playIcon").content.cloneNode(true);
+            const pauseIcon = document.getElementById("pauseIcon").content.cloneNode(true);
+            const btn = document.getElementById("centerPlayPause");
+            const seekBar = document.getElementById("seekBar");
+            const fullscreenBtn = document.getElementById("fullscreenBtn");
+
+            video.src = url;
+            video.controls = false;
+            video.autoplay = true;
+            video.playsInline = true;
+
+            btn.innerHTML = "";
+            btn.appendChild(pauseIcon);
+
+            btn.addEventListener("click", () => {
+              if (video.paused) {
+                video.play();
+                btn.innerHTML = "";
+                btn.appendChild(pauseIcon);
+              } else {
+                video.pause();
+                btn.innerHTML = "";
+                btn.appendChild(playIcon);
+              }
+            });
+
+            video.addEventListener("timeupdate", () => {
+              seekBar.max = video.duration;
+              seekBar.value = video.currentTime;
+              const percent = (video.currentTime / video.duration) * 100;
+              const thumbColor = document.body.classList.contains("dark") ? "#ff8080" : "#90ee90";
+              const fillColor = document.body.classList.contains("dark") ? "#a03070" : "#ff0";
+              const bgColor = document.body.classList.contains("dark") ? "#666" : "#ccc";
+              seekBar.style.background = `linear-gradient(to right, ${fillColor} 0%, ${fillColor} ${percent}%, ${bgColor} ${percent}%)`;
+            });
+
+            seekBar.addEventListener("input", () => {
+              video.currentTime = seekBar.value;
+            });
+
+            fullscreenBtn.addEventListener("click", () => {
+              if (document.fullscreenElement) {
+                document.exitFullscreen();
+              } else {
+                video.closest(".videoWrapper").requestFullscreen();
+              }
+            });
+
+            video.addEventListener("ended", () => {
+              btn.innerHTML = "";
+              btn.appendChild(playIcon);
+            });
+
+            video.addEventListener("play", () => {
+              btn.innerHTML = "";
+              btn.appendChild(pauseIcon);
+            });
+
+            video.addEventListener("pause", () => {
+              btn.innerHTML = "";
+              btn.appendChild(playIcon);
+            });
           }
         })
         .catch(() => {
