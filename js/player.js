@@ -1,124 +1,90 @@
-function initCustomPlayer(url, options = {}) {
-  const video = document.getElementById("videoPlayer");
-  const playIcon = document.getElementById("playIcon").content.cloneNode(true);
-  const pauseIcon = document.getElementById("pauseIcon").content.cloneNode(true);
-  const btn = document.getElementById("centerPlayPause");
-  const seekBar = document.getElementById("seekBar");
-  const fullscreenBtn = document.getElementById("fullscreenBtn");
-  const wrapper = video.closest(".videoWrapper");
+function setupPlayer(options) {
+  const video = document.querySelector("video");
+  const controls = document.querySelector(".videoControls");
+  const seekBar = document.querySelector(".seekBar");
+  const playButton = document.querySelector(".playButton");
+  const fullscreenButton = document.querySelector(".fullscreenButton");
 
-  let controlTimeout;
+  let hideTimeout;
 
-  video.src = url;
-  video.controls = false;
-  video.autoplay = true;
-  video.playsInline = true;
-
-  updateSeekBarColor();
-
-  // 🔘 タップで UI 表示／非表示の切り替え
-  video.addEventListener("click", () => {
-    if (wrapper.classList.contains("hide-controls")) {
-      wrapper.classList.remove("hide-controls");
-      resetControlTimeout();
-    } else {
-      wrapper.classList.add("hide-controls");
-      clearTimeout(controlTimeout);
-    }
-  });
-
-  // 🖱️ ホバー時に表示し、3秒後に自動非表示
-  wrapper.addEventListener("mouseenter", () => {
-    wrapper.classList.remove("hide-controls");
-    resetControlTimeout();
-  });
-
-  wrapper.addEventListener("mouseleave", () => {
-    resetControlTimeout();
-  });
-
-  function resetControlTimeout() {
-    clearTimeout(controlTimeout);
-    controlTimeout = setTimeout(() => {
-      wrapper.classList.add("hide-controls");
+  function showControls() {
+    controls.classList.remove("hide-controls");
+    clearTimeout(hideTimeout);
+    hideTimeout = setTimeout(() => {
+      controls.classList.add("hide-controls");
     }, 3000);
   }
 
+  function toggleControls() {
+    if (controls.classList.contains("hide-controls")) {
+      showControls();
+    } else {
+      controls.classList.add("hide-controls");
+    }
+  }
+
+  function updateSeekBarColor() {
+    const percent = video.currentTime / video.duration;
+    const color = document.body.classList.contains("dark") ? "#ccc" : "#333";
+    seekBar.style.background = `linear-gradient(to right, ${color} ${percent * 100}%, transparent ${percent * 100}%)`;
+  }
+
   function setPlayIcon() {
-    btn.innerHTML = "";
-    btn.appendChild(playIcon.cloneNode(true));
+    playButton.innerHTML = "▶️";
   }
 
   function setPauseIcon() {
-    btn.innerHTML = "";
-    btn.appendChild(pauseIcon.cloneNode(true));
+    playButton.innerHTML = "⏸️";
   }
 
-  btn.addEventListener("click", () => {
+  playButton.addEventListener("click", () => {
     if (video.paused) {
       video.play();
-      setPauseIcon();
     } else {
       video.pause();
-      setPlayIcon();
     }
-    resetControlTimeout(); // 再操作時にも自動非表示のタイマー再設定
   });
 
-  fullscreenBtn.addEventListener("click", () => {
-    if (document.fullscreenElement) {
-      document.exitFullscreen();
-    } else {
-      wrapper.requestFullscreen();
-    }
-    resetControlTimeout();
+  video.addEventListener("play", () => {
+    setPauseIcon();
+  });
+
+  video.addEventListener("pause", () => {
+    setPlayIcon();
+  });
+
+  video.addEventListener("timeupdate", () => {
+    seekBar.value = video.currentTime;
+    updateSeekBarColor();
   });
 
   seekBar.addEventListener("input", () => {
     video.currentTime = seekBar.value;
     updateSeekBarColor();
-    resetControlTimeout();
   });
 
-  video.addEventListener("timeupdate", () => {
-    seekBar.max = video.duration;
-    seekBar.value = video.currentTime;
-    updateSeekBarColor();
+  fullscreenButton.addEventListener("click", () => {
+    const wrapper = document.querySelector(".videoWrapper");
+    if (wrapper.requestFullscreen) {
+      wrapper.requestFullscreen();
+    } else if (wrapper.webkitRequestFullscreen) {
+      wrapper.webkitRequestFullscreen();
+    } else if (wrapper.msRequestFullscreen) {
+      wrapper.msRequestFullscreen();
+    }
   });
 
-  video.addEventListener("play", () => {
-    setPauseIcon();
-    resetControlTimeout();
-  });
+  video.addEventListener("click", toggleControls);
+  video.addEventListener("touchstart", toggleControls);
 
-  video.addEventListener("pause", () => {
-    setPlayIcon();
-    resetControlTimeout();
-  });
+  video.addEventListener("mousemove", showControls);
+  video.addEventListener("touchmove", showControls);
 
-  video.addEventListener("ended", setPlayIcon);
+  seekBar.max = video.duration;
 
-  function updateSeekBarColor() {
-    if (!seekBar || !video || !video.duration) return;
-
-    const percent = (video.currentTime / video.duration) * 100;
-    const isDark = document.body.classList.contains("dark");
-    const fillColor = isDark ? "#a03070" : "#ff0";
-    const bgColor = isDark ? "#666" : "#ccc";
-    seekBar.style.background = `linear-gradient(to right, ${fillColor} 0%, ${fillColor} ${percent}%, ${bgColor} ${percent}%)`;
+  if (options?.onReady) {
+    video.addEventListener("loadedmetadata", options.onReady);
   }
 
   window.updateSeekBarColor = updateSeekBarColor;
-
-  if (options?.onReady) {
-    video.addEventListener("loadeddata", options.onReady);
-  }
-
-  if (video.paused) {
-    setPlayIcon();
-  } else {
-    setPauseIcon();
-  }
-
-  resetControlTimeout(); // 初期表示時にも自動消失タイマーを開始
 }
