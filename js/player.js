@@ -15,7 +15,6 @@ function initCustomPlayer(url, options = {}) {
   video.autoplay = true;
   video.playsInline = true;
 
-  // 🌙 色更新（外部からも呼び出せる）
   function updateSeekBarColor() {
     if (!seekBar || !video || !video.duration) return;
 
@@ -27,7 +26,6 @@ function initCustomPlayer(url, options = {}) {
   }
   window.updateSeekBarColor = updateSeekBarColor;
 
-  // ▶️ 再生／停止アイコン切り替え
   function setPlayIcon() {
     btn.innerHTML = "";
     btn.appendChild(playIcon.cloneNode(true));
@@ -37,7 +35,6 @@ function initCustomPlayer(url, options = {}) {
     btn.appendChild(pauseIcon.cloneNode(true));
   }
 
-  // ⏯️ 中央ボタンによる再生／一時停止
   btn.addEventListener("click", () => {
     if (video.paused) {
       video.play();
@@ -46,24 +43,22 @@ function initCustomPlayer(url, options = {}) {
       video.pause();
       setPlayIcon();
     }
-    resetControlTimeout();
+    showControls(); // ボタン押下時は表示
   });
 
-  // 📺 フルスクリーンボタン
   fullscreenBtn.addEventListener("click", () => {
     if (document.fullscreenElement) {
       document.exitFullscreen();
     } else {
       wrapper.requestFullscreen();
     }
-    resetControlTimeout();
+    showControls();
   });
 
-  // 🎚️ seekBar 操作
   seekBar.addEventListener("input", () => {
     video.currentTime = seekBar.value;
     updateSeekBarColor();
-    resetControlTimeout();
+    showControls();
   });
 
   video.addEventListener("timeupdate", () => {
@@ -76,51 +71,45 @@ function initCustomPlayer(url, options = {}) {
     seekBar.max = video.duration;
     seekBar.value = video.currentTime;
     updateSeekBarColor();
-    resetControlTimeout();
     if (options?.onReady) options.onReady(video);
+    hideControls(); // 初期状態で非表示
   });
 
-  // ⏱️ 表示されたら3秒後に自動で非表示
-  function resetControlTimeout() {
-    wrapper.classList.remove("hide-controls");
-    clearTimeout(controlTimeout);
-    controlTimeout = setTimeout(() => {
-      wrapper.classList.add("hide-controls");
-    }, 3000);
-  }
-
-  // 🖱️ ホバー時も3秒タイマー
-  wrapper.addEventListener("mouseenter", resetControlTimeout);
-  wrapper.addEventListener("mouseleave", resetControlTimeout);
-
-  // 📱 動画タップ／クリックでトグル
-  video.addEventListener("click", () => {
-    if (wrapper.classList.contains("hide-controls")) {
-      resetControlTimeout();
-    } else {
-      wrapper.classList.add("hide-controls");
-      clearTimeout(controlTimeout);
-    }
-  });
-  video.addEventListener("touchstart", () => {
-    if (wrapper.classList.contains("hide-controls")) {
-      resetControlTimeout();
-    } else {
-      wrapper.classList.add("hide-controls");
-      clearTimeout(controlTimeout);
-    }
-  });
-
-  // ⏮️ 状態変化に応じたアイコン更新
   video.addEventListener("play", setPauseIcon);
   video.addEventListener("pause", setPlayIcon);
   video.addEventListener("ended", setPlayIcon);
 
-  // 🌟 初期状態
+  // 🎯 タップ/クリックで表示 ⇄ 非表示トグル
+  video.addEventListener("click", toggleControls);
+  video.addEventListener("touchstart", (e) => {
+    e.preventDefault(); // iOSダブル発火防止
+    toggleControls();
+  });
+
+  wrapper.addEventListener("mouseenter", showControls); // PCでのhover表示
+
+  function showControls() {
+    wrapper.classList.remove("hide-controls");
+    clearTimeout(controlTimeout);
+    controlTimeout = setTimeout(hideControls, 3000);
+  }
+
+  function hideControls() {
+    wrapper.classList.add("hide-controls");
+    clearTimeout(controlTimeout);
+  }
+
+  function toggleControls() {
+    if (wrapper.classList.contains("hide-controls")) {
+      showControls(); // 表示して3秒保持
+    } else {
+      hideControls(); // 即非表示
+    }
+  }
+
   if (video.paused) {
     setPlayIcon();
   } else {
     setPauseIcon();
   }
-  resetControlTimeout();
 }
