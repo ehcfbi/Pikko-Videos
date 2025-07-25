@@ -103,14 +103,10 @@ function initCustomPlayer(url, options = {}) {
     }
   });
 
-  // 🛠️ スマホタッチ表示の安定化（←今回の唯一の修正）
-  video.addEventListener("touchstart", () => {
-    if (wrapper.classList.contains("hide-controls")) {
-      resetControlTimeout();
-    } else {
-      wrapper.classList.add("hide-controls");
-      clearTimeout(controlTimeout);
-    }
+  // ✅ 修正箇所：スマホでのタッチ表示が一瞬になる問題を解消
+  video.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    resetControlTimeout();
   });
 
   // ⏮️ 状態変化に応じたアイコン更新
