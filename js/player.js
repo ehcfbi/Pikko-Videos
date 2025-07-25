@@ -15,6 +15,7 @@ function initCustomPlayer(url, options = {}) {
   video.autoplay = true;
   video.playsInline = true;
 
+  // 🌙 色更新（外部からも呼び出せる）
   function updateSeekBarColor() {
     if (!seekBar || !video || !video.duration) return;
 
@@ -26,6 +27,7 @@ function initCustomPlayer(url, options = {}) {
   }
   window.updateSeekBarColor = updateSeekBarColor;
 
+  // ▶️ 再生／停止アイコン切り替え
   function setPlayIcon() {
     btn.innerHTML = "";
     btn.appendChild(playIcon.cloneNode(true));
@@ -35,6 +37,7 @@ function initCustomPlayer(url, options = {}) {
     btn.appendChild(pauseIcon.cloneNode(true));
   }
 
+  // ⏯️ 中央ボタンによる再生／一時停止
   btn.addEventListener("click", () => {
     if (video.paused) {
       video.play();
@@ -46,6 +49,7 @@ function initCustomPlayer(url, options = {}) {
     resetControlTimeout();
   });
 
+  // 📺 フルスクリーンボタン
   fullscreenBtn.addEventListener("click", () => {
     if (document.fullscreenElement) {
       document.exitFullscreen();
@@ -55,6 +59,7 @@ function initCustomPlayer(url, options = {}) {
     resetControlTimeout();
   });
 
+  // 🎚️ seekBar 操作
   seekBar.addEventListener("input", () => {
     video.currentTime = seekBar.value;
     updateSeekBarColor();
@@ -75,6 +80,7 @@ function initCustomPlayer(url, options = {}) {
     if (options?.onReady) options.onReady(video);
   });
 
+  // ⏱️ 表示されたら3秒後に自動で非表示
   function resetControlTimeout() {
     wrapper.classList.remove("hide-controls");
     clearTimeout(controlTimeout);
@@ -83,23 +89,34 @@ function initCustomPlayer(url, options = {}) {
     }, 3000);
   }
 
+  // 🖱️ ホバー時も3秒タイマー
   wrapper.addEventListener("mouseenter", resetControlTimeout);
   wrapper.addEventListener("mouseleave", resetControlTimeout);
 
-  // 📱 タッチ・クリックどちらでも確実に表示をトリガー
-  video.addEventListener("touchstart", (e) => {
-    e.preventDefault(); // iOSの誤動作防止
-    resetControlTimeout();
-  });
-
+  // 📱 動画タップ／クリックでトグル
   video.addEventListener("click", () => {
-    resetControlTimeout();
+    if (wrapper.classList.contains("hide-controls")) {
+      resetControlTimeout();
+    } else {
+      wrapper.classList.add("hide-controls");
+      clearTimeout(controlTimeout);
+    }
+  });
+  video.addEventListener("touchstart", () => {
+    if (wrapper.classList.contains("hide-controls")) {
+      resetControlTimeout();
+    } else {
+      wrapper.classList.add("hide-controls");
+      clearTimeout(controlTimeout);
+    }
   });
 
+  // ⏮️ 状態変化に応じたアイコン更新
   video.addEventListener("play", setPauseIcon);
   video.addEventListener("pause", setPlayIcon);
   video.addEventListener("ended", setPlayIcon);
 
+  // 🌟 初期状態
   if (video.paused) {
     setPlayIcon();
   } else {
