@@ -80,13 +80,6 @@ input[type="range"].seekBar::-moz-range-thumb {
   cursor: pointer;
 }
 
-/* 💡 ホバー時に表示（ただし hide-controls がない時のみ） */
-.videoWrapper:hover:not(.hide-controls) .centerPlayPause,
-.videoWrapper:hover:not(.hide-controls) .videoControls {
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
 /* 👀 明示的な非表示 */
 .videoWrapper.hide-controls .centerPlayPause,
 .videoWrapper.hide-controls .videoControls {
