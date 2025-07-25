@@ -8,16 +8,14 @@ function initCustomPlayer(url, options = {}) {
   const playIcon = document.getElementById("playIcon").content.cloneNode(true);
   const pauseIcon = document.getElementById("pauseIcon").content.cloneNode(true);
 
-  let controlTimeout;
-
   video.src = url;
   video.controls = false;
   video.autoplay = true;
   video.playsInline = true;
 
+  // 🌙 色更新（外部からも呼び出せる）
   function updateSeekBarColor() {
     if (!seekBar || !video || !video.duration) return;
-
     const percent = (video.currentTime / video.duration) * 100;
     const isDark = document.body.classList.contains("dark");
     const fillColor = isDark ? "#a03070" : "#ff0";
@@ -43,7 +41,6 @@ function initCustomPlayer(url, options = {}) {
       video.pause();
       setPlayIcon();
     }
-    showControls();
   });
 
   fullscreenBtn.addEventListener("click", () => {
@@ -52,13 +49,11 @@ function initCustomPlayer(url, options = {}) {
     } else {
       wrapper.requestFullscreen();
     }
-    showControls();
   });
 
   seekBar.addEventListener("input", () => {
     video.currentTime = seekBar.value;
     updateSeekBarColor();
-    showControls();
   });
 
   video.addEventListener("timeupdate", () => {
@@ -72,42 +67,29 @@ function initCustomPlayer(url, options = {}) {
     seekBar.value = video.currentTime;
     updateSeekBarColor();
     if (options?.onReady) options.onReady(video);
-    hideControls(); // 初期状態は非表示
+  });
+
+  // ✅ 表示/非表示トグル（hoverなし、タップ/クリックのみ）
+  function toggleControls() {
+    wrapper.classList.toggle("hide-controls");
+  }
+
+  video.addEventListener("click", toggleControls);
+  video.addEventListener("touchstart", (e) => {
+    e.preventDefault(); // iOS二重発火防止
+    toggleControls();
   });
 
   video.addEventListener("play", setPauseIcon);
   video.addEventListener("pause", setPlayIcon);
   video.addEventListener("ended", setPlayIcon);
 
-  // 👇 hover表示を完全廃止し、タップ／クリックのみでトグル
-  video.addEventListener("click", toggleControls);
-  video.addEventListener("touchstart", (e) => {
-    e.preventDefault(); // iOS対策
-    toggleControls();
-  });
-
-  function showControls() {
-    wrapper.classList.remove("hide-controls");
-    clearTimeout(controlTimeout);
-    controlTimeout = setTimeout(hideControls, 3000);
-  }
-
-  function hideControls() {
-    wrapper.classList.add("hide-controls");
-    clearTimeout(controlTimeout);
-  }
-
-  function toggleControls() {
-    if (wrapper.classList.contains("hide-controls")) {
-      showControls(); // 表示して3秒保持
-    } else {
-      hideControls(); // 即非表示
-    }
-  }
-
   if (video.paused) {
     setPlayIcon();
   } else {
     setPauseIcon();
   }
+
+  // 初期状態は非表示に
+  wrapper.classList.add("hide-controls");
 }
