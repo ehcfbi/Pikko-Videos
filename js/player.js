@@ -43,7 +43,7 @@ function initCustomPlayer(url, options = {}) {
       video.pause();
       setPlayIcon();
     }
-    showControls(); // ボタン押下時は表示
+    showControls();
   });
 
   fullscreenBtn.addEventListener("click", () => {
@@ -72,21 +72,19 @@ function initCustomPlayer(url, options = {}) {
     seekBar.value = video.currentTime;
     updateSeekBarColor();
     if (options?.onReady) options.onReady(video);
-    hideControls(); // 初期状態で非表示
+    hideControls(); // 初期状態は非表示
   });
 
   video.addEventListener("play", setPauseIcon);
   video.addEventListener("pause", setPlayIcon);
   video.addEventListener("ended", setPlayIcon);
 
-  // 🎯 タップ/クリックで表示 ⇄ 非表示トグル
+  // 👇 hover表示を完全廃止し、タップ／クリックのみでトグル
   video.addEventListener("click", toggleControls);
   video.addEventListener("touchstart", (e) => {
-    e.preventDefault(); // iOSダブル発火防止
+    e.preventDefault(); // iOS対策
     toggleControls();
   });
-
-  wrapper.addEventListener("mouseenter", showControls); // PCでのhover表示
 
   function showControls() {
     wrapper.classList.remove("hide-controls");
