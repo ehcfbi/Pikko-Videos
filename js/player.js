@@ -1,56 +1,81 @@
-function setupPlayer(options) {
-  const video = document.querySelector("video");
-  const controls = document.querySelector(".videoControls");
-  const seekBar = document.querySelector(".seekBar");
-  const playButton = document.querySelector(".playButton");
-  const fullscreenButton = document.querySelector(".fullscreenButton");
+function initializePlayer(video, options = {}) {
+  const wrapper = video.closest(".videoWrapper");
+  const btn = wrapper.querySelector(".centerPlayPause");
+  const seekBar = wrapper.querySelector(".seekBar");
+  const fullscreenBtn = wrapper.querySelector(".fullscreenBtn");
+  const controls = wrapper.querySelector(".videoControls");
 
-  let hideTimeout;
+  video.controls = false;
+  video.autoplay = false;
+  video.playsInline = true;
 
-  function showControls() {
-    controls.classList.remove("hide-controls");
-    clearTimeout(hideTimeout);
-    hideTimeout = setTimeout(() => {
-      controls.classList.add("hide-controls");
+  const playIcon = document.getElementById("playIcon").content.cloneNode(true);
+  const pauseIcon = document.getElementById("pauseIcon").content.cloneNode(true);
+
+  const setPlayIcon = () => {
+    btn.innerHTML = "";
+    btn.appendChild(playIcon.cloneNode(true));
+  };
+
+  const setPauseIcon = () => {
+    btn.innerHTML = "";
+    btn.appendChild(pauseIcon.cloneNode(true));
+  };
+
+  const showControls = () => {
+    wrapper.classList.remove("hide-controls");
+  };
+
+  const hideControls = () => {
+    wrapper.classList.add("hide-controls");
+  };
+
+  let controlTimeout;
+  const resetControlTimeout = () => {
+    showControls();
+    clearTimeout(controlTimeout);
+    controlTimeout = setTimeout(() => {
+      hideControls();
     }, 3000);
-  }
+  };
 
-  function toggleControls() {
-    if (controls.classList.contains("hide-controls")) {
-      showControls();
-    } else {
-      controls.classList.add("hide-controls");
-    }
-  }
+  const updateSeekBarColor = () => {
+    const percentage = (video.currentTime / video.duration) * 100 || 0;
+    const mode = document.body.classList.contains("dark") ? "dark" : "light";
+    seekBar.classList.remove("light-complete", "dark-complete");
+    seekBar.classList.add(`${mode}-complete`);
+    seekBar.style.background = `linear-gradient(to right, ${
+      mode === "dark" ? "#a03070" : "#ff0"
+    } 0%, ${mode === "dark" ? "#a03070" : "#ff0"} ${percentage}%, ${
+      mode === "dark" ? "#666" : "#ccc"
+    } ${percentage}%, ${mode === "dark" ? "#666" : "#ccc"} 100%)`;
+  };
 
-  function updateSeekBarColor() {
-    const percent = video.currentTime / video.duration;
-    const color = document.body.classList.contains("dark") ? "#ccc" : "#333";
-    seekBar.style.background = `linear-gradient(to right, ${color} ${percent * 100}%, transparent ${percent * 100}%)`;
-  }
+  window.updateSeekBarColor = updateSeekBarColor;
 
-  function setPlayIcon() {
-    playButton.innerHTML = "▶️";
-  }
-
-  function setPauseIcon() {
-    playButton.innerHTML = "⏸️";
-  }
-
-  playButton.addEventListener("click", () => {
+  btn.addEventListener("click", () => {
     if (video.paused) {
       video.play();
+      setPauseIcon();
     } else {
       video.pause();
+      setPlayIcon();
     }
+    resetControlTimeout();
   });
 
-  video.addEventListener("play", () => {
-    setPauseIcon();
+  seekBar.addEventListener("input", () => {
+    video.currentTime = seekBar.value;
+    updateSeekBarColor();
+    resetControlTimeout();
   });
 
-  video.addEventListener("pause", () => {
-    setPlayIcon();
+  fullscreenBtn.addEventListener("click", () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      wrapper.requestFullscreen();
+    }
   });
 
   video.addEventListener("timeupdate", () => {
@@ -58,33 +83,25 @@ function setupPlayer(options) {
     updateSeekBarColor();
   });
 
-  seekBar.addEventListener("input", () => {
-    video.currentTime = seekBar.value;
+  video.addEventListener("loadeddata", () => {
+    seekBar.max = video.duration;
+    seekBar.value = video.currentTime;
     updateSeekBarColor();
+    resetControlTimeout();
+    if (options.onReady) options.onReady(video);
   });
 
-  fullscreenButton.addEventListener("click", () => {
-    const wrapper = document.querySelector(".videoWrapper");
-    if (wrapper.requestFullscreen) {
-      wrapper.requestFullscreen();
-    } else if (wrapper.webkitRequestFullscreen) {
-      wrapper.webkitRequestFullscreen();
-    } else if (wrapper.msRequestFullscreen) {
-      wrapper.msRequestFullscreen();
-    }
-  });
+  video.addEventListener("mousemove", resetControlTimeout);
+  video.addEventListener("touchstart", resetControlTimeout);
+  video.addEventListener("click", resetControlTimeout);
 
-  video.addEventListener("click", toggleControls);
-  video.addEventListener("touchstart", toggleControls);
+  video.addEventListener("play", setPauseIcon);
+  video.addEventListener("pause", setPlayIcon);
+  video.addEventListener("ended", setPlayIcon);
 
-  video.addEventListener("mousemove", showControls);
-  video.addEventListener("touchmove", showControls);
+  wrapper.addEventListener("mouseenter", showControls);
+  wrapper.addEventListener("mouseleave", hideControls);
 
-  seekBar.max = video.duration;
-
-  if (options?.onReady) {
-    video.addEventListener("loadedmetadata", options.onReady);
-  }
-
-  window.updateSeekBarColor = updateSeekBarColor;
+  hideControls();
+  setPlayIcon();
 }
