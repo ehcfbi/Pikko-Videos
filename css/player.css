@@ -5,7 +5,6 @@
   margin-top: 10px;
 }
 
-/* 中央再生／一時停止ボタン */
 .centerPlayPause {
   position: absolute;
   top: 50%;
@@ -26,7 +25,6 @@
   fill: white;
 }
 
-/* 下部のコントロールバー */
 .videoControls {
   position: absolute;
   bottom: 8px;
@@ -73,7 +71,6 @@ input[type="range"].seekBar::-moz-range-thumb {
   cursor: pointer;
 }
 
-/* フルスクリーンボタン */
 .fullscreenBtn {
   background: rgba(0,0,0,0.4);
   color: white;
@@ -83,26 +80,21 @@ input[type="range"].seekBar::-moz-range-thumb {
   cursor: pointer;
 }
 
-/* ホバー時に強制表示（!importantで .hide-controls を上書き） */
-.videoWrapper:hover .videoControls,
-.videoWrapper:hover .centerPlayPause {
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
+/* 💡 ホバー時に表示（ただし hide-controls がない時のみ） */
 .videoWrapper:hover:not(.hide-controls) .centerPlayPause,
 .videoWrapper:hover:not(.hide-controls) .videoControls {
   opacity: 1 !important;
   visibility: visible !important;
 }
 
-.hide-controls .centerPlayPause,
-.hide-controls .videoControls {
+/* 👀 明示的な非表示 */
+.videoWrapper.hide-controls .centerPlayPause,
+.videoWrapper.hide-controls .videoControls {
   opacity: 0 !important;
   visibility: hidden !important;
 }
 
-/* ダークモードの色調整 */
+/* 🌒 ダークモードの色調整 */
 body.dark input[type="range"].seekBar {
   background: #666;
 }
@@ -113,10 +105,10 @@ body.dark input[type="range"].seekBar::-moz-range-thumb {
   background: #ff8080;
 }
 
-/* シークバーの再生進行に応じた背景（JSで設定） */
+/* 🌈 シークバー背景：JSで設定 */
 input[type="range"].seekBar.light-complete {
   background: linear-gradient(to right, #ff0 0%, #ccc 0%);
 }
-body.dark input[type="range"].seekBar.dark-complete {
+input[type="range"].seekBar.dark-complete {
   background: linear-gradient(to right, #a03070 0%, #666 0%);
 }
