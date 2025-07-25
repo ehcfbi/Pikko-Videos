@@ -9,7 +9,6 @@ function initCustomPlayer(url, options = {}) {
   const pauseIcon = document.getElementById("pauseIcon").content.cloneNode(true);
 
   let controlTimeout;
-  let recentTouch = false;
 
   video.src = url;
   video.controls = false;
@@ -87,24 +86,14 @@ function initCustomPlayer(url, options = {}) {
   wrapper.addEventListener("mouseenter", resetControlTimeout);
   wrapper.addEventListener("mouseleave", resetControlTimeout);
 
-  // 📱 タッチとクリック処理（スマホ対応）
+  // 📱 タッチ・クリックどちらでも確実に表示をトリガー
   video.addEventListener("touchstart", (e) => {
-    e.preventDefault();
-    recentTouch = true;
+    e.preventDefault(); // iOSの誤動作防止
     resetControlTimeout();
   });
 
   video.addEventListener("click", () => {
-    if (recentTouch) {
-      recentTouch = false;
-      return;
-    }
-    if (wrapper.classList.contains("hide-controls")) {
-      resetControlTimeout();
-    } else {
-      wrapper.classList.add("hide-controls");
-      clearTimeout(controlTimeout);
-    }
+    resetControlTimeout();
   });
 
   video.addEventListener("play", setPauseIcon);
