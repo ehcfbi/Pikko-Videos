@@ -70,6 +70,7 @@
       width: 100%;
       aspect-ratio: 16 / 9;
       max-width: 720px;
+      margin: 0 auto;
     }
 
     #videoPlayer {
@@ -77,19 +78,23 @@
       height: 100%;
     }
 
-    .centerPlayPause {
+    .centerPlayPause,
+    .videoControls {
       position: absolute;
+      z-index: 10;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease;
+    }
+
+    .centerPlayPause {
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
       width: 64px;
       height: 64px;
       cursor: pointer;
-      z-index: 10;
       display: block;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.3s ease;
     }
 
     .centerPlayPause svg {
@@ -99,17 +104,12 @@
     }
 
     .videoControls {
-      position: absolute;
       bottom: 8px;
       left: 8px;
       right: 8px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      z-index: 10;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.3s ease;
     }
 
     .seekWrapper {
@@ -156,7 +156,6 @@
       cursor: pointer;
     }
 
-    /* ダークモード */
     body.dark input[type="range"].seekBar {
       background: #666;
     }
