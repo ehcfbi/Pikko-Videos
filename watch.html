@@ -66,12 +66,10 @@
       background: #09c;
     }
 
-    /* 🎬 独自プレイヤー UI */
     .videoWrapper {
-      position: relative;
-      width: 480px;
-      height: 270px;
-      margin-top: 10px;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      max-width: 720px;
     }
 
     #videoPlayer {
@@ -156,13 +154,6 @@
       padding: 4px 10px;
       border-radius: 4px;
       cursor: pointer;
-    }
-
-    /* ホバー時に表示 */
-    .videoWrapper:hover .videoControls,
-    .videoWrapper:hover .centerPlayPause {
-      opacity: 1;
-      visibility: visible;
     }
 
     /* ダークモード */
