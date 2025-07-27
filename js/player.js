@@ -13,7 +13,7 @@ function initCustomPlayer(url, options = {}) {
   video.autoplay = true;
   video.playsInline = true;
 
-  // 🌙 色更新（外部からも呼び出せる）
+  // 🌙 色更新
   function updateSeekBarColor() {
     if (!seekBar || !video || !video.duration) return;
     const percent = (video.currentTime / video.duration) * 100;
@@ -69,7 +69,7 @@ function initCustomPlayer(url, options = {}) {
     if (options?.onReady) options.onReady(video);
   });
 
-  // ✅ 表示/非表示トグル（スマホ・PC両対応）
+  // ✅ トグル処理（クリック／タップで表示⇄非表示）
   function toggleControls() {
     wrapper.classList.toggle("hide-controls");
   }
@@ -86,25 +86,23 @@ function initCustomPlayer(url, options = {}) {
     setPauseIcon();
   }
 
-  // 初期状態は非表示に
+  // 初期は非表示
   wrapper.classList.add("hide-controls");
 
-  // 📱 フルスクリーン時にスマホ端末なら自動横向き・サイズ調整
+  // ✅ スマホフルスクリーン時に横向き＆サイズ最適化
   wrapper.addEventListener("fullscreenchange", () => {
     if (document.fullscreenElement) {
-      const isMobile = /iPhone|iPad|Android/.test(navigator.userAgent);
-      if (isMobile) {
-        screen.orientation?.lock?.("landscape").catch(() => {});
-        setTimeout(() => {
-          video.style.width = "100vw";
-          video.style.height = "100vh";
-          video.style.objectFit = "contain";
-        }, 100);
+      const isMobile = /Android|iPhone|iPad/.test(navigator.userAgent);
+      if (isMobile && screen.orientation?.lock) {
+        screen.orientation.lock("landscape").catch(() => {});
       }
+      video.style.width = "100vw";
+      video.style.height = "100vh";
+      video.style.objectFit = "contain";
     } else {
       video.style.width = "";
       video.style.height = "";
-      video.style.objectFit = "cover";
+      video.style.objectFit = "";
     }
   });
 }
