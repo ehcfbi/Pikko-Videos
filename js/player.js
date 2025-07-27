@@ -69,12 +69,12 @@ function initCustomPlayer(url, options = {}) {
     if (options?.onReady) options.onReady(video);
   });
 
-  // ✅ 表示/非表示トグル（hoverなし、タップ/クリック含む）
+  // ✅ 表示/非表示トグル（スマホ・PC両対応）
   function toggleControls() {
     wrapper.classList.toggle("hide-controls");
   }
 
-  video.addEventListener("pointerup", toggleControls); // ← 修正ポイント
+  video.addEventListener("pointerup", toggleControls);
 
   video.addEventListener("play", setPauseIcon);
   video.addEventListener("pause", setPlayIcon);
@@ -88,4 +88,23 @@ function initCustomPlayer(url, options = {}) {
 
   // 初期状態は非表示に
   wrapper.classList.add("hide-controls");
+
+  // 📱 フルスクリーン時にスマホ端末なら自動横向き・サイズ調整
+  wrapper.addEventListener("fullscreenchange", () => {
+    if (document.fullscreenElement) {
+      const isMobile = /iPhone|iPad|Android/.test(navigator.userAgent);
+      if (isMobile) {
+        screen.orientation?.lock?.("landscape").catch(() => {});
+        setTimeout(() => {
+          video.style.width = "100vw";
+          video.style.height = "100vh";
+          video.style.objectFit = "contain";
+        }, 100);
+      }
+    } else {
+      video.style.width = "";
+      video.style.height = "";
+      video.style.objectFit = "cover";
+    }
+  });
 }
