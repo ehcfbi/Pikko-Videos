@@ -69,16 +69,12 @@ function initCustomPlayer(url, options = {}) {
     if (options?.onReady) options.onReady(video);
   });
 
-  // ✅ 表示/非表示トグル（hoverなし、タップ/クリックのみ）
+  // ✅ 表示/非表示トグル（hoverなし、タップ/クリック含む）
   function toggleControls() {
     wrapper.classList.toggle("hide-controls");
   }
 
-  video.addEventListener("click", toggleControls);
-  video.addEventListener("touchstart", (e) => {
-    e.preventDefault(); // iOS二重発火防止
-    toggleControls();
-  });
+  video.addEventListener("pointerup", toggleControls); // ← 修正ポイント
 
   video.addEventListener("play", setPauseIcon);
   video.addEventListener("pause", setPlayIcon);
