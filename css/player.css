@@ -1,81 +1,78 @@
 .videoWrapper {
   position: relative;
   width: 100%;
-  max-width: 720px;
   aspect-ratio: 16 / 9;
-  background: black;
-  overflow: hidden;
+  max-width: 720px;
+  margin: 0; /* 左寄せに戻す */
 }
 
-/* 動画を枠内にぴったりフィット */
-.videoWrapper video {
+#videoPlayer {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  display: block;
 }
 
-/* 中央再生ボタン */
 .centerPlayPause {
   position: absolute;
   top: 50%;
   left: 50%;
+  transform: translate(-50%, -50%);
   width: 64px;
   height: 64px;
-  transform: translate(-50%, -50%);
   cursor: pointer;
   z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
+  opacity: 0;
+  visibility: hidden;
   transition: opacity 0.3s ease;
 }
 
-.videoWrapper.hide-controls .centerPlayPause {
-  opacity: 0;
-  pointer-events: none;
+.centerPlayPause svg {
+  width: 100%;
+  height: 100%;
+  fill: white;
 }
 
-/* コントロールバー */
 .videoControls {
   position: absolute;
   bottom: 8px;
   left: 8px;
   right: 8px;
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 10px;
-  background: rgba(0,0,0,0.4);
-  padding: 4px;
-  border-radius: 6px;
   z-index: 10;
+  opacity: 0;
+  visibility: hidden;
   transition: opacity 0.3s ease;
 }
 
-.videoWrapper.hide-controls .videoControls {
-  opacity: 0;
-  pointer-events: none;
+.seekWrapper {
+  flex: 1;
+  margin-right: 10px;
 }
 
-/* シークバー */
-#seekBar {
-  appearance: none;
+input[type="range"].seekBar {
   width: 100%;
+  appearance: none;
   height: 6px;
   border-radius: 3px;
   background: #ccc;
+  position: relative;
+  overflow: hidden;
 }
 
-#seekBar::-webkit-slider-thumb {
+input[type="range"].seekBar::-webkit-slider-thumb {
   appearance: none;
   width: 12px;
   height: 12px;
   background: #90ee90;
   border-radius: 50%;
   cursor: pointer;
+  position: relative;
+  z-index: 2;
 }
 
-#seekBar::-moz-range-thumb {
+input[type="range"].seekBar::-moz-range-thumb {
   width: 12px;
   height: 12px;
   background: #90ee90;
@@ -84,25 +81,24 @@
   cursor: pointer;
 }
 
-/* フルスクリーンボタン */
-#fullscreenBtn {
-  background: none;
-  border: none;
+.fullscreenBtn {
+  background: rgba(0,0,0,0.4);
   color: white;
-  font-size: 14px;
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 4px;
   cursor: pointer;
-  padding: 4px 8px;
 }
 
 /* ダークモード対応 */
-body.dark #seekBar {
+body.dark input[type="range"].seekBar {
   background: #666;
 }
 
-body.dark #seekBar::-webkit-slider-thumb {
+body.dark input[type="range"].seekBar::-webkit-slider-thumb {
   background: #ff8080;
 }
 
-body.dark #seekBar::-moz-range-thumb {
+body.dark input[type="range"].seekBar::-moz-range-thumb {
   background: #ff8080;
 }
