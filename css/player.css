@@ -3,12 +3,16 @@
   width: 100%;
   aspect-ratio: 16 / 9;
   max-width: 720px;
-  margin: 0; /* 左寄せに戻す */
+  margin: 0;
+  background: black;
+  overflow: hidden;
 }
 
 #videoPlayer {
   width: 100%;
   height: 100%;
+  object-fit: contain;
+  background: black;
 }
 
 .centerPlayPause {
@@ -90,7 +94,6 @@ input[type="range"].seekBar::-moz-range-thumb {
   cursor: pointer;
 }
 
-/* ダークモード対応 */
 body.dark input[type="range"].seekBar {
   background: #666;
 }
@@ -101,4 +104,11 @@ body.dark input[type="range"].seekBar::-webkit-slider-thumb {
 
 body.dark input[type="range"].seekBar::-moz-range-thumb {
   background: #ff8080;
+}
+
+/* フルスクリーン時のUI維持 */
+.videoWrapper.fullscreen .centerPlayPause,
+.videoWrapper.fullscreen .videoControls {
+  position: fixed;
+  z-index: 1000;
 }
