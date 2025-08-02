@@ -20,13 +20,10 @@
   <link rel="stylesheet" href="css/player.css">
 
   <style>
-    body {
-      font-family: sans-serif;
+    body, html {
       margin: 0;
       padding: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      font-family: sans-serif;
     }
 
     .error {
@@ -73,8 +70,8 @@
 
     .videoWrapper {
       width: 100%;
-      aspect-ratio: 16 / 9;
       max-width: 720px;
+      aspect-ratio: 16 / 9;
       position: relative;
     }
 
@@ -173,6 +170,14 @@
     body.dark input[type="range"].seekBar::-moz-range-thumb {
       background: #ff8080;
     }
+
+    /* 修正追加: コントロール表示切り替え用 */
+    .centerPlayPause.show,
+    .videoControls.show {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
   </style>
 </head>
 <body class="bg-animation">
@@ -253,42 +258,6 @@
             year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
           });
 
-          if (info.hasPassword) {
-            content.innerHTML = `
-              <h1>${info.title} ${lockIcon}</h1>
-              <div class="author">
-                <img src="${SERVER}/icons/${info.username}.jpg" alt="icon">
-                <a href="user?name=${encodeURIComponent(info.username)}">${info.username}</a>
-              </div>
-              <div style="font-size: 0.9em;">${postedTime}</div>
-              <p>This video or music is locked. Please enter the password to watch.</p>
-              <input type="password" id="passInput" placeholder="Password" style="padding: 6px;">
-              <button onclick="checkAccess()">Unlock</button>
-              <p id="errorMsg" class="error"></p>
-            `;
-            window.checkAccess = () => {
-              const password = document.getElementById("passInput").value;
-              fetch(`${SERVER}/checkAccess`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id, password })
-              })
-              .then(res => res.ok ? res.json() : null)
-              .then(result => {
-                if (result?.access) {
-                  showMedia(info, mediaUrl, isAudio, lockIcon, postedTime);
-                } else {
-                  document.getElementById("errorMsg").textContent = "Incorrect password.";
-                }
-              })
-              .catch(() => {
-                document.getElementById("errorMsg").textContent = "Failed to verify password.";
-              });
-            };
-          } else {
-            showMedia(info, mediaUrl, isAudio, lockIcon, postedTime);
-          }
-
           function showMedia(info, mediaUrl, isAudio, lockIcon, postedTime) {
             const rewritten = rewriteDescription(info.description);
             content.innerHTML = `
@@ -335,7 +304,7 @@
                 .then(res => res.blob())
                 .then(blob => {
                   const url = URL.createObjectURL(blob);
-                  initCustomPlayer(url);
+                  initCustomPlayer(url);  // player.js で定義されている関数
                 })
                 .catch(() => {
                   content.innerHTML += `<p class="error">Failed to load video file.</p>`;
