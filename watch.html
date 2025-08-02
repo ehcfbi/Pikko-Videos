@@ -22,6 +22,11 @@
   <style>
     body {
       font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     .error {
@@ -70,7 +75,7 @@
       width: 100%;
       aspect-ratio: 16 / 9;
       max-width: 720px;
-      margin: 0 auto;
+      position: relative;
     }
 
     #videoPlayer {
@@ -85,6 +90,7 @@
       opacity: 0;
       visibility: hidden;
       transition: opacity 0.3s ease;
+      pointer-events: none;
     }
 
     .centerPlayPause {
@@ -299,7 +305,7 @@
                     <div class="videoWrapper">
                       <video id="videoPlayer" autoplay playsinline></video>
                       <div id="centerPlayPause" class="centerPlayPause"></div>
-                      <div class="videoControls">
+                      <div class="videoControls" id="videoControls">
                         <div class="seekWrapper">
                           <input type="range" id="seekBar" class="seekBar" min="0" value="0">
                         </div>
