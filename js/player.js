@@ -1,72 +1,84 @@
 function initCustomPlayer(videoUrl) {
-  const video = document.getElementById("videoPlayer");
-  const centerPlayPause = document.getElementById("centerPlayPause");
-  const videoControls = document.querySelector(".videoControls");
-  const seekBar = document.getElementById("seekBar");
-  const fullscreenBtn = document.getElementById("fullscreenBtn");
+  const wrapper = document.createElement('div');
+  wrapper.className = 'videoWrapper';
 
+  const video = document.createElement('video');
+  video.id = 'videoPlayer';
   video.src = videoUrl;
-  video.load();
+  video.controls = false;
+  video.playsInline = true;
 
-  // 初期アイコンの設定
-  updateCenterIcon(true);
+  const centerPlayPause = document.createElement('div');
+  centerPlayPause.className = 'centerPlayPause';
+  centerPlayPause.innerHTML = `<svg viewBox="0 0 64 64"><path d="M16 16h12v32H16zM36 16h12v32H36z"/></svg>`;
 
-  // イベント登録（PC・スマホ両対応）
-  video.addEventListener("pointerdown", toggleControls);
-  centerPlayPause.addEventListener("pointerdown", togglePlayPause);
-  fullscreenBtn.addEventListener("click", toggleFullScreen);
+  const videoControls = document.createElement('div');
+  videoControls.className = 'videoControls';
 
-  // 再生・停止に応じたアイコン切替
-  video.addEventListener("play", () => updateCenterIcon(false));
-  video.addEventListener("pause", () => updateCenterIcon(true));
+  const seekWrapper = document.createElement('div');
+  seekWrapper.className = 'seekWrapper';
 
-  // 時間更新に応じてシークバー更新
-  video.addEventListener("timeupdate", () => {
-    seekBar.value = video.currentTime;
-  });
+  const seekBar = document.createElement('input');
+  seekBar.type = 'range';
+  seekBar.className = 'seekBar';
+  seekBar.value = 0;
 
-  // メタデータ取得後に最大時間設定
-  video.addEventListener("loadedmetadata", () => {
-    seekBar.max = video.duration;
-  });
+  seekWrapper.appendChild(seekBar);
 
-  // シークバー操作
-  seekBar.addEventListener("input", () => {
-    video.currentTime = seekBar.value;
-  });
+  const fullscreenBtn = document.createElement('div');
+  fullscreenBtn.className = 'fullscreenBtn';
+  fullscreenBtn.textContent = 'Fullscreen';
 
-  function toggleControls() {
-    const isVisible = videoControls.style.opacity === "1";
-    const nextOpacity = isVisible ? "0" : "1";
-    const nextVisibility = isVisible ? "hidden" : "visible";
+  videoControls.appendChild(seekWrapper);
+  videoControls.appendChild(fullscreenBtn);
 
-    videoControls.style.opacity = nextOpacity;
-    videoControls.style.visibility = nextVisibility;
+  wrapper.appendChild(video);
+  wrapper.appendChild(centerPlayPause);
+  wrapper.appendChild(videoControls);
 
-    centerPlayPause.style.opacity = nextOpacity;
-    centerPlayPause.style.visibility = nextVisibility;
-  }
+  document.body.appendChild(wrapper);
 
-  function togglePlayPause() {
+  centerPlayPause.addEventListener('click', () => {
     if (video.paused) {
       video.play();
     } else {
       video.pause();
     }
-  }
+  });
 
-  function toggleFullScreen() {
+  video.addEventListener('play', () => {
+    centerPlayPause.style.opacity = 0;
+    centerPlayPause.style.visibility = 'hidden';
+    videoControls.style.opacity = 1;
+    videoControls.style.visibility = 'visible';
+  });
+
+  video.addEventListener('pause', () => {
+    centerPlayPause.style.opacity = 1;
+    centerPlayPause.style.visibility = 'visible';
+  });
+
+  seekBar.addEventListener('input', () => {
+    video.currentTime = (video.duration * seekBar.value) / 100;
+  });
+
+  video.addEventListener('timeupdate', () => {
+    seekBar.value = (video.currentTime / video.duration) * 100;
+  });
+
+  fullscreenBtn.addEventListener('click', () => {
     if (!document.fullscreenElement) {
-      video.requestFullscreen?.() || video.webkitRequestFullscreen?.();
+      wrapper.requestFullscreen();
     } else {
-      document.exitFullscreen?.() || document.webkitExitFullscreen?.();
+      document.exitFullscreen();
     }
-  }
+  });
 
-  function updateCenterIcon(showPlayIcon) {
-    const templateId = showPlayIcon ? "playIcon" : "pauseIcon";
-    const template = document.getElementById(templateId);
-    centerPlayPause.innerHTML = "";
-    centerPlayPause.appendChild(template.content.cloneNode(true));
-  }
+  document.addEventListener('fullscreenchange', () => {
+    if (document.fullscreenElement) {
+      wrapper.classList.add('fullscreen');
+    } else {
+      wrapper.classList.remove('fullscreen');
+    }
+  });
 }
