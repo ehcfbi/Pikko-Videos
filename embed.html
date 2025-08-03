@@ -82,6 +82,7 @@
   <div class="overlay">
     <a id="watch" href="#" target="_blank"><img src="logo.png" class="thumb" alt="logo"></a>
   </div>
+
 <script>
   const params = new URLSearchParams(location.search);
   const id = params.get("id");
@@ -105,18 +106,16 @@
         document.getElementById("videoInfoText").textContent = `${info.title} by ${info.username}`;
 
         if (info.hasPassword) {
-          const authUI = document.createElement("div");
-          authUI.id = "authPrompt";
-          authUI.style = "color:white;text-align:center;";
-          authUI.innerHTML = `
-            <p>This video or music is locked. Please enter the password.</p>
-            <input type="password" id="embedPassInput" placeholder="Password" style="padding:6px;">
-            <button id="unlockBtn">Unlock</button>
-            <p id="embedErrorMsg" style="color:red;"></p>
+          container.innerHTML += `
+            <div style="color:white;text-align:center;">
+              <p>This video or music is locked. Please enter the password.</p>
+              <input type="password" id="embedPassInput" placeholder="Password" style="padding:6px;">
+              <button onclick="verifyEmbedAccess()">Unlock</button>
+              <p id="embedErrorMsg" style="color:red;"></p>
+            </div>
           `;
-          container.appendChild(authUI);
 
-          document.getElementById("unlockBtn").addEventListener("click", () => {
+          window.verifyEmbedAccess = () => {
             const password = document.getElementById("embedPassInput").value;
             fetch(`${SERVER}/checkAccess`, {
               method: "POST",
@@ -126,7 +125,6 @@
               .then(res => res.ok ? res.json() : null)
               .then(result => {
                 if (result?.access) {
-                  document.getElementById("authPrompt").remove(); // ✅ UI削除
                   showEmbedMedia();
                 } else {
                   document.getElementById("embedErrorMsg").textContent = "Incorrect password.";
@@ -135,7 +133,7 @@
               .catch(() => {
                 document.getElementById("embedErrorMsg").textContent = "Failed to verify password.";
               });
-          });
+          };
         } else {
           showEmbedMedia();
         }
@@ -178,6 +176,7 @@
             wavesurfer.on("pause", () => {
               btn.textContent = "play";
             });
+
           } else {
             const video = document.createElement("video");
             video.controls = true;
