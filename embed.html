@@ -3,50 +3,63 @@
 <head>
   <meta charset="UTF-8" />
   <title>embed - Pikko Videos</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Embedding video player.">
-  <meta property="og:title" content="Embed - Pikko Videos">
-  <meta property="og:description" content="Embedding video player.">
-  <meta property="og:url" content="https://videos.bird.f5.si">
-
   <script>const SERVER = "https://pikko1.tcpexposer.com";</script>
   <script src="https://unpkg.com/wavesurfer.js"></script>
-
   <style>
-    body {
+    html, body {
       margin: 0;
-      font-family: sans-serif;
-      background: #000;
-      color: #fff;
-    }
-
-    .embedWrapper {
-      position: relative;
-      width: 100%;
-      height: 100vh;
+      padding: 0;
+      height: 100%;
+      background-color: #000;
       display: flex;
       justify-content: center;
       align-items: center;
     }
-
-    .videoArea {
-      max-width: 560px;
-      width: 100%;
+    .media-container {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
     }
-
     video {
-      width: 100%;
-      height: auto;
+      max-width: 100%;
+      max-height: 100%;
       background: #000;
     }
-
     #waveform {
-      width: 100%;
-      height: 100px;
-      background: #222;
-      margin-bottom: 20px;
+      width: 90%;
+      height: 80px;
+      background: #111;
+      margin-bottom: 10px;
     }
-
+    #controls {
+      margin-top: 10px;
+    }
+    .overlay {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+    }
+    .thumb {
+      width: 120px;
+      opacity: 0.6;
+    }
+    .info-overlay {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background-color: rgba(0, 0, 0, 0.6);
+      color: white;
+      font-size: 16px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-family: sans-serif;
+      max-width: 80vw;
+      z-index: 10;
+    }
     button {
       background: #0af;
       color: white;
@@ -56,130 +69,133 @@
       cursor: pointer;
       border-radius: 4px;
     }
-
     button:hover {
       background: #09c;
-    }
-
-    .topInfo {
-      position: absolute;
-      top: 8px;
-      left: 8px;
-      right: 8px;
-      display: flex;
-      justify-content: space-between;
-      color: rgba(255,255,255,0.5);
-      font-size: 0.9em;
-      z-index: 5;
-      pointer-events: none;
-    }
-
-    .topInfo a {
-      pointer-events: auto;
-      color: rgba(255,255,255,0.6);
-      text-decoration: none;
-      font-weight: bold;
-    }
-
-    .error {
-      color: #f55;
-      font-weight: bold;
-      margin-top: 1em;
     }
   </style>
 </head>
 <body>
-  <div class="embedWrapper">
-    <div class="videoArea" id="embedContainer"></div>
+  <div class="media-container" id="container">
+    <div class="info-overlay" id="videoInfoText">Pikko and Pikko Videos is looking for this videos or music...</div>
+    <!-- media player will be inserted here -->
   </div>
+  <div class="overlay">
+    <a id="watch" href="#" target="_blank"><img src="logo.png" class="thumb" alt="logo"></a>
+  </div>
+<script>
+  const params = new URLSearchParams(location.search);
+  const id = params.get("id");
+  const container = document.getElementById("container");
 
-  <script>
-    const id = new URLSearchParams(location.search).get("id");
-    const container = document.getElementById("embedContainer");
+  if (!id) {
+    container.innerHTML += "<p style='color:white;text-align:center;'>video or music id has not been entered.</p>";
+  } else {
+    fetch(`${SERVER}/videoInfo/${id}`)
+      .then(res => res.ok ? res.json() : null)
+      .then(info => {
+        if (!info || !info.fileName) {
+          container.innerHTML += "<p style='color:white;text-align:center;'>Pikko and Pikko Videos couldn't find this video or music.</p>";
+          return;
+        }
 
-    if (!id) {
-      container.innerHTML = `<p class="error">No media found.</p>`;
-    } else {
-      fetch(`${SERVER}/videoInfo/${id}`)
-        .then(res => res.ok ? res.json() : null)
-        .then(info => {
-          if (!info || !info.fileName) {
-            container.innerHTML = `<p class="error">Media not found.</p>`;
-            return;
-          }
+        const ext = info.fileName.split(".").pop().toLowerCase();
+        const isAudio = ext === "mp3" || ext === "wav";
+        const mediaUrl = `${SERVER}/videos/${encodeURIComponent(info.fileName)}`;
+        document.getElementById("watch").href = `watch.html?id=${encodeURIComponent(id)}`;
+        document.getElementById("videoInfoText").textContent = `${info.title} by ${info.username}`;
 
-          const ext = info.fileName.split(".").pop().toLowerCase();
-          const isAudio = ext === "mp3" || ext === "wav";
-          const mediaUrl = `${SERVER}/videos/${info.fileName}`;
-
-          const titleInfo = `
-            <div class="topInfo">
-              <div>${info.title} by 「${info.username}」</div>
-              <a href="user?name=${encodeURIComponent(info.username)}">
-                <img src="${SERVER}/icons/${info.username}.jpg" alt="icon" width="32" height="32" style="border-radius:50%;">
-              </a>
-            </div>
+        if (info.hasPassword) {
+          const authUI = document.createElement("div");
+          authUI.id = "authPrompt";
+          authUI.style = "color:white;text-align:center;";
+          authUI.innerHTML = `
+            <p>This video or music is locked. Please enter the password.</p>
+            <input type="password" id="embedPassInput" placeholder="Password" style="padding:6px;">
+            <button id="unlockBtn">Unlock</button>
+            <p id="embedErrorMsg" style="color:red;"></p>
           `;
+          container.appendChild(authUI);
 
-          if (info.hasPassword) {
-            container.innerHTML = `
-              ${titleInfo}
-              <p>This media is locked. Please enter the password to view.</p>
-              <input type="password" id="passInput" placeholder="Password" style="padding:6px;">
-              <button onclick="checkAccess()">Unlock</button>
-              <p id="errorMsg" class="error"></p>
-            `;
-
-            window.checkAccess = () => {
-              const password = document.getElementById("passInput").value;
-              fetch(`${SERVER}/checkAccess`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id, password })
+          document.getElementById("unlockBtn").addEventListener("click", () => {
+            const password = document.getElementById("embedPassInput").value;
+            fetch(`${SERVER}/checkAccess`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id, password })
+            })
+              .then(res => res.ok ? res.json() : null)
+              .then(result => {
+                if (result?.access) {
+                  document.getElementById("authPrompt").remove(); // ✅ UI削除
+                  showEmbedMedia();
+                } else {
+                  document.getElementById("embedErrorMsg").textContent = "Incorrect password.";
+                }
               })
-                .then(res => res.ok ? res.json() : null)
-                .then(result => {
-                  if (result?.access) {
-                    showMedia(mediaUrl, isAudio, titleInfo);
-                  } else {
-                    document.getElementById("errorMsg").textContent = "Incorrect password.";
-                  }
-                })
-                .catch(() => {
-                  document.getElementById("errorMsg").textContent = "Failed to verify password.";
-                });
-            };
-          } else {
-            showMedia(mediaUrl, isAudio, titleInfo);
-          }
-
-          function showMedia(mediaUrl, isAudio, titleInfo) {
-            container.innerHTML = titleInfo;
-
-            if (isAudio) {
-              container.innerHTML += `<div id="waveform"></div><button id="togglePlay">play</button>`;
-              const wavesurfer = WaveSurfer.create({
-                container: '#waveform',
-                waveColor: '#888',
-                progressColor: '#0af',
-                height: 100,
-                responsive: true
+              .catch(() => {
+                document.getElementById("embedErrorMsg").textContent = "Failed to verify password.";
               });
-              wavesurfer.load(mediaUrl);
-              const btn = document.getElementById("togglePlay");
-              btn.addEventListener("click", () => wavesurfer.playPause());
-              wavesurfer.on("play", () => { btn.textContent = "pause"; });
-              wavesurfer.on("pause", () => { btn.textContent = "play"; });
-            } else {
-              container.innerHTML += `<video src="${mediaUrl}" playsinline controls></video>`;
-              // autoplay removed per request
-            }
+          });
+        } else {
+          showEmbedMedia();
+        }
+
+        function showEmbedMedia() {
+          if (isAudio) {
+            const waveformDiv = document.createElement("div");
+            waveformDiv.id = "waveform";
+
+            const btn = document.createElement("button");
+            btn.id = "togglePlay";
+            btn.textContent = "play";
+
+            const controls = document.createElement("div");
+            controls.id = "controls";
+            controls.appendChild(btn);
+
+            container.appendChild(waveformDiv);
+            container.appendChild(controls);
+
+            const wavesurfer = WaveSurfer.create({
+              container: '#waveform',
+              waveColor: '#555',
+              progressColor: '#0af',
+              height: 80,
+              barWidth: 2,
+              responsive: true
+            });
+
+            wavesurfer.load(mediaUrl);
+
+            btn.addEventListener("click", () => {
+              wavesurfer.playPause();
+            });
+
+            wavesurfer.on("play", () => {
+              btn.textContent = "pause";
+            });
+
+            wavesurfer.on("pause", () => {
+              btn.textContent = "play";
+            });
+          } else {
+            const video = document.createElement("video");
+            video.controls = true;
+            video.autoplay = false;
+            video.setAttribute("controlsList", "nodownload");
+            video.playsInline = true;
+            video.muted = false;
+            video.src = mediaUrl;
+            video.style.maxWidth = "100%";
+            video.style.maxHeight = "100%";
+            container.appendChild(video);
           }
-        })
-        .catch(() => {
-          container.innerHTML = `<p class="error">error</p>`;
-        });
-    }
-  </script>
+        }
+      })
+      .catch(() => {
+        container.innerHTML += "<p style='color:white;text-align:center;'>Failed to load media.</p>";
+      });
+  }
+</script>
 </body>
 </html>
