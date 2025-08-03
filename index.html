@@ -92,7 +92,7 @@
 
         const list = sorted.map(v => `
           <div class="videoCard">
-            <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}" alt="thumb"><br>
+            <a href="watch?id=${v.id}"><img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}" alt="thumb"></a><br>
             <b>
               ${v.title}
               ${v.password ? `<img src="img/lock.svg" alt="locked" class="lockIcon">` : ""}
@@ -104,7 +104,6 @@
               hour: "2-digit",
               minute: "2-digit"
             })}<br>
-            <a href="watch?id=${v.id}">watch</a>
             <div style="display: flex; align-items: center; margin-top: 5px;">
               <img src="${SERVER}/icons/${v.username}.jpg"
                 alt="icon"
@@ -125,4 +124,5 @@
   });
 </script>
 </body>
+
 
