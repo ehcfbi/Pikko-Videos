@@ -152,7 +152,7 @@
             </div>
             <div style="font-size: 0.9em;">${postedTime}</div>
             ${playerHtml}
-            <p style="white-space: pre-wrap; margin-top: 1em;">${info.description}</p>
+            <p style="white-space: pre-wrap; margin-top: 1em;">${rewriteDescription(info.description)}</p>
           `;
 
           if (isAudio) {
@@ -199,6 +199,25 @@
       });
   }
 
+  function rewriteDescription(desc) {
+  const temp = document.createElement("div");
+  temp.innerHTML = desc;
+  const urls = temp.querySelectorAll("url");
+  urls.forEach(node => {
+    const parts = node.textContent.split("|");
+    const raw = parts[0]?.trim();
+    const text = parts[1]?.trim() || raw;
+    const encoded = encodeURIComponent(raw);
+    const a = document.createElement("a");
+    a.href = `redirect?url=${encoded}`;
+    a.textContent = text;
+    a.target = "_blank";
+    a.rel = "noopener";
+    node.replaceWith(a);
+  });
+  return temp.innerHTML;
+}
+  
   function copyUrl() {
     navigator.clipboard.writeText(location.href);
   }
@@ -210,3 +229,4 @@
 </script>
 </body>
 </html>
+
