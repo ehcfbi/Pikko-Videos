@@ -20,32 +20,26 @@
   <link rel="stylesheet" href="css/player.css">
 
   <style>
-    body, html {
-      margin: 0;
-      padding: 0;
+    body {
       font-family: sans-serif;
     }
-
     .error {
       color: red;
       font-weight: bold;
       margin-top: 1em;
     }
-
     .lockIcon {
       width: 16px;
       height: 16px;
       vertical-align: middle;
       margin-left: 4px;
     }
-
     .author {
       display: flex;
       align-items: center;
       margin-top: 4px;
       margin-bottom: 6px;
     }
-
     .author img {
       width: 40px;
       height: 40px;
@@ -53,7 +47,15 @@
       margin-right: 8px;
       object-fit: cover;
     }
-
+    #waveform {
+      width: 100%;
+      height: 100px;
+      background: #f0f0f0;
+      margin-top: 20px;
+    }
+    #controls {
+      margin-top: 10px;
+    }
     button {
       background: #0af;
       color: white;
@@ -63,124 +65,12 @@
       cursor: pointer;
       border-radius: 4px;
     }
-
     button:hover {
       background: #09c;
     }
-
-    .videoWrapper {
-      width: 100%;
-      max-width: 720px;
-      aspect-ratio: 16 / 9;
-      position: relative;
-    }
-
-    #videoPlayer {
-      width: 100%;
-      height: 100%;
-    }
-
-    .centerPlayPause,
-    .videoControls {
-      position: absolute;
-      z-index: 10;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.3s ease;
-      pointer-events: none;
-    }
-
-    .centerPlayPause {
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 64px;
-      height: 64px;
-      cursor: pointer;
-      display: block;
-    }
-
-    .centerPlayPause svg {
-      width: 100%;
-      height: 100%;
-      fill: white;
-    }
-
-    .videoControls {
-      bottom: 8px;
-      left: 8px;
-      right: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .seekWrapper {
-      flex: 1;
-      margin-right: 10px;
-    }
-
-    input[type="range"].seekBar {
-      width: 100%;
-      appearance: none;
-      height: 6px;
-      border-radius: 3px;
-      background: #ccc;
-      position: relative;
-      overflow: hidden;
-    }
-
-    input[type="range"].seekBar::-webkit-slider-thumb {
-      appearance: none;
-      width: 12px;
-      height: 12px;
-      background: #90ee90;
-      border-radius: 50%;
-      cursor: pointer;
-      position: relative;
-      z-index: 2;
-    }
-
-    input[type="range"].seekBar::-moz-range-thumb {
-      width: 12px;
-      height: 12px;
-      background: #90ee90;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-    }
-
-    .fullscreenBtn {
-      background: rgba(0,0,0,0.4);
-      color: white;
-      font-size: 13px;
-      padding: 4px 10px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    body.dark input[type="range"].seekBar {
-      background: #666;
-    }
-
-    body.dark input[type="range"].seekBar::-webkit-slider-thumb {
-      background: #ff8080;
-    }
-
-    body.dark input[type="range"].seekBar::-moz-range-thumb {
-      background: #ff8080;
-    }
-
-    /* 修正追加: コントロール表示切り替え用 */
-    .centerPlayPause.show,
-    .videoControls.show {
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-    }
   </style>
 </head>
-<body class="bg-animation">
+<body class="bg-animation dark">
   <a href="./"><img class="logo" src="logo.png" alt="logo" width="200" height="100" /></a>
   <p><button onclick="toggleTheme()" id="themeBtn">Light Mode</button></p>
 
@@ -192,20 +82,6 @@
   </table>
 
   <div id="content"></div>
-
-  <template id="playIcon">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="white">
-      <polygon points="20,16 20,48 48,32" />
-    </svg>
-  </template>
-
-  <template id="pauseIcon">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="white">
-      <rect x="18" y="16" width="10" height="32" rx="2"/>
-      <rect x="36" y="16" width="10" height="32" rx="2"/>
-    </svg>
-  </template>
-
   <script>
     const id = new URLSearchParams(location.search).get("id");
     const content = document.getElementById("content");
@@ -222,19 +98,23 @@
     function rewriteDescription(desc) {
       const temp = document.createElement("div");
       temp.innerHTML = desc;
+
       const urls = temp.querySelectorAll("url");
       urls.forEach(node => {
         const parts = node.textContent.split("|");
         const raw = parts[0]?.trim();
         const text = parts[1]?.trim() || raw;
         const encoded = encodeURIComponent(raw);
+
         const a = document.createElement("a");
         a.href = `redirect?url=${encoded}`;
         a.textContent = text;
         a.target = "_blank";
         a.rel = "noopener";
+
         node.replaceWith(a);
       });
+
       return temp.innerHTML;
     }
 
@@ -258,6 +138,43 @@
             year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
           });
 
+          if (info.hasPassword) {
+            content.innerHTML = `
+              <h1>${info.title} ${lockIcon}</h1>
+              <div class="author">
+                <img src="${SERVER}/icons/${info.username}.jpg" alt="icon">
+                <a href="user?name=${encodeURIComponent(info.username)}">${info.username}</a>
+              </div>
+              <div style="font-size: 0.9em;">${postedTime}</div>
+              <p>This video or music is locked. Please enter the password to watch.</p>
+              <input type="password" id="passInput" placeholder="Password" style="padding: 6px;">
+              <button onclick="checkAccess()">Unlock</button>
+              <p id="errorMsg" class="error"></p>
+            `;
+
+            window.checkAccess = () => {
+              const password = document.getElementById("passInput").value;
+              fetch(`${SERVER}/checkAccess`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id, password })
+              })
+                .then(res => res.ok ? res.json() : null)
+                .then(result => {
+                  if (result?.access) {
+                    showMedia(info, mediaUrl, isAudio, lockIcon, postedTime);
+                  } else {
+                    document.getElementById("errorMsg").textContent = "Incorrect password.";
+                  }
+                })
+                .catch(() => {
+                  document.getElementById("errorMsg").textContent = "Failed to verify password.";
+                });
+            };
+          } else {
+            showMedia(info, mediaUrl, isAudio, lockIcon, postedTime);
+          }
+
           function showMedia(info, mediaUrl, isAudio, lockIcon, postedTime) {
             const rewritten = rewriteDescription(info.description);
             content.innerHTML = `
@@ -267,23 +184,14 @@
                 <a href="user?name=${encodeURIComponent(info.username)}">${info.username}</a>
               </div>
               <div style="font-size: 0.9em;">${postedTime}</div>
-              ${
-                isAudio
-                  ? `<div id="waveform"></div><div id="controls"><button id="togglePlay">play</button></div>`
-                  : `
-                    <div class="videoWrapper">
-                      <video id="videoPlayer" autoplay playsinline></video>
-                      <div id="centerPlayPause" class="centerPlayPause"></div>
-                      <div class="videoControls" id="videoControls">
-                        <div class="seekWrapper">
-                          <input type="range" id="seekBar" class="seekBar" min="0" value="0">
-                        </div>
-                        <button id="fullscreenBtn" class="fullscreenBtn">⛶</button>
-                      </div>
-                    </div>
-                  `
+              ${isAudio
+                ? `<div id="waveform"></div><div id="controls"><button id="togglePlay">play</button></div>`
+                : `<div id="customPlayer" style="width:480px; height:270px;"></div>`
               }
-              ${rewritten ? `<p style="white-space: pre-wrap; margin-top: 1em;">${rewritten}</p>` : ""}
+              ${rewritten
+                ? `<p style="white-space: pre-wrap; margin-top: 1em;">${rewritten}</p>`
+                : ""
+              }
             `;
 
             if (isAudio) {
@@ -294,7 +202,9 @@
                 height: 100,
                 responsive: true
               });
+
               wavesurfer.load(mediaUrl);
+
               const btn = document.getElementById("togglePlay");
               btn.addEventListener("click", () => wavesurfer.playPause());
               wavesurfer.on("play", () => { btn.textContent = "pause"; });
@@ -304,7 +214,7 @@
                 .then(res => res.blob())
                 .then(blob => {
                   const url = URL.createObjectURL(blob);
-                  initCustomPlayer(url);  // player.js で定義されている関数
+                  initCustomPlayer(url);
                 })
                 .catch(() => {
                   content.innerHTML += `<p class="error">Failed to load video file.</p>`;
