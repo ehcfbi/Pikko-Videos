@@ -35,6 +35,10 @@
       vertical-align: middle;
       margin-left: 4px;
     }
+    .error {
+      color: red;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body class="bg-animation">
@@ -45,52 +49,65 @@
   <div id="info"></div>
   <h2>videos and musics</h2>
   <div id="list"></div>
-
   <script>
-const params = new URLSearchParams(location.search);
-const name = params.get("name");
-if (!name) location.href = "./";
+    const params = new URLSearchParams(location.search);
+    const name = params.get("name");
+    if (!name) location.href = "./";
 
-document.title = `${name} - Pikko Videos`;
+    document.title = `${name} - Pikko Videos`;
 
-    document.getElementById("info").innerHTML = `
-      <div style="display: flex; align-items: center; margin-bottom: 10px;">
-        <img src="${SERVER}/icons/${name}.jpg" alt="icon" width="60" height="60" style="margin-right: 10px;">
-        <font size="6" color="purple">${name}</font>
-      </div>
-    `;
+    const iconUrl = `${SERVER}/icons/${name}.jpg`;
+    const iconImg = new Image();
+    iconImg.src = iconUrl;
 
-    fetch(`${SERVER}/videos/user/${encodeURIComponent(name)}`)
-      .then(res => res.json())
-      .then(videos => {
-        videos.sort((a, b) => new Date(b.date) - new Date(a.date));
-        const list = videos.map(v => `
-          <div class="videoCard">
-            <a href="watch?id=${v.id}"><img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}" alt="thumb"></a><br>
-            <b>
-              ${v.title}
-              ${v.password ? `<img src="img/lock.svg" alt="locked" class="lockIcon">` : ""}
-            </b><br>
-            ${new Date(v.date).toLocaleString("ja-JP", {
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-              hour: "2-digit",
-              minute: "2-digit"
-            })}<br>
-          </div>
-        `).join("");
-        document.getElementById("list").innerHTML = list || "No videos yet.";
-      });
+    iconImg.onload = () => {
+      // ユーザーアイコン画像が存在する → ユーザーは存在する
+      document.getElementById("info").innerHTML = `
+        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+          <img src="${iconUrl}" alt="icon" width="60" height="60" style="margin-right: 10px;">
+          <font size="6" color="purple">${name}</font>
+        </div>
+      `;
+
+      // 動画取得
+      fetch(`${SERVER}/videos/user/${encodeURIComponent(name)}`)
+        .then(res => res.json())
+        .then(videos => {
+          videos.sort((a, b) => new Date(b.date) - new Date(a.date));
+          const list = videos.map(v => `
+            <div class="videoCard">
+              <a href="watch?id=${v.id}"><img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}" alt="thumb"></a><br>
+              <b>
+                ${v.title}
+                ${v.password ? `<img src="img/lock.svg" alt="locked" class="lockIcon">` : ""}
+              </b><br>
+              ${new Date(v.date).toLocaleString("ja-JP", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit"
+              })}<br>
+            </div>
+          `).join("");
+          document.getElementById("list").innerHTML = list || "No videos yet.";
+        });
+    };
+
+    iconImg.onerror = () => {
+      // ユーザーアイコン画像が存在しない → アカウントなし
+      document.getElementById("info").innerHTML = `<p class="error">This account does not exist.</p>`;
+      document.getElementById("list").innerHTML = "";
+    };
+
     function copyUrl() {
-    const element = document.createElement('input');
-    element.value = location.href;
-    document.body.appendChild(element);
-    element.select();
-    document.execCommand('copy');
-    document.body.removeChild(element);
-}
+      const element = document.createElement('input');
+      element.value = location.href;
+      document.body.appendChild(element);
+      element.select();
+      document.execCommand('copy');
+      document.body.removeChild(element);
+    }
   </script>
 </body>
 </html>
-
