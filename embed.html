@@ -60,6 +60,18 @@
       max-width: 80vw;
       z-index: 10;
     }
+    .author-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
+      vertical-align: middle;
+      margin-left: 8px;
+    }
+    .author-link {
+      color: white;
+      margin-left: 6px;
+      text-decoration: none;
+    }
     button {
       background: #0af;
       color: white;
@@ -80,7 +92,9 @@
     <!-- media player will be inserted here -->
   </div>
   <div class="overlay">
-    <a id="watch" href="#" target="_blank"><img src="logo.png" class="thumb" alt="logo"></a>
+    <a id="watch" href="#" target="_blank">
+      <img src="logo.png" class="thumb" alt="logo">
+    </a>
   </div>
 
 <script>
@@ -103,17 +117,25 @@
         const isAudio = ext === "mp3" || ext === "wav";
         const mediaUrl = `${SERVER}/videos/${encodeURIComponent(info.fileName)}`;
         document.getElementById("watch").href = `watch.html?id=${encodeURIComponent(id)}`;
-        document.getElementById("videoInfoText").textContent = `${info.title} by ${info.username}`;
+
+        document.getElementById("videoInfoText").innerHTML = `
+          ${info.title}
+          <img src="${SERVER}/icons/${info.username}.jpg" alt="icon" class="author-icon">
+          <a href="user?name=${encodeURIComponent(info.username)}" class="author-link">${info.username}</a>
+        `;
 
         if (info.hasPassword) {
-          container.innerHTML += `
-            <div style="color:white;text-align:center;">
-              <p>This video or music is locked. Please enter the password.</p>
-              <input type="password" id="embedPassInput" placeholder="Password" style="padding:6px;">
-              <button onclick="verifyEmbedAccess()">Unlock</button>
-              <p id="embedErrorMsg" style="color:red;"></p>
-            </div>
+          const unlockUI = document.createElement("div");
+          unlockUI.id = "unlockUI";
+          unlockUI.style.color = "white";
+          unlockUI.style.textAlign = "center";
+          unlockUI.innerHTML = `
+            <p>This video or music is locked. Please enter the password.</p>
+            <input type="password" id="embedPassInput" placeholder="Password" style="padding:6px;">
+            <button onclick="verifyEmbedAccess()">Unlock</button>
+            <p id="embedErrorMsg" style="color:red;"></p>
           `;
+          container.appendChild(unlockUI);
 
           window.verifyEmbedAccess = () => {
             const password = document.getElementById("embedPassInput").value;
@@ -125,6 +147,9 @@
               .then(res => res.ok ? res.json() : null)
               .then(result => {
                 if (result?.access) {
+                  // 🎯 パスワード入力欄を削除
+                  const ui = document.getElementById("unlockUI");
+                  if (ui) ui.remove();
                   showEmbedMedia();
                 } else {
                   document.getElementById("embedErrorMsg").textContent = "Incorrect password.";
