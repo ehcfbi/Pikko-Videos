@@ -136,79 +136,75 @@
           showMedia(info, mediaUrl, isAudio, lockIcon, postedTime);
         }
 
-        function showMedia(info, mediaUrl, isAudio, lockIcon, postedTime) {
-          const playerHtml = isAudio ? `
-            <div id="waveform"></div>
-            <div id="controls"><button id="togglePlay">play</button></div>
-          ` : `
-            <video id="player" width="480px" height="270px" controls controlsList="nodownload" autoplay playsinline></video>
-          `;
+function showMedia(info, mediaUrl, isAudio, lockIcon, postedTime) {
+  const playerHtml = isAudio ? `
+    <div id="waveform"></div>
+    <div id="controls"><button id="togglePlay">play</button></div>
+  ` : `
+    <video id="player" width="480px" height="270px" controls controlsList="nodownload" autoplay playsinline></video>
+  `;
 
-          content.innerHTML = `
-            <h1>${info.title} ${lockIcon}</h1>
-            <div class="author">
-              <img src="${SERVER}/icons/${info.username}.jpg" alt="icon">
-              <a href="user?name=${encodeURIComponent(info.username)}">${info.username}</a>
-            </div>
-            <div style="font-size: 0.9em;">${postedTime}</div>
-            ${playerHtml}
-            <p style="white-space: pre-wrap; margin-top: 1em;">${rewriteDescription(info.description)}</p>
+  content.innerHTML = `
+    <h1>${info.title} ${lockIcon}</h1>
+    <div class="author">
+      <img src="${SERVER}/icons/${info.username}.jpg" alt="icon">
+      <a href="user?name=${encodeURIComponent(info.username)}">${info.username}</a>
+    </div>
+    <div style="font-size: 0.9em;">${postedTime}</div>
+    ${playerHtml}
+    <p style="white-space: pre-wrap; margin-top: 1em;">${rewriteDescription(info.description)}</p>
 
-            <!-- 🔽 コメントセクション -->
-            <div id="comments" style="margin-top: 2em;">
-              <h2>Comments</h2>
-              <div id="commentList">Loading comments...</div>
-              <div style="margin-top: 1em;">
-                <textarea id="commentInput" rows="3" style="width: 100%; padding: 6px;" placeholder="Write a comment..."></textarea>
-                <button id="postCommentBtn" style="margin-top: 6px;">Post Comment</button>
-              </div>
-            </div>
-          `;
+    <!-- 🔽 コメントセクション -->
+    <div id="comments" style="margin-top: 2em;">
+      <h2>Comments</h2>
+      <div id="commentList">Loading comments...</div>
+      <div style="margin-top: 1em;">
+        <textarea id="commentInput" rows="3" style="width: 100%; padding: 6px;" placeholder="Write a comment..."></textarea>
+        <button id="postCommentBtn" style="margin-top: 6px;">Post Comment</button>
+      </div>
+    </div>
+  `;
 
-          if (isAudio) {
-            const wavesurfer = WaveSurfer.create({
-              container: '#waveform',
-              waveColor: '#888',
-              progressColor: '#0af',
-              height: 100,
-              responsive: true
-            });
+  // 🔽 プレイヤー処理
+  if (isAudio) {
+    const wavesurfer = WaveSurfer.create({
+      container: '#waveform',
+      waveColor: '#888',
+      progressColor: '#0af',
+      height: 100,
+      responsive: true
+    });
 
-            wavesurfer.load(mediaUrl);
+    wavesurfer.load(mediaUrl);
 
-            const btn = document.getElementById("togglePlay");
-            btn.addEventListener("click", () => {
-              wavesurfer.playPause();
-            });
+    const btn = document.getElementById("togglePlay");
+    btn.addEventListener("click", () => {
+      wavesurfer.playPause();
+    });
 
-            wavesurfer.on("play", () => {
-              btn.textContent = "pause";
-            });
+    wavesurfer.on("play", () => {
+      btn.textContent = "pause";
+    });
 
-            wavesurfer.on("pause", () => {
-              btn.textContent = "play";
-            });
-          } else {
-            fetch(mediaUrl)
-              .then(res => res.blob())
-              .then(blob => {
-                const url = URL.createObjectURL(blob);
-                document.getElementById("player").src = url;
-              })
-              .catch(() => {
-                const player = document.getElementById("player");
-                if (player) {
-                  player.replaceWith(`<p class="error">Failed to load video file.</p>`);
-                }
-              });
-          }
-        }
+    wavesurfer.on("pause", () => {
+      btn.textContent = "play";
+    });
+  } else {
+    fetch(mediaUrl)
+      .then(res => res.blob())
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        document.getElementById("player").src = url;
       })
       .catch(() => {
-        content.innerHTML = `<p class="error">error</p>`;
+        const player = document.getElementById("player");
+        if (player) {
+          player.replaceWith(`<p class="error">Failed to load video file.</p>`);
+        }
       });
+  }
 
-      // 🔽 コメント機能のスクリプト
+  // 🔽 コメント機能のスクリプト（ここが重要！）
   const commentList = document.getElementById("commentList");
   const commentInput = document.getElementById("commentInput");
   const postBtn = document.getElementById("postCommentBtn");
@@ -269,7 +265,6 @@
 
   loadComments();
 }
-  }
 
   function rewriteDescription(desc) {
   const temp = document.createElement("div");
@@ -301,5 +296,6 @@
 </script>
 </body>
 </html>
+
 
 
