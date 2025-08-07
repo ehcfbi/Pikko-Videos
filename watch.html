@@ -83,13 +83,13 @@
   const content = document.getElementById("content");
 
   if (!id) {
-    content.innerHTML = `<p class="error">Pikko and Pikko Videos couldn't find this video or music.</p>`;
+    content.innerHTML = `<p class="error">Missing video or music ID.</p>`;
   } else {
     fetch(`${SERVER}/videoInfo/${id}`)
       .then(res => res.ok ? res.json() : null)
       .then(info => {
         if (!info || !info.fileName) {
-          content.innerHTML = `<p class="error">Pikko and Pikko Videos couldn't find this video or music.</p>`;
+          content.innerHTML = `<p class="error">Video or music not found.</p>`;
           return;
         }
 
@@ -110,7 +110,7 @@
               <a href="user?name=${encodeURIComponent(info.username)}">${info.username}</a>
             </div>
             <div style="font-size: 0.9em;">${postedTime}</div>
-            <p>This video or music is locked. Please enter the password to watch.</p>
+            <p>This content is password protected. Please enter the password to unlock.</p>
             <input type="password" id="passInput" placeholder="Password" style="padding: 6px;">
             <button onclick="checkAccess()">Unlock</button>
             <p id="errorMsg" class="error"></p>
@@ -142,7 +142,7 @@
         function showMedia(info, mediaUrl, isAudio, lockIcon, postedTime) {
           const playerHtml = isAudio ? `
             <div id="waveform"></div>
-            <div id="controls"><button id="togglePlay">play</button></div>
+            <div id="controls"><button id="togglePlay">Play</button></div>
           ` : `
             <video id="player" width="480px" height="270px" controls controlsList="nodownload" autoplay playsinline></video>
           `;
@@ -175,11 +175,11 @@
             });
 
             wavesurfer.on("play", () => {
-              btn.textContent = "pause";
+              btn.textContent = "Pause";
             });
 
             wavesurfer.on("pause", () => {
-              btn.textContent = "play";
+              btn.textContent = "Play";
             });
           } else {
             fetch(mediaUrl)
@@ -196,13 +196,13 @@
               });
           }
 
-          // コメントセクション追加
+          // Comment section
           const commentSection = document.createElement("div");
           commentSection.innerHTML = `
-            <h2 style="margin-top: 1em;">💬 コメント</h2>
-            <div id="commentsList">読み込み中...</div>
-            <textarea id="commentInput" placeholder="コメントを入力..." rows="3" style="width:100%; margin-top:10px;"></textarea>
-            <button onclick="submitComment()" style="margin-top:6px;">送信</button>
+            <h2 style="margin-top: 1em;">💬 Comments</h2>
+            <div id="commentsList">Loading comments...</div>
+            <textarea id="commentInput" placeholder="Write a comment..." rows="3" style="width:100%; margin-top:10px;"></textarea>
+            <button onclick="submitComment()" style="margin-top:6px;">Submit</button>
             <p id="commentError" class="error"></p>
           `;
           content.appendChild(commentSection);
@@ -213,18 +213,18 @@
               .then(comments => {
                 const list = document.getElementById("commentsList");
                 list.innerHTML = "";
-                if (comments.length === 0) {
-                  list.textContent = "コメントはまだありません。";
+                if (!comments || comments.length === 0) {
+                  list.textContent = "No comments yet.";
                   return;
                 }
                 comments.forEach(c => {
                   const div = document.createElement("div");
-                  div.textContent = \`\${c.user}: \${c.text}\`;
+                  div.textContent = `${c.user}: ${c.text}`;
                   list.appendChild(div);
                 });
               })
               .catch(err => {
-                document.getElementById("commentsList").textContent = "コメントの読み込みに失敗しました。";
+                document.getElementById("commentsList").textContent = "Failed to load comments.";
                 console.error(err);
               });
           }
@@ -234,18 +234,18 @@
             const text = input.value.trim();
             if (!text) return;
 
-            fetch(`${SERVER}/comments?id=${id}`, { 
+            fetch(`${SERVER}/comments?id=${id}`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ text })
             })
               .then(res => {
-                if (!res.ok) throw new Error("送信失敗");
+                if (!res.ok) throw new Error("Submit failed");
                 input.value = "";
                 loadComments();
               })
               .catch(err => {
-                document.getElementById("commentError").textContent = "コメントの送信に失敗しました。";
+                document.getElementById("commentError").textContent = "Failed to submit comment.";
                 console.error(err);
               });
           }
@@ -254,7 +254,7 @@
         }
       })
       .catch(() => {
-        content.innerHTML = `<p class="error">error</p>`;
+        content.innerHTML = `<p class="error">Unexpected error occurred.</p>`;
       });
   }
 
@@ -288,4 +288,3 @@
 </script>
 </body>
 </html>
-
