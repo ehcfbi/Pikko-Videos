@@ -208,7 +208,7 @@
           content.appendChild(commentSection);
 
           function loadComments() {
-            fetch(\`\${SERVER}/api/comments?id=\${id}\`)
+            fetch(`${SERVER}/comments?id=${id}`)
               .then(res => res.json())
               .then(comments => {
                 const list = document.getElementById("commentsList");
@@ -234,7 +234,7 @@
             const text = input.value.trim();
             if (!text) return;
 
-            fetch(\`\${SERVER}/api/comments?id=\${id}\`, {
+            fetch(`${SERVER}/comments?id=${id}`, { 
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ text })
@@ -288,3 +288,4 @@
 </script>
 </body>
 </html>
+
