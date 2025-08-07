@@ -121,7 +121,7 @@
         document.getElementById("videoInfoText").innerHTML = `
           ${info.title}
           <img src="${SERVER}/icons/${info.username}.jpg" alt="icon" class="author-icon">
-          <a href="user?name=${encodeURIComponent(info.username)}" class="author-link">${info.username}</a>
+          <a href="user?name=${encodeURIComponent(info.username)}" class="author-link">${info.username} target="_blank"</a>
         `;
 
         if (info.hasPassword) {
