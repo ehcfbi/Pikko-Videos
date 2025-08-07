@@ -153,6 +153,16 @@
             <div style="font-size: 0.9em;">${postedTime}</div>
             ${playerHtml}
             <p style="white-space: pre-wrap; margin-top: 1em;">${rewriteDescription(info.description)}</p>
+
+            <!-- 🔽 コメントセクション -->
+            <div id="comments" style="margin-top: 2em;">
+              <h2>Comments</h2>
+              <div id="commentList">Loading comments...</div>
+              <div style="margin-top: 1em;">
+                <textarea id="commentInput" rows="3" style="width: 100%; padding: 6px;" placeholder="Write a comment..."></textarea>
+                <button id="postCommentBtn" style="margin-top: 6px;">Post Comment</button>
+              </div>
+            </div>
           `;
 
           if (isAudio) {
@@ -197,6 +207,68 @@
       .catch(() => {
         content.innerHTML = `<p class="error">error</p>`;
       });
+
+      // 🔽 コメント機能のスクリプト
+  const commentList = document.getElementById("commentList");
+  const commentInput = document.getElementById("commentInput");
+  const postBtn = document.getElementById("postCommentBtn");
+  const me = Storage?.getUser?.() || { username: "anonymous" };
+
+  function loadComments() {
+    fetch(`${SERVER}/comments/${id}`)
+      .then(res => res.ok ? res.json() : [])
+      .then(data => {
+        if (!Array.isArray(data) || data.length === 0) {
+          commentList.innerHTML = "<p>No comments yet.</p>";
+          return;
+        }
+
+        commentList.innerHTML = data.map(c => {
+          const time = new Date(c.timestamp).toLocaleString("ja-JP", {
+            year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
+          });
+          return `<div style="margin-bottom: 1em;">
+            <strong>${c.user}</strong> <span style="font-size: 0.8em;">${time}</span><br>
+            <div style="white-space: pre-wrap;">${escapeHtml(c.text)}</div>
+          </div>`;
+        }).join("");
+      })
+      .catch(() => {
+        commentList.innerHTML = "<p class='error'>Failed to load comments.</p>";
+      });
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, s => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    }[s]));
+  }
+
+  postBtn.addEventListener("click", () => {
+    const text = commentInput.value.trim();
+    if (!text) return;
+
+    fetch(`${SERVER}/comment/${id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: me.username, text })
+    })
+      .then(res => res.ok ? res.json() : null)
+      .then(result => {
+        if (result?.message === "Comment posted.") {
+          commentInput.value = "";
+          loadComments();
+        } else {
+          alert("Failed to post comment.");
+        }
+      })
+      .catch(() => {
+        alert("Error posting comment.");
+      });
+  });
+
+  loadComments();
+}
   }
 
   function rewriteDescription(desc) {
@@ -229,4 +301,5 @@
 </script>
 </body>
 </html>
+
 
