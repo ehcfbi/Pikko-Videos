@@ -62,10 +62,6 @@
       margin-right: 8px;
       object-fit: cover;
     }
-    #commentsList {
-      margin-top: 10px;
-      margin-bottom: 10px;
-    }
   </style>
 </head>
 <body class="bg-animation">
@@ -78,18 +74,19 @@
     </tr>
   </table>
   <div id="content"></div>
+
 <script>
   const id = new URLSearchParams(location.search).get("id");
   const content = document.getElementById("content");
 
   if (!id) {
-    content.innerHTML = `<p class="error">Missing video or music ID.</p>`;
+    content.innerHTML = `<p class="error">Pikko and Pikko Videos couldn't find this video or music.</p>`;
   } else {
     fetch(`${SERVER}/videoInfo/${id}`)
       .then(res => res.ok ? res.json() : null)
       .then(info => {
         if (!info || !info.fileName) {
-          content.innerHTML = `<p class="error">Video or music not found.</p>`;
+          content.innerHTML = `<p class="error">Pikko and Pikko Videos couldn't find this video or music.</p>`;
           return;
         }
 
@@ -110,7 +107,7 @@
               <a href="user?name=${encodeURIComponent(info.username)}">${info.username}</a>
             </div>
             <div style="font-size: 0.9em;">${postedTime}</div>
-            <p>This content is password protected. Please enter the password to unlock.</p>
+            <p>This video or music is locked. Please enter the password to watch.</p>
             <input type="password" id="passInput" placeholder="Password" style="padding: 6px;">
             <button onclick="checkAccess()">Unlock</button>
             <p id="errorMsg" class="error"></p>
@@ -142,7 +139,7 @@
         function showMedia(info, mediaUrl, isAudio, lockIcon, postedTime) {
           const playerHtml = isAudio ? `
             <div id="waveform"></div>
-            <div id="controls"><button id="togglePlay">Play</button></div>
+            <div id="controls"><button id="togglePlay">play</button></div>
           ` : `
             <video id="player" width="480px" height="270px" controls controlsList="nodownload" autoplay playsinline></video>
           `;
@@ -175,11 +172,11 @@
             });
 
             wavesurfer.on("play", () => {
-              btn.textContent = "Pause";
+              btn.textContent = "pause";
             });
 
             wavesurfer.on("pause", () => {
-              btn.textContent = "Play";
+              btn.textContent = "play";
             });
           } else {
             fetch(mediaUrl)
@@ -195,88 +192,32 @@
                 }
               });
           }
-
-          // Comment section
-          const commentSection = document.createElement("div");
-          commentSection.innerHTML = `
-            <h2 style="margin-top: 1em;">💬 Comments</h2>
-            <div id="commentsList">Loading comments...</div>
-            <textarea id="commentInput" placeholder="Write a comment..." rows="3" style="width:100%; margin-top:10px;"></textarea>
-            <button onclick="submitComment()" style="margin-top:6px;">Submit</button>
-            <p id="commentError" class="error"></p>
-          `;
-          content.appendChild(commentSection);
-
-          function loadComments() {
-            fetch(`${SERVER}/comments?id=${id}`)
-              .then(res => res.json())
-              .then(comments => {
-                const list = document.getElementById("commentsList");
-                list.innerHTML = "";
-                if (!comments || comments.length === 0) {
-                  list.textContent = "No comments yet.";
-                  return;
-                }
-                comments.forEach(c => {
-                  const div = document.createElement("div");
-                  div.textContent = `${c.user}: ${c.text}`;
-                  list.appendChild(div);
-                });
-              })
-              .catch(err => {
-                document.getElementById("commentsList").textContent = "Failed to load comments.";
-                console.error(err);
-              });
-          }
-
-          function submitComment() {
-            const input = document.getElementById("commentInput");
-            const text = input.value.trim();
-            if (!text) return;
-
-            fetch(`${SERVER}/comments?id=${id}`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ text })
-            })
-              .then(res => {
-                if (!res.ok) throw new Error("Submit failed");
-                input.value = "";
-                loadComments();
-              })
-              .catch(err => {
-                document.getElementById("commentError").textContent = "Failed to submit comment.";
-                console.error(err);
-              });
-          }
-
-          loadComments();
         }
       })
       .catch(() => {
-        content.innerHTML = `<p class="error">Unexpected error occurred.</p>`;
+        content.innerHTML = `<p class="error">error</p>`;
       });
   }
 
   function rewriteDescription(desc) {
-    const temp = document.createElement("div");
-    temp.innerHTML = desc;
-    const urls = temp.querySelectorAll("url");
-    urls.forEach(node => {
-      const parts = node.textContent.split("|");
-      const raw = parts[0]?.trim();
-      const text = parts[1]?.trim() || raw;
-      const encoded = encodeURIComponent(raw);
-      const a = document.createElement("a");
-      a.href = `redirect?url=${encoded}`;
-      a.textContent = text;
-      a.target = "_blank";
-      a.rel = "noopener";
-      node.replaceWith(a);
-    });
-    return temp.innerHTML;
-  }
-
+  const temp = document.createElement("div");
+  temp.innerHTML = desc;
+  const urls = temp.querySelectorAll("url");
+  urls.forEach(node => {
+    const parts = node.textContent.split("|");
+    const raw = parts[0]?.trim();
+    const text = parts[1]?.trim() || raw;
+    const encoded = encodeURIComponent(raw);
+    const a = document.createElement("a");
+    a.href = `redirect?url=${encoded}`;
+    a.textContent = text;
+    a.target = "_blank";
+    a.rel = "noopener";
+    node.replaceWith(a);
+  });
+  return temp.innerHTML;
+}
+  
   function copyUrl() {
     navigator.clipboard.writeText(location.href);
   }
@@ -288,3 +229,4 @@
 </script>
 </body>
 </html>
+
