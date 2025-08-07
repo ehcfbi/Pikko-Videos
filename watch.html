@@ -11,6 +11,7 @@
   <script>const SERVER = "https://pikko1.tcpexposer.com";</script>
   <script src="https://unpkg.com/wavesurfer.js"></script>
   <script src="js/dark.js"></script>
+  <script src="js/storage.js"></script>
   <link rel="stylesheet" href="css/animation.css">
   <link rel="stylesheet" href="css/dark.css">
   <style>
@@ -64,237 +65,124 @@
     }
   </style>
 </head>
-<body class="bg-animation">
-  <a href="./"><img class="logo" src="logo.png" alt="logo" width="200" height="100" /></a>
-  <p><button onclick="toggleTheme()" id="themeBtn">Light Mode</button></p>
-  <table>
-    <tr>
-      <th><input type="button" value="share" onclick="copyUrl()" /></th>
-      <th><input type="button" value="embed" onclick="copyCode()" /></th>
-    </tr>
-  </table>
-  <div id="content"></div>
+<body>
+  <div id="main">
+    <h1 id="title">Loading...</h1>
 
-<script>
-  const id = new URLSearchParams(location.search).get("id");
-  const content = document.getElementById("content");
-
-  if (!id) {
-    content.innerHTML = `<p class="error">Pikko and Pikko Videos couldn't find this video or music.</p>`;
-  } else {
-    fetch(`${SERVER}/videoInfo/${id}`)
-      .then(res => res.ok ? res.json() : null)
-      .then(info => {
-        if (!info || !info.fileName) {
-          content.innerHTML = `<p class="error">Pikko and Pikko Videos couldn't find this video or music.</p>`;
-          return;
-        }
-
-        document.title = `${info.title} - Pikko Videos`;
-        const ext = info.fileName.split(".").pop().toLowerCase();
-        const isAudio = ext === "mp3" || ext === "wav";
-        const mediaUrl = `${SERVER}/videos/${info.fileName}`;
-        const lockIcon = info.hasPassword ? `<img src="img/lock.svg" alt="locked" class="lockIcon">` : "";
-        const postedTime = new Date(info.date).toLocaleString("ja-JP", {
-          year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
-        });
-
-        if (info.hasPassword) {
-          content.innerHTML = `
-            <h1>${info.title} ${lockIcon}</h1>
-            <div class="author">
-              <img src="${SERVER}/icons/${info.username}.jpg" alt="icon">
-              <a href="user?name=${encodeURIComponent(info.username)}">${info.username}</a>
-            </div>
-            <div style="font-size: 0.9em;">${postedTime}</div>
-            <p>This video or music is locked. Please enter the password to watch.</p>
-            <input type="password" id="passInput" placeholder="Password" style="padding: 6px;">
-            <button onclick="checkAccess()">Unlock</button>
-            <p id="errorMsg" class="error"></p>
-          `;
-
-          window.checkAccess = () => {
-            const password = document.getElementById("passInput").value;
-            fetch(`${SERVER}/checkAccess`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ id, password })
-            })
-              .then(res => res.ok ? res.json() : null)
-              .then(result => {
-                if (result?.access) {
-                  showMedia(info, mediaUrl, isAudio, lockIcon, postedTime);
-                } else {
-                  document.getElementById("errorMsg").textContent = "Incorrect password.";
-                }
-              })
-              .catch(() => {
-                document.getElementById("errorMsg").textContent = "Failed to verify password.";
-              });
-          };
-        } else {
-          showMedia(info, mediaUrl, isAudio, lockIcon, postedTime);
-        }
-
-function showMedia(info, mediaUrl, isAudio, lockIcon, postedTime) {
-  const playerHtml = isAudio ? `
-    <div id="waveform"></div>
-    <div id="controls"><button id="togglePlay">play</button></div>
-  ` : `
-    <video id="player" width="480px" height="270px" controls controlsList="nodownload" autoplay playsinline></video>
-  `;
-
-  content.innerHTML = `
-    <h1>${info.title} ${lockIcon}</h1>
-    <div class="author">
-      <img src="${SERVER}/icons/${info.username}.jpg" alt="icon">
-      <a href="user?name=${encodeURIComponent(info.username)}">${info.username}</a>
-    </div>
-    <div style="font-size: 0.9em;">${postedTime}</div>
-    ${playerHtml}
-    <p style="white-space: pre-wrap; margin-top: 1em;">${rewriteDescription(info.description)}</p>
-
-    <!-- 🔽 コメントセクション -->
-    <div id="comments" style="margin-top: 2em;">
-      <h2>Comments</h2>
-      <div id="commentList">Loading comments...</div>
-      <div style="margin-top: 1em;">
-        <textarea id="commentInput" rows="3" style="width: 100%; padding: 6px;" placeholder="Write a comment..."></textarea>
-        <button id="postCommentBtn" style="margin-top: 6px;">Post Comment</button>
+    <div class="author" id="author">
+      <img id="authorIcon" src="" alt="User Icon">
+      <div>
+        <div id="authorName">Author</div>
+        <a id="authorLink" href="#" target="_blank">View Profile</a>
       </div>
     </div>
-  `;
 
-  // 🔽 プレイヤー処理
-  if (isAudio) {
-    const wavesurfer = WaveSurfer.create({
-      container: '#waveform',
-      waveColor: '#888',
-      progressColor: '#0af',
-      height: 100,
-      responsive: true
-    });
+    <video id="video" class="video-js vjs-default-skin" controls preload="auto" width="640" height="360">
+      <source id="videoSource" src="" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
 
-    wavesurfer.load(mediaUrl);
+    <div id="waveform"></div>
+    <div id="controls">
+      <button onclick="wavesurfer.playPause()">Play/Pause</button>
+    </div>
 
-    const btn = document.getElementById("togglePlay");
-    btn.addEventListener("click", () => {
-      wavesurfer.playPause();
-    });
+    <div id="commentsSection">
+      <h2>💬 コメント</h2>
+      <div id="commentsList">読み込み中...</div>
+      <textarea id="commentInput" placeholder="コメントを入力..." rows="3" style="width:100%; margin-top:10px;"></textarea>
+      <button onclick="submitComment()">送信</button>
+    </div>
 
-    wavesurfer.on("play", () => {
-      btn.textContent = "pause";
-    });
+    <div class="error" id="errorMsg"></div>
+  </div>
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const videoId = urlParams.get("v");
+  const video = document.getElementById("video");
+  const videoSource = document.getElementById("videoSource");
+  const title = document.getElementById("title");
+  const authorName = document.getElementById("authorName");
+  const authorIcon = document.getElementById("authorIcon");
+  const authorLink = document.getElementById("authorLink");
+  const commentsList = document.getElementById("commentsList");
+  const errorMsg = document.getElementById("errorMsg");
 
-    wavesurfer.on("pause", () => {
-      btn.textContent = "play";
-    });
-  } else {
-    fetch(mediaUrl)
-      .then(res => res.blob())
-      .then(blob => {
-        const url = URL.createObjectURL(blob);
-        document.getElementById("player").src = url;
-      })
-      .catch(() => {
-        const player = document.getElementById("player");
-        if (player) {
-          player.replaceWith(`<p class="error">Failed to load video file.</p>`);
-        }
-      });
+  if (!videoId) {
+    errorMsg.textContent = "動画IDが指定されていません。";
+    throw new Error("Missing video ID");
   }
 
-  // 🔽 コメント機能のスクリプト（ここが重要！）
-  const commentList = document.getElementById("commentList");
-  const commentInput = document.getElementById("commentInput");
-  const postBtn = document.getElementById("postCommentBtn");
-  const me = Storage?.getUser?.() || { username: "anonymous" };
+  fetch(`${SERVER}/api/video/${videoId}`)
+    .then(res => res.json())
+    .then(data => {
+      title.textContent = data.title || "Untitled";
+      videoSource.src = data.videoUrl;
+      video.load();
+
+      authorName.textContent = data.author.name;
+      authorIcon.src = data.author.icon;
+      authorLink.href = data.author.link;
+
+      if (data.audioUrl) {
+        wavesurfer.load(data.audioUrl);
+      }
+
+      loadComments();
+    })
+    .catch(err => {
+      errorMsg.textContent = "動画の読み込みに失敗しました。";
+      console.error(err);
+    });
 
   function loadComments() {
-    fetch(`${SERVER}/comments/${id}`)
-      .then(res => res.ok ? res.json() : [])
-      .then(data => {
-        if (!Array.isArray(data) || data.length === 0) {
-          commentList.innerHTML = "<p>No comments yet.</p>";
+    fetch(`${SERVER}/api/comments?v=${videoId}`)
+      .then(res => res.json())
+      .then(comments => {
+        commentsList.innerHTML = "";
+        if (comments.length === 0) {
+          commentsList.textContent = "コメントはまだありません。";
           return;
         }
-
-        commentList.innerHTML = data.map(c => {
-          const time = new Date(c.timestamp).toLocaleString("ja-JP", {
-            year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
-          });
-          return `<div style="margin-bottom: 1em;">
-            <strong>${c.user}</strong> <span style="font-size: 0.8em;">${time}</span><br>
-            <div style="white-space: pre-wrap;">${escapeHtml(c.text)}</div>
-          </div>`;
-        }).join("");
+        comments.forEach(c => {
+          const div = document.createElement("div");
+          div.textContent = `${c.user}: ${c.text}`;
+          commentsList.appendChild(div);
+        });
       })
-      .catch(() => {
-        commentList.innerHTML = "<p class='error'>Failed to load comments.</p>";
+      .catch(err => {
+        commentsList.textContent = "コメントの読み込みに失敗しました。";
+        console.error(err);
       });
   }
 
-  function escapeHtml(str) {
-    return str.replace(/[&<>"']/g, s => ({
-      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-    }[s]));
-  }
-
-  postBtn.addEventListener("click", () => {
-    const text = commentInput.value.trim();
+  function submitComment() {
+    const input = document.getElementById("commentInput");
+    const text = input.value.trim();
     if (!text) return;
 
-    fetch(`${SERVER}/comment/${id}`, {
+    fetch(`${SERVER}/api/comments?v=${videoId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: me.username, text })
+      body: JSON.stringify({ text })
     })
-      .then(res => res.ok ? res.json() : null)
-      .then(result => {
-        if (result?.message === "Comment posted.") {
-          commentInput.value = "";
-          loadComments();
-        } else {
-          alert("Failed to post comment.");
-        }
+      .then(res => {
+        if (!res.ok) throw new Error("送信失敗");
+        input.value = "";
+        loadComments();
       })
-      .catch(() => {
-        alert("Error posting comment.");
+      .catch(err => {
+        errorMsg.textContent = "コメントの送信に失敗しました。";
+        console.error(err);
       });
-  });
-
-  loadComments();
-}
-
-  function rewriteDescription(desc) {
-  const temp = document.createElement("div");
-  temp.innerHTML = desc;
-  const urls = temp.querySelectorAll("url");
-  urls.forEach(node => {
-    const parts = node.textContent.split("|");
-    const raw = parts[0]?.trim();
-    const text = parts[1]?.trim() || raw;
-    const encoded = encodeURIComponent(raw);
-    const a = document.createElement("a");
-    a.href = `redirect?url=${encoded}`;
-    a.textContent = text;
-    a.target = "_blank";
-    a.rel = "noopener";
-    node.replaceWith(a);
-  });
-  return temp.innerHTML;
-}
-  
-  function copyUrl() {
-    navigator.clipboard.writeText(location.href);
   }
 
-  function copyCode() {
-    const url = `<iframe src="https://videos.bird.f5.si/embed?id=${id}" width="560" height="315" frameborder="0" allowfullscreen></iframe>`;
-    navigator.clipboard.writeText(url);
-  }
+  const wavesurfer = WaveSurfer.create({
+    container: '#waveform',
+    waveColor: '#ddd',
+    progressColor: '#0af',
+    height: 80
+  });
 </script>
 </body>
 </html>
-
-
