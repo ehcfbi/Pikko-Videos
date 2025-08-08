@@ -30,19 +30,41 @@
     .author img {
       width: 40px; height: 40px; border-radius: 5px; margin-right: 8px; object-fit: cover;
     }
+
+    /* 🎞️ 字幕表示スタイル（track風） */
     .subtitle {
-      position: absolute; bottom: 8%; width: 100%; text-align: center;
-      font-size: 1.2em; color: white; text-shadow: 0 0 4px black;
-      pointer-events: none; padding: 0 1em; box-sizing: border-box;
-    }
-    :fullscreen .subtitle, :-webkit-full-screen .subtitle {
+      position: absolute;
+      bottom: 5%;
+      left: 50%;
+      transform: translateX(-50%);
+      max-width: 90%;
+      text-align: center;
       font-size: 1.5em;
+      color: white;
+      background-color: rgba(0, 0, 0, 0.6);
+      padding: 0.2em 0.6em;
+      border-radius: 6px;
+      pointer-events: none;
+      z-index: 10;
+      box-sizing: border-box;
+      white-space: pre-wrap;
     }
+
+    :fullscreen .subtitle,
+    :-webkit-full-screen .subtitle {
+      font-size: 2em;
+      bottom: 8%;
+    }
+
     .subtitle-controls {
       margin-top: 1em;
     }
-    .subtitle-controls select, .subtitle-controls button {
-      font-size: 1em; padding: 0.3em 0.6em; margin-right: 0.5em;
+
+    .subtitle-controls select,
+    .subtitle-controls button {
+      font-size: 1em;
+      padding: 0.3em 0.6em;
+      margin-right: 0.5em;
     }
   </style>
 </head>
@@ -116,6 +138,7 @@ if (!id) {
       } else {
         showMedia(info, mediaUrl, isAudio, lockIcon, postedTime);
       }
+
       function showMedia(info, mediaUrl, isAudio, lockIcon, postedTime) {
         const playerHtml = isAudio ? `
           <div id="waveform"></div>
@@ -188,11 +211,10 @@ if (!id) {
                 fetch(`${SERVER}/subtitles/${id}/${langOnly}`)
                   .then(res => res.ok ? res.text() : "")
                   .then(text => {
-                    console.log("📥 VTT raw text:", text);
                     subtitles = parseVTT(text);
-                    console.log("✅ Parsed subtitles:", subtitles);
                   });
               }
+
               function parseVTT(vttText) {
                 vttText = vttText.replace(/\r\n/g, "\n").trim();
                 const entries = [];
@@ -213,19 +235,19 @@ if (!id) {
 
               function parseTime(t) {
                 const parts = t.split(":");
-              if (parts.length === 3) {
-                const h = parseInt(parts[0]);
-                const m = parseInt(parts[1]);
-                const s = parseFloat(parts[2]);
-                return h * 3600 + m * 60 + s;
-              } else if (parts.length === 2) {
-                const m = parseInt(parts[0]);
-                const s = parseFloat(parts[1]);
-                return m * 60 + s;
-              } else {
-                return parseFloat(t); // fallback
+                if (parts.length === 3) {
+                  const h = parseInt(parts[0]);
+                  const m = parseInt(parts[1]);
+                  const s = parseFloat(parts[2]);
+                  return h * 3600 + m * 60 + s;
+                } else if (parts.length === 2) {
+                  const m = parseInt(parts[0]);
+                  const s = parseFloat(parts[1]);
+                  return m * 60 + s;
+                } else {
+                  return parseFloat(t);
+                }
               }
-            }
 
               video.addEventListener("timeupdate", () => {
                 if (!subtitleEnabled || subtitles.length === 0) {
@@ -234,7 +256,6 @@ if (!id) {
                 }
                 const current = video.currentTime;
                 const active = subtitles.find(s => current >= s.start && current <= s.end);
-                console.log("⏱ Current time:", current, "🗨️ Active subtitle:", active?.text);
                 subtitleDiv.textContent = active ? active.text : "";
               });
 
@@ -304,4 +325,3 @@ function copyCode() {
 </script>
 </body>
 </html>
-
