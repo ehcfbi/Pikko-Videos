@@ -7,7 +7,7 @@
   <meta property="og:title" content="Pikko Videos">
   <meta property="og:description" content="Let's watch the videos.">
   <meta property="og:url" content="https://videos.bird.f5.si">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=320,initial-scale=1">
   <script>const SERVER = "https://pikko1.tcpexposer.com";</script>
   <script src="https://unpkg.com/wavesurfer.js"></script>
   <script src="js/dark.js"></script>
@@ -33,17 +33,21 @@
 
     #videoWrapper {
       position: relative;
-      width: 100%;
-      max-width: 640px;
-      margin: 0 auto;
+      width: 320px;
+      height: 180px;
+      margin-left: 0;
+    }
+
+    #player {
+      width: 320px;
+      height: 180px;
     }
 
     .subtitle {
       position: absolute;
       bottom: 5%;
-      left: 50%;
-      transform: translateX(-50%);
-      max-width: 90%;
+      left: 0;
+      width: 100%;
       text-align: center;
       font-size: 1.5em;
       color: white;
@@ -54,12 +58,6 @@
       z-index: 10;
       box-sizing: border-box;
       white-space: pre-wrap;
-    }
-
-    :fullscreen .subtitle,
-    :-webkit-full-screen .subtitle {
-      font-size: 2em;
-      bottom: 8%;
     }
 
     .subtitle-controls {
@@ -151,7 +149,7 @@ if (!id) {
           <div id="controls"><button id="togglePlay">play</button></div>
         ` : `
           <div id="videoWrapper">
-            <video id="player" width="100%" height="auto" controls controlsList="nodownload" autoplay playsinline></video>
+            <video id="player" controls controlsList="nodownload" autoplay playsinline></video>
             <div class="subtitle" id="subtitle"></div>
           </div>
           <div class="subtitle-controls">
@@ -263,6 +261,17 @@ if (!id) {
                 const current = video.currentTime;
                 const active = subtitles.find(s => current >= s.start && current <= s.end);
                 subtitleDiv.textContent = active ? active.text : "";
+              });
+
+              document.addEventListener("fullscreenchange", () => {
+                const isFullscreen = document.fullscreenElement;
+                if (isFullscreen) {
+                  subtitleDiv.style.fontSize = "2em";
+                  subtitleDiv.style.bottom = "8%";
+                } else {
+                  subtitleDiv.style.fontSize = "1.5em";
+                  subtitleDiv.style.bottom = "5%";
+                }
               });
 
               if (Array.isArray(info.subtitles)) {
