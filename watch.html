@@ -1,3 +1,4 @@
+<!-- Part 1: watch.html with subtitle support -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -76,130 +77,144 @@
   <div id="content"></div>
 
 <script>
-  const id = new URLSearchParams(location.search).get("id");
-  const content = document.getElementById("content");
+const id = new URLSearchParams(location.search).get("id");
+const content = document.getElementById("content");
 
-  if (!id) {
-    content.innerHTML = `<p class="error">Pikko and Pikko Videos couldn't find this video or music.</p>`;
-  } else {
-    fetch(`${SERVER}/videoInfo/${id}`)
-      .then(res => res.ok ? res.json() : null)
-      .then(info => {
-        if (!info || !info.fileName) {
-          content.innerHTML = `<p class="error">Pikko and Pikko Videos couldn't find this video or music.</p>`;
-          return;
-        }
+if (!id) {
+  content.innerHTML = `<p class="error">Pikko and Pikko Videos couldn't find this video or music.</p>`;
+} else {
+  fetch(`${SERVER}/videoInfo/${id}`)
+    .then(res => res.ok ? res.json() : null)
+    .then(info => {
+      if (!info || !info.fileName) {
+        content.innerHTML = `<p class="error">Pikko and Pikko Videos couldn't find this video or music.</p>`;
+        return;
+      }
 
-        document.title = `${info.title} - Pikko Videos`;
-        const ext = info.fileName.split(".").pop().toLowerCase();
-        const isAudio = ext === "mp3" || ext === "wav";
-        const mediaUrl = `${SERVER}/videos/${info.fileName}`;
-        const lockIcon = info.hasPassword ? `<img src="img/lock.svg" alt="locked" class="lockIcon">` : "";
-        const postedTime = new Date(info.date).toLocaleString("ja-JP", {
-          year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
-        });
-
-        if (info.hasPassword) {
-          content.innerHTML = `
-            <h1>${info.title} ${lockIcon}</h1>
-            <div class="author">
-              <img src="${SERVER}/icons/${info.username}.jpg" alt="icon">
-              <a href="user?name=${encodeURIComponent(info.username)}">${info.username}</a>
-            </div>
-            <div style="font-size: 0.9em;">${postedTime}</div>
-            <p>This video or music is locked. Please enter the password to watch.</p>
-            <input type="password" id="passInput" placeholder="Password" style="padding: 6px;">
-            <button onclick="checkAccess()">Unlock</button>
-            <p id="errorMsg" class="error"></p>
-          `;
-
-          window.checkAccess = () => {
-            const password = document.getElementById("passInput").value;
-            fetch(`${SERVER}/checkAccess`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ id, password })
-            })
-              .then(res => res.ok ? res.json() : null)
-              .then(result => {
-                if (result?.access) {
-                  showMedia(info, mediaUrl, isAudio, lockIcon, postedTime);
-                } else {
-                  document.getElementById("errorMsg").textContent = "Incorrect password.";
-                }
-              })
-              .catch(() => {
-                document.getElementById("errorMsg").textContent = "Failed to verify password.";
-              });
-          };
-        } else {
-          showMedia(info, mediaUrl, isAudio, lockIcon, postedTime);
-        }
-
-        function showMedia(info, mediaUrl, isAudio, lockIcon, postedTime) {
-          const playerHtml = isAudio ? `
-            <div id="waveform"></div>
-            <div id="controls"><button id="togglePlay">play</button></div>
-          ` : `
-            <video id="player" width="480px" height="270px" controls controlsList="nodownload" autoplay playsinline></video>
-          `;
-
-          content.innerHTML = `
-            <h1>${info.title} ${lockIcon}</h1>
-            <div class="author">
-              <img src="${SERVER}/icons/${info.username}.jpg" alt="icon">
-              <a href="user?name=${encodeURIComponent(info.username)}">${info.username}</a>
-            </div>
-            <div style="font-size: 0.9em;">${postedTime}</div>
-            ${playerHtml}
-            <p style="white-space: pre-wrap; margin-top: 1em;">${rewriteDescription(info.description)}</p>
-          `;
-
-          if (isAudio) {
-            const wavesurfer = WaveSurfer.create({
-              container: '#waveform',
-              waveColor: '#888',
-              progressColor: '#0af',
-              height: 100,
-              responsive: true
-            });
-
-            wavesurfer.load(mediaUrl);
-
-            const btn = document.getElementById("togglePlay");
-            btn.addEventListener("click", () => {
-              wavesurfer.playPause();
-            });
-
-            wavesurfer.on("play", () => {
-              btn.textContent = "pause";
-            });
-
-            wavesurfer.on("pause", () => {
-              btn.textContent = "play";
-            });
-          } else {
-            fetch(mediaUrl)
-              .then(res => res.blob())
-              .then(blob => {
-                const url = URL.createObjectURL(blob);
-                document.getElementById("player").src = url;
-              })
-              .catch(() => {
-                const player = document.getElementById("player");
-                if (player) {
-                  player.replaceWith(`<p class="error">Failed to load video file.</p>`);
-                }
-              });
-          }
-        }
-      })
-      .catch(() => {
-        content.innerHTML = `<p class="error">error</p>`;
+      document.title = `${info.title} - Pikko Videos`;
+      const ext = info.fileName.split(".").pop().toLowerCase();
+      const isAudio = ext === "mp3" || ext === "wav";
+      const mediaUrl = `${SERVER}/videos/${info.fileName}`;
+      const lockIcon = info.hasPassword ? `<img src="img/lock.svg" alt="locked" class="lockIcon">` : "";
+      const postedTime = new Date(info.date).toLocaleString("ja-JP", {
+        year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
       });
-  }
 
-  function rewriteDescription(desc) {
+      if (info.hasPassword) {
+        content.innerHTML = `
+          <h1>${info.title} ${lockIcon}</h1>
+          <div class="author">
+            <img src="${SERVER}/icons/${info.username}.jpg" alt="icon">
+            <a href="user?name=${encodeURIComponent(info.username)}">${info.username}</a>
+          </div>
+          <div style="font-size: 0.9em;">${postedTime}</div>
+          <p>This video or music is locked. Please enter the password to watch.</p>
+          <input type="password" id="passInput" placeholder="Password" style="padding: 6px;">
+          <button onclick="checkAccess()">Unlock</button>
+          <p id="errorMsg" class="error"></p>
+        `;
+
+        window.checkAccess = () => {
+          const password = document.getElementById("passInput").value;
+          fetch(`${SERVER}/checkAccess`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, password })
+          })
+            .then(res => res.ok ? res.json() : null)
+            .then(result => {
+              if (result?.access) {
+                showMedia(info, mediaUrl, isAudio, lockIcon, postedTime);
+              } else {
+                document.getElementById("errorMsg").textContent = "Incorrect password.";
+              }
+            })
+            .catch(() => {
+              document.getElementById("errorMsg").textContent = "Failed to verify password.";
+            });
+        };
+      } else {
+        showMedia(info, mediaUrl, isAudio, lockIcon, postedTime);
+      }
+      function showMedia(info, mediaUrl, isAudio, lockIcon, postedTime) {
+        const playerHtml = isAudio ? `
+          <div id="waveform"></div>
+          <div id="controls"><button id="togglePlay">play</button></div>
+        ` : `
+          <video id="player" width="480px" height="270px" controls controlsList="nodownload" autoplay playsinline>
+          </video>
+        `;
+
+        content.innerHTML = `
+          <h1>${info.title} ${lockIcon}</h1>
+          <div class="author">
+            <img src="${SERVER}/icons/${info.username}.jpg" alt="icon">
+            <a href="user?name=${encodeURIComponent(info.username)}">${info.username}</a>
+          </div>
+          <div style="font-size: 0.9em;">${postedTime}</div>
+          ${playerHtml}
+          <p style="white-space: pre-wrap; margin-top: 1em;">${rewriteDescription(info.description)}</p>
+        `;
+
+        if (isAudio) {
+          const wavesurfer = WaveSurfer.create({
+            container: '#waveform',
+            waveColor: '#888',
+            progressColor: '#0af',
+            height: 100,
+            responsive: true
+          });
+
+          wavesurfer.load(mediaUrl);
+
+          const btn = document.getElementById("togglePlay");
+          btn.addEventListener("click", () => {
+            wavesurfer.playPause();
+          });
+
+          wavesurfer.on("play", () => {
+            btn.textContent = "pause";
+          });
+
+          wavesurfer.on("pause", () => {
+            btn.textContent = "play";
+          });
+        } else {
+          fetch(mediaUrl)
+            .then(res => res.blob())
+            .then(blob => {
+              const url = URL.createObjectURL(blob);
+              const video = document.getElementById("player");
+              video.src = url;
+
+              // 🎞️ 字幕追加
+              if (Array.isArray(info.subtitles)) {
+                info.subtitles.forEach((sub, index) => {
+                  const track = document.createElement("track");
+                  track.kind = "subtitles";
+                  track.label = sub.language;
+                  track.srclang = sub.language;
+                  track.src = `${SERVER}/subtitles/${sub.fileName}`;
+                  if (index === 0) track.default = true;
+                  video.appendChild(track);
+                });
+              }
+            })
+            .catch(() => {
+              const player = document.getElementById("player");
+              if (player) {
+                player.replaceWith(`<p class="error">Failed to load video file.</p>`);
+              }
+            });
+        }
+      }
+    })
+    .catch(() => {
+      content.innerHTML = `<p class="error">error</p>`;
+    });
+}
+
+function rewriteDescription(desc) {
   const temp = document.createElement("div");
   temp.innerHTML = desc;
   const urls = temp.querySelectorAll("url");
@@ -217,16 +232,15 @@
   });
   return temp.innerHTML;
 }
-  
-  function copyUrl() {
-    navigator.clipboard.writeText(location.href);
-  }
 
-  function copyCode() {
-    const url = `<iframe src="https://videos.bird.f5.si/embed?id=${id}" width="560" height="315" frameborder="0" allowfullscreen></iframe>`;
-    navigator.clipboard.writeText(url);
-  }
+function copyUrl() {
+  navigator.clipboard.writeText(location.href);
+}
+
+function copyCode() {
+  const url = `<iframe src="https://videos.bird.f5.si/embed?id=${id}" width="560" height="315" frameborder="0" allowfullscreen></iframe>`;
+  navigator.clipboard.writeText(url);
+}
 </script>
 </body>
 </html>
-
