@@ -51,6 +51,9 @@
       color: #333;
       margin-top: 8px;
     }
+    .subtitleItem {
+      margin: 2px 0;
+    }
   </style>
 </head>
 <body class="bg-animation">
@@ -194,22 +197,27 @@ function renderVideos() {
         return sortOrder === "asc" ? ta - tb : tb - ta;
       });
 
-      const list = videos.map(v => `
-        <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
-          <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}?t=${Date.now()}" width="200"><br>
-          <b>
-            ${v.title}
-            ${v.password ? `<img src="img/lock.svg" alt="locked" class="lockIcon">` : ""}
-          </b><br>
-          ${new Date(v.date).toLocaleString("ja-JP", {
-            year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
-          })}<br>
-          <a href="watch?id=${v.id}">watch</a>
-          <button onclick="deleteVideo('${v.id}')">delete</button>
-          <button onclick="showEdit('${v.id}', \`${v.title}\`, \`${v.description || ""}\`)">edit</button>
-          <div id="edit-${v.id}"></div>
-        </div>
-      `).join("");
+      const list = videos.map(v => {
+        const thumb = v.thumbnail || `${v.id}.jpg`;
+        const subtitleList = v.subtitles ? Object.keys(v.subtitles).map(lang => `<li>${lang}</li>`).join("") : "";
+        return `
+          <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+            <img src="${SERVER}/thumbnails/${thumb}?t=${Date.now()}" width="200"><br>
+            <b>
+              ${v.title}
+              ${v.password ? `<img src="img/lock.svg" alt="locked" class="lockIcon">` : ""}
+            </b><br>
+            ${new Date(v.date).toLocaleString("ja-JP", {
+              year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
+            })}<br>
+            <a href="watch?id=${v.id}">watch</a>
+            <button onclick="deleteVideo('${v.id}')">delete</button>
+            <button onclick="showEdit('${v.id}', \`${v.title}\`, \`${v.description || ""}\`, ${JSON.stringify(v.subtitles || {})})">edit</button>
+            <div id="edit-${v.id}"></div>
+            ${subtitleList ? `<ul>${subtitleList}</ul>` : ""}
+          </div>
+        `;
+      }).join("");
       document.getElementById("list").innerHTML = list || "No videos yet.";
     });
 }
@@ -245,21 +253,33 @@ function upload() {
     fetch(`${SERVER}/upload`, { method: "POST", body: formData })
       .then(res => res.ok ? res.json() : Promise.reject())
       .then(data => {
-        status.textContent = "✅ Upload successful.";
-        renderVideos();
-        resetForm();
+        const subtitlePromises = [];
 
         if (document.getElementById("useSubtitleUpload").checked && subtitleFiles.length > 0) {
           subtitleFiles.forEach(({ language, file }) => {
             const subForm = new FormData();
             subForm.append("subtitle", file);
             subForm.append("language", language);
-            fetch(`${SERVER}/uploadSubtitle/${data.id}`, {
-              method: "POST",
-              body: subForm
-            });
+            subtitlePromises.push(
+              fetch(`${SERVER}/uploadSubtitle/${data.id}`, {
+                method: "POST",
+                body: subForm
+              })
+            );
           });
         }
+
+        Promise.all(subtitlePromises)
+          .then(() => {
+            status.textContent = "✅ Upload successful.";
+            renderVideos();
+            resetForm();
+          })
+          .catch(() => {
+            status.textContent = "⚠️ Upload succeeded but subtitle failed.";
+            renderVideos();
+            resetForm();
+          });
       })
       .catch(() => {
         status.textContent = "❌ Upload failed.";
@@ -293,8 +313,15 @@ function upload() {
     submit(form);
   }
 }
-function showEdit(id, title, description) {
+function showEdit(id, title, description, subtitles) {
   const container = document.getElementById(`edit-${id}`);
+  const subtitleItems = Object.entries(subtitles).map(([lang, file]) => `
+    <li class="subtitleItem">
+      ${lang}
+      <button onclick="deleteSubtitle('${id}', '${lang}')">delete</button>
+    </li>
+  `).join("");
+
   container.innerHTML = `
     <p>Edit:</p>
     <p>title</p>
@@ -307,6 +334,14 @@ function showEdit(id, title, description) {
     <p>lock</p>
     <input type="checkbox" id="lockToggle-${id}" onchange="toggleEditLock('${id}')"> lock this video or music<br>
     <input id="lockPassword-${id}" type="password" placeholder="password (if locked)" disabled><br>
+    <p>subtitles</p>
+    <input type="checkbox" id="useSubtitleEdit-${id}"> edit subtitles?<br>
+    <div id="subtitleEditArea-${id}" style="display: none;">
+      <ul id="subtitleList-${id}">${subtitleItems}</ul>
+      <input id="subtitleLang-${id}" placeholder="language">
+      <input id="subtitleFile-${id}" type="file" accept=".vtt">
+      <button onclick="addSubtitleEdit('${id}')">add subtitle</button>
+    </div>
     <button onclick="submitEdit('${id}')">save</button>
     <button onclick="cancelEdit('${id}')">cancel</button>
   `;
@@ -314,6 +349,38 @@ function showEdit(id, title, description) {
   document.getElementById(`useThumbEdit-${id}`).addEventListener("change", () => {
     document.getElementById(`thumb-${id}`).disabled = !document.getElementById(`useThumbEdit-${id}`).checked;
   });
+
+  document.getElementById(`useSubtitleEdit-${id}`).addEventListener("change", () => {
+    document.getElementById(`subtitleEditArea-${id}`).style.display =
+      document.getElementById(`useSubtitleEdit-${id}`).checked ? "block" : "none";
+  });
+
+  window.subtitleEdits = window.subtitleEdits || {};
+  window.subtitleEdits[id] = [];
+}
+
+function addSubtitleEdit(id) {
+  const lang = document.getElementById(`subtitleLang-${id}`).value.trim();
+  const file = document.getElementById(`subtitleFile-${id}`).files[0];
+  if (!lang || !file) return alert("Enter language and select a .vtt file.");
+  if (!file.name.endsWith(".vtt")) return alert("Only .vtt files allowed.");
+
+  window.subtitleEdits[id].push({ language: lang, file });
+  const li = document.createElement("li");
+  li.textContent = `${lang} - ${file.name}`;
+  document.getElementById(`subtitleList-${id}`).appendChild(li);
+
+  document.getElementById(`subtitleLang-${id}`).value = "";
+  document.getElementById(`subtitleFile-${id}`).value = "";
+}
+
+function deleteSubtitle(id, lang) {
+  if (!confirm(`Delete subtitle "${lang}"?`)) return;
+  fetch(`${SERVER}/deleteSubtitle/${id}/${encodeURIComponent(lang)}`, {
+    method: "DELETE"
+  })
+    .then(() => renderVideos())
+    .catch(() => alert("Failed to delete subtitle."));
 }
 
 function toggleEditLock(id) {
@@ -325,49 +392,61 @@ function cancelEdit(id) {
 }
 
 function submitEdit(id) {
-  const titleEl = document.getElementById(`title-${id}`);
-  const descEl = document.getElementById(`desc-${id}`);
-  const thumbEl = document.getElementById(`thumb-${id}`);
-  const lockToggle = document.getElementById(`lockToggle-${id}`);
-  const passEl = document.getElementById(`lockPassword-${id}`);
-
-  if (!titleEl || !descEl || !thumbEl || !lockToggle || !passEl) {
-    alert("編集フォームが正しく表示されていません。");
-    return;
-  }
-
-  const newTitle = titleEl.value.trim();
-  const newDesc = descEl.value.trim();
+  const title = document.getElementById(`title-${id}`).value.trim();
+  const description = document.getElementById(`desc-${id}`).value.trim();
   const thumbChecked = document.getElementById(`useThumbEdit-${id}`).checked;
-  const newThumb = thumbEl.files[0];
-  const isLocked = lockToggle.checked;
-  const password = passEl.value.trim();
-
-  if (thumbChecked && !newThumb) return alert("Select a thumbnail image.");
-  if (thumbChecked && newThumb.size > 130 * 1024) return alert("Thumbnail too big.");
-  if (isLocked && !password) return alert("Enter password.");
+  const thumb = document.getElementById(`thumb-${id}`).files[0];
+  const isLocked = document.getElementById(`lockToggle-${id}`).checked;
+  const password = document.getElementById(`lockPassword-${id}`).value.trim();
+  const subtitleChecked = document.getElementById(`useSubtitleEdit-${id}`).checked;
+  const status = document.getElementById(`uploadStatus`);
 
   const form = new FormData();
-  form.append("title", newTitle);
-  form.append("description", newDesc);
+  form.append("title", title);
+  form.append("description", description);
   form.append("lockPassword", isLocked ? password : "");
 
   function finishSend(blob) {
     if (blob) form.append("thumbnail", blob, "thumb.jpg");
+
     fetch(`${SERVER}/editVideo/${id}`, {
       method: "PATCH",
       body: form
     })
-    .then(res => res.ok ? res.json() : Promise.reject())
-    .then(() => {
-      renderVideos();
-      cancelEdit(id);
-    })
-    .catch(() => alert("Failed to save edits."));
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(() => {
+        const subtitlePromises = [];
+
+        if (subtitleChecked && window.subtitleEdits?.[id]?.length > 0) {
+          window.subtitleEdits[id].forEach(({ language, file }) => {
+            const subForm = new FormData();
+            subForm.append("subtitle", file);
+            subForm.append("language", language);
+            subtitlePromises.push(
+              fetch(`${SERVER}/uploadSubtitle/${id}`, {
+                method: "POST",
+                body: subForm
+              })
+            );
+          });
+        }
+
+        Promise.all(subtitlePromises)
+          .then(() => {
+            renderVideos();
+            cancelEdit(id);
+          })
+          .catch(() => {
+            alert("Subtitle upload failed.");
+            renderVideos();
+            cancelEdit(id);
+          });
+      })
+      .catch(() => alert("Failed to save edits."));
   }
 
-  if (thumbChecked) {
-    cropImage(newThumb, 640, 360, finishSend);
+  if (thumbChecked && thumb) {
+    cropImage(thumb, 640, 360, finishSend);
   } else {
     finishSend(null);
   }
@@ -377,35 +456,6 @@ function deleteVideo(id) {
   if (!confirm("Delete this video?")) return;
   fetch(`${SERVER}/deleteVideo/${id}`, { method: "DELETE" })
     .then(() => renderVideos());
-}
-
-function updateIcon() {
-  const input = document.getElementById("iconInput");
-  const file = input.files[0];
-  const status = document.getElementById("iconStatus");
-  if (!file) return alert("Select a .jpg image.");
-  if (file.size > 30 * 1024) return alert("Icon too big.");
-
-  status.innerHTML = `<span class="spinner"></span> Updating icon...`;
-
-  cropImage(file, 600, 600, blob => {
-    const form = new FormData();
-    form.append("username", me);
-    form.append("icon", blob, "icon.jpg");
-
-    fetch(`${SERVER}/updateIcon`, {
-      method: "POST",
-      body: form
-    })
-      .then(res => res.ok ? res.json() : Promise.reject())
-      .then(() => {
-        document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg?${Date.now()}`;
-        input.value = "";
-        status.textContent = "✅ Icon updated.";
-      })
-      .catch(() => status.textContent = "❌ Icon update failed.")
-      .finally(() => setTimeout(() => status.textContent = "", 3000));
-  });
 }
 
 function logout() {
