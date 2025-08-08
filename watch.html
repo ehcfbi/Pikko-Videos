@@ -295,11 +295,13 @@ if (!id) {
               }
             });
         }
-      }
-    })
-    .catch(() => {
-      content.innerHTML = `<p class="error">error</p>`;
-    });
+      } // ← showMedia 関数の閉じ
+    }); // ← then(info => { ... }) の閉じ
+  .catch(() => {
+    content.innerHTML = `<p class="error">error</p>`;
+  });
+}
+
 function rewriteDescription(desc) {
   const temp = document.createElement("div");
   temp.innerHTML = desc;
