@@ -212,7 +212,7 @@ function renderVideos() {
             })}<br>
             <a href="watch?id=${v.id}">watch</a>
             <button onclick='deleteVideo("${v.id}")'>delete</button>
-            <button onclick='showEditFromData(${JSON.stringify(v)})'>edit</button>
+            <button class="editBtn" data-video='${encodeURIComponent(JSON.stringify(v))}'>edit</button>
             <div id="edit-${v.id}"></div>
             ${subtitleList ? `<ul>${subtitleList}</ul>` : ""}
           </div>
@@ -222,101 +222,21 @@ function renderVideos() {
     });
 }
 
+document.addEventListener("click", e => {
+  if (e.target.classList.contains("editBtn")) {
+    const raw = e.target.getAttribute("data-video");
+    try {
+      const video = JSON.parse(decodeURIComponent(raw));
+      showEditFromData(video);
+    } catch (err) {
+      alert("Failed to load edit data.");
+    }
+  }
+});
+
 function showEditFromData(v) {
   showEdit(v.id, v.title, v.description || "", v.subtitles || {});
 }
-function upload() {
-  const title = document.getElementById("titleInput").value.trim();
-  const file = document.getElementById("fileInput").files[0];
-  const thumbChecked = document.getElementById("useThumbUpload").checked;
-  const thumb = document.getElementById("thumbInput").files[0];
-  const thumbSizeValue = document.getElementById("thumbSize").value;
-  const [tw, th] = thumbSizeValue.split("x").map(Number);
-  const description = document.getElementById("description").value.trim();
-  const isLocked = document.getElementById("lockToggle").checked;
-  const password = document.getElementById("lockPassword").value.trim();
-  const status = document.getElementById("uploadStatus");
-
-  if (!title || !file) return alert("Enter title and file.");
-  if (file.size > 30 * 1024 * 1024) return alert("File too big.");
-  if (thumbChecked && !thumb) return alert("Select a thumbnail image.");
-  if (thumbChecked && thumb.size > 130 * 1024) return alert("Thumbnail too big.");
-  if (isLocked && !password) return alert("Enter password.");
-
-  status.innerHTML = `<span class="spinner"></span> Uploading...`;
-
-  const form = new FormData();
-  form.append("username", me);
-  form.append("title", title);
-  form.append("description", description);
-  form.append("video", file);
-  form.append("lockPassword", isLocked ? password : "");
-
-  function submit(formData) {
-    fetch(`${SERVER}/upload`, { method: "POST", body: formData })
-      .then(res => res.ok ? res.json() : Promise.reject())
-      .then(data => {
-        const subtitlePromises = [];
-
-        if (document.getElementById("useSubtitleUpload").checked && subtitleFiles.length > 0) {
-          subtitleFiles.forEach(({ language, file }) => {
-            const subForm = new FormData();
-            subForm.append("subtitle", file);
-            subForm.append("language", language);
-            subtitlePromises.push(
-              fetch(`${SERVER}/uploadSubtitle/${data.id}`, {
-                method: "POST",
-                body: subForm
-              })
-            );
-          });
-        }
-
-        Promise.all(subtitlePromises)
-          .then(() => {
-            status.textContent = "✅ Upload successful.";
-            renderVideos();
-            resetForm();
-          })
-          .catch(() => {
-            status.textContent = "⚠️ Upload succeeded but subtitle failed.";
-            renderVideos();
-            resetForm();
-          });
-      })
-      .catch(() => {
-        status.textContent = "❌ Upload failed.";
-      });
-  }
-
-  function resetForm() {
-    document.getElementById("titleInput").value = "";
-    document.getElementById("fileInput").value = "";
-    document.getElementById("thumbInput").value = "";
-    document.getElementById("description").value = "";
-    document.getElementById("lockToggle").checked = false;
-    document.getElementById("lockPassword").value = "";
-    document.getElementById("lockPassword").disabled = true;
-    document.getElementById("useThumbUpload").checked = false;
-    document.getElementById("thumbInput").disabled = true;
-    document.getElementById("thumbSize").disabled = true;
-    document.getElementById("useSubtitleUpload").checked = false;
-    document.getElementById("subtitleUploadArea").style.display = "none";
-    subtitleFiles.length = 0;
-    document.getElementById("subtitleList").innerHTML = "";
-    setTimeout(() => status.textContent = "", 3000);
-  }
-
-  if (thumbChecked) {
-    cropImage(thumb, tw, th, blob => {
-      form.append("thumbnail", blob, "thumb.jpg");
-      submit(form);
-    });
-  } else {
-    submit(form);
-  }
-}
-
 function showEdit(id, title, description, subtitles) {
   const container = document.getElementById(`edit-${id}`);
   const subtitleItems = Object.entries(subtitles).map(([lang, file]) => `
@@ -403,7 +323,7 @@ function submitEdit(id) {
   const isLocked = document.getElementById(`lockToggle-${id}`).checked;
   const password = document.getElementById(`lockPassword-${id}`).value.trim();
   const subtitleChecked = document.getElementById(`useSubtitleEdit-${id}`).checked;
-  const status = document.getElementById(`uploadStatus`);
+  const status = document.getElementById("uploadStatus");
 
   const form = new FormData();
   form.append("title", title);
