@@ -129,6 +129,10 @@ document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg`;
 let sortOrder = "desc";
 const subtitleFiles = [];
 
+function sanitizeText(text) {
+  return text.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\r?\n/g, "\\n");
+}
+
 document.getElementById("useThumbUpload").addEventListener("change", () => {
   const checked = document.getElementById("useThumbUpload").checked;
   document.getElementById("thumbInput").disabled = !checked;
@@ -200,6 +204,11 @@ function renderVideos() {
       const list = videos.map(v => {
         const thumb = v.thumbnail || `${v.id}.jpg`;
         const subtitleList = v.subtitles ? Object.keys(v.subtitles).map(lang => `<li>${lang}</li>`).join("") : "";
+        const safeVideo = {
+          ...v,
+          title: sanitizeText(v.title),
+          description: sanitizeText(v.description || "")
+        };
         return `
           <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
             <img src="${SERVER}/thumbnails/${thumb}?t=${Date.now()}" width="200"><br>
@@ -212,7 +221,7 @@ function renderVideos() {
             })}<br>
             <a href="watch?id=${v.id}">watch</a>
             <button onclick='deleteVideo("${v.id}")'>delete</button>
-            <button class="editBtn" data-video='${encodeURIComponent(JSON.stringify(v))}'>edit</button>
+            <button class="editBtn" data-video='${encodeURIComponent(JSON.stringify(safeVideo))}'>edit</button>
             <div id="edit-${v.id}"></div>
             ${subtitleList ? `<ul>${subtitleList}</ul>` : ""}
           </div>
