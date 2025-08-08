@@ -62,6 +62,36 @@
       margin-right: 8px;
       object-fit: cover;
     }
+
+    /* 🎞️ 字幕表示用スタイル */
+    .subtitle {
+      position: absolute;
+      bottom: 8%;
+      width: 100%;
+      text-align: center;
+      font-size: 1.2em;
+      color: white;
+      text-shadow: 0 0 4px black;
+      pointer-events: none;
+      padding: 0 1em;
+      box-sizing: border-box;
+    }
+
+    :fullscreen .subtitle,
+    :-webkit-full-screen .subtitle {
+      font-size: 1.5em;
+    }
+
+    .subtitle-controls {
+      margin-top: 1em;
+    }
+
+    .subtitle-controls select,
+    .subtitle-controls button {
+      font-size: 1em;
+      padding: 0.3em 0.6em;
+      margin-right: 0.5em;
+    }
   </style>
 </head>
 <body class="bg-animation">
@@ -140,8 +170,15 @@ if (!id) {
           <div id="waveform"></div>
           <div id="controls"><button id="togglePlay">play</button></div>
         ` : `
-          <video id="player" width="480px" height="270px" controls controlsList="nodownload" autoplay playsinline>
-          </video>
+          <div style="position: relative;">
+            <video id="player" width="480px" height="270px" controls controlsList="nodownload" autoplay playsinline></video>
+            <div class="subtitle" id="subtitle"></div>
+          </div>
+          <div class="subtitle-controls">
+            <label for="subtitleLang">字幕:</label>
+            <select id="subtitleLang"></select>
+            <button id="toggleSubtitle">字幕オフ</button>
+          </div>
         `;
 
         content.innerHTML = `
@@ -186,16 +223,75 @@ if (!id) {
               const video = document.getElementById("player");
               video.src = url;
 
-              // 🎞️ 字幕追加（修正済み）
+              // 🎞️ 自前字幕処理
+              const subtitleDiv = document.getElementById("subtitle");
+              const langSelect = document.getElementById("subtitleLang");
+              const toggleBtn = document.getElementById("toggleSubtitle");
+
+              let subtitles = [];
+              let subtitleEnabled = true;
+
+              function loadSubtitle(lang) {
+                const sub = info.subtitles.find(s => s.language === lang);
+                if (!sub) return;
+                fetch(`${SERVER}/subtitles/${id}/${sub.fileName}`)
+                  .then(res => res.ok ? res.text() : "")
+                  .then(text => {
+                    subtitles = parseVTT(text);
+                  });
+              }
+
+              function parseVTT(vttText) {
+                const entries = [];
+                const blocks = vttText.split(/\n\n+/);
+                for (const block of blocks) {
+                  const lines = block.trim().split("\n");
+                  if (lines.length < 2) continue;
+                  const timeLine = lines.find(line => line.includes("-->"));
+                  if (!timeLine) continue;
+                  const [start, end] = timeLine.split(" --> ").map(parseTime);
+                  const text = lines.slice(lines.indexOf(timeLine) + 1).join("\n");
+                  if (!isNaN(start) && !isNaN(end)) {
+                    entries.push({ start, end, text });
+                  }
+                }
+                return entries;
+              }
+
+              function parseTime(t) {
+                const [h, m, s] = t.split(":").map(parseFloat);
+                return h * 3600 + m * 60 + s;
+              }
+
+              video.addEventListener("timeupdate", () => {
+                if (!subtitleEnabled || subtitles.length === 0) {
+                  subtitleDiv.textContent = "";
+                  return;
+                }
+                const current = video.currentTime;
+                const active = subtitles.find(s => current >= s.start && current <= s.end);
+                subtitleDiv.textContent = active ? active.text : "";
+              });
+
               if (Array.isArray(info.subtitles)) {
-                info.subtitles.forEach((sub, index) => {
-                  const track = document.createElement("track");
-                  track.kind = "subtitles";
-                  track.label = sub.language;
-                  track.srclang = sub.language;
-                  track.src = `${SERVER}/subtitles/${id}/${sub.fileName}`;
-                  if (index === 0) track.default = true;
-                  video.appendChild(track);
+                info.subtitles.forEach((sub, i) => {
+                  const opt = document.createElement("option");
+                  opt.value = sub.language;
+                  opt.textContent = sub.language;
+                  langSelect.appendChild(opt);
+                  if (i === 0) langSelect.value = sub.language;
+                });
+
+                loadSubtitle(langSelect.value);
+
+                langSelect.addEventListener("change", () => {
+                  loadSubtitle(langSelect.value);
+                });
+
+                toggleBtn.addEventListener("click", () => {
+                  subtitleEnabled = !subtitleEnabled;
+                  toggleBtn.textContent = subtitleEnabled ? "字幕オフ" : "字幕オン";
+                  subtitleDiv.textContent = "";
                 });
               }
             })
