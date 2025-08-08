@@ -161,8 +161,9 @@ function updateIcon() {
   cropImage(file, 600, 600, blob => {
     const form = new FormData();
     form.append("icon", blob, "icon.jpg");
+    form.append("username", me); // ✅ server.js に合わせて追加
 
-    fetch(`${SERVER}/uploadIcon`, {
+    fetch(`${SERVER}/updateIcon`, {
       method: "POST",
       body: form
     })
@@ -192,11 +193,11 @@ function upload() {
   if (!title || !file) return alert("Enter title and select a file.");
 
   const form = new FormData();
-  form.append("username", me); // ✅ 修正済み
+  form.append("username", me); // ✅ server.js に合わせて追加
   form.append("title", title);
   form.append("description", description);
   form.append("lockPassword", isLocked ? password : "");
-  form.append("video", file);
+  form.append("video", file); // ✅ server.js は video フィールドを期待
 
   function finishSend(blob) {
     if (blob) form.append("thumbnail", blob, "thumb.jpg");
@@ -211,6 +212,8 @@ function upload() {
 
         if (subtitleChecked && subtitleFiles.length > 0) {
           subtitleFiles.forEach(({ language, file }) => {
+            if (!file.name.endsWith(".vtt")) return; // ✅ server.js は .vtt 限定
+
             const subForm = new FormData();
             subForm.append("subtitle", file);
             subForm.append("language", language);
