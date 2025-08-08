@@ -41,6 +41,7 @@
     #player {
       width: 320px;
       height: 180px;
+      background: black;
     }
 
     .subtitle {
@@ -60,15 +61,26 @@
       white-space: pre-wrap;
     }
 
-    .subtitle-controls {
-      margin-top: 1em;
+    .custom-controls {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
     }
 
-    .subtitle-controls select,
-    .subtitle-controls button {
+    .custom-controls button,
+    .custom-controls select {
       font-size: 1em;
-      padding: 0.3em 0.6em;
-      margin-right: 0.5em;
+      padding: 0.4em 0.8em;
+      border-radius: 4px;
+      border: none;
+      background: #0af;
+      color: white;
+      cursor: pointer;
+    }
+
+    .custom-controls button:hover {
+      background: #09c;
     }
   </style>
 </head>
@@ -149,13 +161,14 @@ if (!id) {
           <div id="controls"><button id="togglePlay">play</button></div>
         ` : `
           <div id="videoWrapper">
-            <video id="player" controls controlsList="nodownload" autoplay playsinline></video>
+            <video id="player" autoplay playsinline></video>
             <div class="subtitle" id="subtitle"></div>
           </div>
-          <div class="subtitle-controls">
-            <label for="subtitleLang">字幕:</label>
-            <select id="subtitleLang"></select>
+          <div class="custom-controls">
+            <button id="playPauseBtn">▶️</button>
+            <button id="fullscreenBtn">⛶</button>
             <button id="toggleSubtitle">字幕オフ</button>
+            <select id="subtitleLang"></select>
           </div>
         `;
 
@@ -201,12 +214,59 @@ if (!id) {
               const video = document.getElementById("player");
               video.src = url;
 
+              const playPauseBtn = document.getElementById("playPauseBtn");
+              const fullscreenBtn = document.getElementById("fullscreenBtn");
               const subtitleDiv = document.getElementById("subtitle");
-              const langSelect = document.getElementById("subtitleLang");
               const toggleBtn = document.getElementById("toggleSubtitle");
+              const langSelect = document.getElementById("subtitleLang");
+              const videoWrapper = document.getElementById("videoWrapper");
 
               let subtitles = [];
               let subtitleEnabled = true;
+
+              playPauseBtn.addEventListener("click", () => {
+                if (video.paused) {
+                  video.play();
+                  playPauseBtn.textContent = "⏸️";
+                } else {
+                  video.pause();
+                  playPauseBtn.textContent = "▶️";
+                }
+              });
+
+              fullscreenBtn.addEventListener("click", () => {
+                if (document.fullscreenElement) {
+                  document.exitFullscreen();
+                } else {
+                  videoWrapper.requestFullscreen();
+                }
+              });
+
+              toggleBtn.addEventListener("click", () => {
+                subtitleEnabled = !subtitleEnabled;
+                toggleBtn.textContent = subtitleEnabled ? "字幕オフ" : "字幕オン";
+                subtitleDiv.textContent = "";
+              });
+
+              video.addEventListener("timeupdate", () => {
+                if (!subtitleEnabled || subtitles.length === 0) {
+                  subtitleDiv.textContent = "";
+                  return;
+                }
+                const current = video.currentTime;
+                const active = subtitles.find(s => current >= s.start && current <= s.end);
+                subtitleDiv.textContent = active ? active.text : "";
+              });
+
+              document.addEventListener("fullscreenchange", () => {
+                if (document.fullscreenElement) {
+                  subtitleDiv.style.fontSize = "2em";
+                  subtitleDiv.style.bottom = "8%";
+                } else {
+                  subtitleDiv.style.fontSize = "1.5em";
+                  subtitleDiv.style.bottom = "5%";
+                }
+              });
 
               function loadSubtitle(lang) {
                 const sub = info.subtitles.find(s => s.language === lang);
@@ -253,27 +313,6 @@ if (!id) {
                 }
               }
 
-              video.addEventListener("timeupdate", () => {
-                if (!subtitleEnabled || subtitles.length === 0) {
-                  subtitleDiv.textContent = "";
-                  return;
-                }
-                const current = video.currentTime;
-                const active = subtitles.find(s => current >= s.start && current <= s.end);
-                subtitleDiv.textContent = active ? active.text : "";
-              });
-
-              document.addEventListener("fullscreenchange", () => {
-                const isFullscreen = document.fullscreenElement;
-                if (isFullscreen) {
-                  subtitleDiv.style.fontSize = "2em";
-                  subtitleDiv.style.bottom = "8%";
-                } else {
-                  subtitleDiv.style.fontSize = "1.5em";
-                  subtitleDiv.style.bottom = "5%";
-                }
-              });
-
               if (Array.isArray(info.subtitles)) {
                 info.subtitles.forEach((sub, i) => {
                   const opt = document.createElement("option");
@@ -287,12 +326,6 @@ if (!id) {
 
                 langSelect.addEventListener("change", () => {
                   loadSubtitle(langSelect.value);
-                });
-
-                toggleBtn.addEventListener("click", () => {
-                  subtitleEnabled = !subtitleEnabled;
-                  toggleBtn.textContent = subtitleEnabled ? "字幕オフ" : "字幕オン";
-                  subtitleDiv.textContent = "";
                 });
               }
             })
