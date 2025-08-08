@@ -35,13 +35,13 @@
       position: relative;
       width: 100%;
       max-width: 640px;
+      margin: 0 auto;
     }
 
     .subtitle {
       position: absolute;
       bottom: 5%;
       left: 0;
-      transform: none;
       margin-left: 10px;
       max-width: 90%;
       text-align: left;
@@ -208,6 +208,7 @@ if (!id) {
               const subtitleDiv = document.getElementById("subtitle");
               const langSelect = document.getElementById("subtitleLang");
               const toggleBtn = document.getElementById("toggleSubtitle");
+
               let subtitles = [];
               let currentLang = "";
               let subtitleEnabled = true;
@@ -245,7 +246,6 @@ if (!id) {
                     toggleBtn.textContent = subtitleEnabled ? "字幕オフ" : "字幕オン";
                   });
 
-                  const video = document.getElementById("player");
                   video.addEventListener("timeupdate", () => {
                     if (!subtitleEnabled || subtitles.length === 0) return;
                     const currentTime = video.currentTime;
@@ -255,10 +255,38 @@ if (!id) {
                     subtitleDiv.textContent = current ? current.text : "";
                   });
                 });
+            })
+            .catch(() => {
+              const player = document.getElementById("player");
+              if (player) {
+                player.replaceWith(`<p class="error">Failed to load video file.</p>`);
+              }
             });
         }
       }
+    })
+    .catch(() => {
+      content.innerHTML = `<p class="error">error</p>`;
     });
+}
+
+function rewriteDescription(desc) {
+  const temp = document.createElement("div");
+  temp.innerHTML = desc;
+  const urls = temp.querySelectorAll("url");
+  urls.forEach(node => {
+    const parts = node.textContent.split("|");
+    const raw = parts[0]?.trim();
+    const text = parts[1]?.trim() || raw;
+    const encoded = encodeURIComponent(raw);
+    const a = document.createElement("a");
+    a.href = `redirect?url=${encoded}`;
+    a.textContent = text;
+    a.target = "_blank";
+    a.rel = "noopener";
+    node.replaceWith(a);
+  });
+  return temp.innerHTML;
 }
 
 function copyUrl() {
@@ -272,10 +300,6 @@ function copyCode() {
   navigator.clipboard.writeText(embedCode)
     .then(() => alert("Embed code copied!"))
     .catch(() => alert("Failed to copy embed code."));
-}
-
-function rewriteDescription(desc) {
-  return desc.replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 </script>
 </body>
