@@ -174,9 +174,9 @@ if (!id) {
             <video id="player" autoplay playsinline></video>
             <div class="subtitle" id="subtitle"></div>
             <div class="custom-controls" id="customControls">
-              <button id="playPauseBtn">▶️</button>
+              <button id="playPauseBtn">⏸</button>
               <button id="fullscreenBtn">⛶</button>
-              <button id="toggleSubtitle">字幕オフ</button>
+              <button id="toggleSubtitle">sub off</button>
               <select id="subtitleLang"></select>
               <input type="range" id="seekBar" min="0" max="100" value="0" step="0.1" />
             </div>
@@ -239,10 +239,10 @@ if (!id) {
               playPauseBtn.addEventListener("click", () => {
                 if (video.paused) {
                   video.play();
-                  playPauseBtn.textContent = "⏸️";
+                  playPauseBtn.textContent = "⏸";
                 } else {
                   video.pause();
-                  playPauseBtn.textContent = "▶️";
+                  playPauseBtn.textContent = "▶";
                 }
               });
 
@@ -256,7 +256,7 @@ if (!id) {
 
               toggleBtn.addEventListener("click", () => {
                 subtitleEnabled = !subtitleEnabled;
-                toggleBtn.textContent = subtitleEnabled ? "字幕オフ" : "字幕オン";
+                toggleBtn.textContent = subtitleEnabled ? "sub off" : "sub on";
                 subtitleDiv.textContent = "";
               });
 
@@ -398,3 +398,4 @@ function copyCode() {
 </script>
 </body>
 </html>
+
