@@ -211,8 +211,8 @@ function renderVideos() {
               year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
             })}<br>
             <a href="watch?id=${v.id}">watch</a>
-            <button onclick="deleteVideo('${v.id}')">delete</button>
-            <button onclick="showEdit('${v.id}', \`${v.title}\`, \`${v.description || ""}\`, ${JSON.stringify(v.subtitles || {})})">edit</button>
+            <button onclick='deleteVideo("${v.id}")'>delete</button>
+            <button onclick='showEditFromData(${JSON.stringify(v)})'>edit</button>
             <div id="edit-${v.id}"></div>
             ${subtitleList ? `<ul>${subtitleList}</ul>` : ""}
           </div>
@@ -222,6 +222,9 @@ function renderVideos() {
     });
 }
 
+function showEditFromData(v) {
+  showEdit(v.id, v.title, v.description || "", v.subtitles || {});
+}
 function upload() {
   const title = document.getElementById("titleInput").value.trim();
   const file = document.getElementById("fileInput").files[0];
@@ -313,6 +316,7 @@ function upload() {
     submit(form);
   }
 }
+
 function showEdit(id, title, description, subtitles) {
   const container = document.getElementById(`edit-${id}`);
   const subtitleItems = Object.entries(subtitles).map(([lang, file]) => `
