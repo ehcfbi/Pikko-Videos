@@ -52,7 +52,7 @@
       margin-top: 8px;
     }
     .subtitleRow {
-      margin-bottom: 6px;
+      margin: 6px 0;
     }
   </style>
 </head>
@@ -98,16 +98,16 @@
   </select><br>
   <h3>description</h3>
   <textarea id="description" placeholder="description" rows="4" cols="40"></textarea><br>
+  <h3>subtitles (.vtt only)</h3>
+  <div id="subtitleContainer"></div>
+  <button onclick="addSubtitleRow()">add subtitle</button><br><br>
+
   <h3>lock</h3>
   <input type="checkbox" id="lockToggle" onchange="toggleUploadLock()"> lock this video or music<br>
   <input id="lockPassword" type="password" placeholder="password (if locked)" disabled><br>
-
-  <h3>subtitles (.vtt, optional)</h3>
-  <div id="subtitleContainer"></div>
-  <button onclick="addSubtitleRow()">➕ Add subtitle</button><br><br>
-
   <button class="upload_button" onclick="upload()">upload</button>
   <div id="uploadStatus"></div>
+
   <h2>your videos and musics</h2>
   <label for="sortSelect">Sort by:</label>
   <select id="sortSelect" onchange="setSortOrder(this.value)">
@@ -115,7 +115,6 @@
     <option value="asc">oldest first</option>
   </select>
   <div id="list"></div>
-
 <script>
 let me = Storage.getUser();
 if (!me) location.href = "signin";
@@ -143,6 +142,33 @@ function addSubtitleRow() {
     <input type="file" accept=".vtt" id="subtitleFile-${index}">
   `;
   container.appendChild(row);
+}
+
+async function uploadSubtitles(videoId) {
+  const container = document.getElementById("subtitleContainer");
+  for (let i = 0; i < container.children.length; i++) {
+    const lang = document.getElementById(`subtitleLang-${i}`).value.trim();
+    const fileInput = document.getElementById(`subtitleFile-${i}`);
+    const file = fileInput.files[0];
+    if (!lang || !file) continue;
+
+    const formData = new FormData();
+    formData.append("language", lang);
+    formData.append("subtitle", file);
+
+    try {
+      const res = await fetch(`${SERVER}/uploadSubtitle/${videoId}`, {
+        method: "POST",
+        body: formData
+      });
+      const result = await res.json();
+      if (!result || !result.language) {
+        console.warn(`Subtitle upload failed for ${lang}`);
+      }
+    } catch (err) {
+      console.warn(`Subtitle upload error for ${lang}`, err);
+    }
+  }
 }
 function upload() {
   const title = document.getElementById("titleInput").value.trim();
@@ -174,11 +200,12 @@ function upload() {
   function submit(formData) {
     fetch(`${SERVER}/upload`, { method: "POST", body: formData })
       .then(res => res.ok ? res.json() : Promise.reject())
-      .then(data => {
+      .then(async result => {
+        if (!result || !result.id) throw new Error("No video ID returned.");
+        await uploadSubtitles(result.id);
         status.textContent = "✅ Upload successful.";
         renderVideos();
         resetForm();
-        if (data.id) uploadSubtitles(data.id);
       })
       .catch(() => {
         status.textContent = "❌ Upload failed.";
@@ -197,6 +224,7 @@ function upload() {
     document.getElementById("thumbInput").disabled = true;
     document.getElementById("thumbSize").disabled = true;
     document.getElementById("subtitleContainer").innerHTML = "";
+    addSubtitleRow();
     setTimeout(() => status.textContent = "", 3000);
   }
 
@@ -208,34 +236,6 @@ function upload() {
   } else {
     submit(form);
   }
-}
-
-function uploadSubtitles(videoId) {
-  const container = document.getElementById("subtitleContainer");
-  const rows = container.querySelectorAll(".subtitleRow");
-
-  rows.forEach((row, i) => {
-    const langInput = row.querySelector(`#subtitleLang-${i}`);
-    const fileInput = row.querySelector(`#subtitleFile-${i}`);
-    const lang = langInput?.value.trim();
-    const file = fileInput?.files[0];
-    if (!lang || !file) return;
-    if (file.size > 100 * 1024) {
-      alert(`Subtitle file too big (${lang}).`);
-      return;
-    }
-
-    const form = new FormData();
-    form.append("language", lang);
-    form.append("subtitle", file);
-
-    fetch(`${SERVER}/uploadSubtitle/${videoId}`, {
-      method: "POST",
-      body: form
-    }).catch(() => {
-      console.warn(`Failed to upload subtitle for ${lang}`);
-    });
-  });
 }
 function renderVideos() {
   fetch(`${SERVER}/videos/user/${me}`)
@@ -267,6 +267,35 @@ function renderVideos() {
     });
 }
 
+function updateIcon() {
+  const input = document.getElementById("iconInput");
+  const file = input.files[0];
+  const status = document.getElementById("iconStatus");
+  if (!file) return alert("Select a .jpg image.");
+  if (file.size > 30 * 1024) return alert("Icon too big.");
+
+  status.innerHTML = `<span class="spinner"></span> Updating icon...`;
+
+  cropImage(file, 600, 600, blob => {
+    const form = new FormData();
+    form.append("username", me);
+    form.append("icon", blob, "icon.jpg");
+
+    fetch(`${SERVER}/updateIcon`, {
+      method: "POST",
+      body: form
+    })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(() => {
+        document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg?${Date.now()}`;
+        input.value = "";
+        status.textContent = "✅ Icon updated.";
+      })
+      .catch(() => status.textContent = "❌ Icon update failed.")
+      .finally(() => setTimeout(() => status.textContent = "", 3000));
+  });
+}
+
 function showEdit(id, title, description) {
   const container = document.getElementById(`edit-${id}`);
   container.innerHTML = `
@@ -281,10 +310,6 @@ function showEdit(id, title, description) {
     <p>lock</p>
     <input type="checkbox" id="lockToggle-${id}" onchange="toggleEditLock('${id}')"> lock this video or music<br>
     <input id="lockPassword-${id}" type="password" placeholder="password (if locked)" disabled><br>
-    <p>subtitles (.vtt)</p>
-    <input type="checkbox" id="useSubtitleEdit-${id}"> change subtitles?<br>
-    <div id="subtitleEditContainer-${id}" style="margin-left: 10px;"></div>
-    <button onclick="addSubtitleEditRow('${id}')">➕ Add subtitle</button><br>
     <button onclick="submitEdit('${id}')">save</button>
     <button onclick="cancelEdit('${id}')">cancel</button>
   `;
@@ -292,24 +317,8 @@ function showEdit(id, title, description) {
   document.getElementById(`useThumbEdit-${id}`).addEventListener("change", () => {
     document.getElementById(`thumb-${id}`).disabled = !document.getElementById(`useThumbEdit-${id}`).checked;
   });
-
-  document.getElementById(`useSubtitleEdit-${id}`).addEventListener("change", () => {
-    const checked = document.getElementById(`useSubtitleEdit-${id}`).checked;
-    document.getElementById(`subtitleEditContainer-${id}`).style.display = checked ? "block" : "none";
-  });
 }
 
-function addSubtitleEditRow(id) {
-  const container = document.getElementById(`subtitleEditContainer-${id}`);
-  const index = container.children.length;
-  const row = document.createElement("div");
-  row.className = "subtitleRow";
-  row.innerHTML = `
-    <input placeholder="language code (e.g. en, ja)" id="subtitleLangEdit-${id}-${index}" style="width: 120px;">
-    <input type="file" accept=".vtt" id="subtitleFileEdit-${id}-${index}">
-  `;
-  container.appendChild(row);
-}
 function toggleEditLock(id) {
   document.getElementById(`lockPassword-${id}`).disabled = !document.getElementById(`lockToggle-${id}`).checked;
 }
@@ -324,6 +333,11 @@ function submitEdit(id) {
   const thumbEl = document.getElementById(`thumb-${id}`);
   const lockToggle = document.getElementById(`lockToggle-${id}`);
   const passEl = document.getElementById(`lockPassword-${id}`);
+
+  if (!titleEl || !descEl || !thumbEl || !lockToggle || !passEl) {
+    alert("編集フォームが正しく表示されていません。");
+    return;
+  }
 
   const newTitle = titleEl.value.trim();
   const newDesc = descEl.value.trim();
@@ -349,9 +363,6 @@ function submitEdit(id) {
     })
     .then(res => res.ok ? res.json() : Promise.reject())
     .then(() => {
-      if (document.getElementById(`useSubtitleEdit-${id}`).checked) {
-        uploadSubtitlesEdit(id);
-      }
       renderVideos();
       cancelEdit(id);
     })
@@ -363,34 +374,6 @@ function submitEdit(id) {
   } else {
     finishSend(null);
   }
-}
-
-function uploadSubtitlesEdit(id) {
-  const container = document.getElementById(`subtitleEditContainer-${id}`);
-  const rows = container.querySelectorAll(".subtitleRow");
-
-  rows.forEach((row, i) => {
-    const langInput = row.querySelector(`#subtitleLangEdit-${id}-${i}`);
-    const fileInput = row.querySelector(`#subtitleFileEdit-${id}-${i}`);
-    const lang = langInput?.value.trim();
-    const file = fileInput?.files[0];
-    if (!lang || !file) return;
-    if (file.size > 100 * 1024) {
-      alert(`Subtitle file too big (${lang}).`);
-      return;
-    }
-
-    const form = new FormData();
-    form.append("language", lang);
-    form.append("subtitle", file);
-
-    fetch(`${SERVER}/uploadSubtitle/${id}`, {
-      method: "PATCH",
-      body: form
-    }).catch(() => {
-      console.warn(`Failed to upload subtitle for ${lang}`);
-    });
-  });
 }
 
 function deleteVideo(id) {
@@ -454,6 +437,7 @@ function copyUrl() {
   document.body.removeChild(element);
 }
 
+addSubtitleRow();
 renderVideos();
 </script>
 </body>
