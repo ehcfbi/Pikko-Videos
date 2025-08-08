@@ -30,20 +30,17 @@
     .author img {
       width: 40px; height: 40px; border-radius: 5px; margin-right: 8px; object-fit: cover;
     }
-
     #videoWrapper {
       position: relative;
       width: 640px;
       height: 360px;
       margin-left: 0;
     }
-
     #player {
       width: 640px;
       height: 360px;
       background: black;
     }
-
     .subtitle {
       position: absolute;
       bottom: 5%;
@@ -59,8 +56,8 @@
       z-index: 10;
       box-sizing: border-box;
       white-space: pre-wrap;
+      display: none;
     }
-
     .custom-controls {
       position: absolute;
       bottom: 5%;
@@ -72,7 +69,6 @@
       align-items: center;
       z-index: 20;
     }
-
     .custom-controls button,
     .custom-controls select,
     .custom-controls input[type="range"] {
@@ -84,11 +80,9 @@
       color: white;
       cursor: pointer;
     }
-
     .custom-controls button:hover {
       background: #09c;
     }
-
     #seekBar {
       width: 120px;
     }
@@ -258,18 +252,25 @@ if (!id) {
                 subtitleEnabled = !subtitleEnabled;
                 toggleBtn.textContent = subtitleEnabled ? "sub off" : "sub on";
                 subtitleDiv.textContent = "";
+                subtitleDiv.style.display = "none";
               });
 
               video.addEventListener("timeupdate", () => {
                 if (!subtitleEnabled || subtitles.length === 0) {
                   subtitleDiv.textContent = "";
+                  subtitleDiv.style.display = "none";
                   return;
                 }
                 const current = video.currentTime;
                 const active = subtitles.find(s => current >= s.start && current <= s.end);
-                subtitleDiv.textContent = active ? active.text : "";
+                if (active) {
+                  subtitleDiv.textContent = active.text;
+                  subtitleDiv.style.display = "block";
+                } else {
+                  subtitleDiv.textContent = "";
+                  subtitleDiv.style.display = "none";
+                }
 
-                // ✅ シークバー更新
                 seekBar.value = (video.currentTime / video.duration) * 100;
               });
 
@@ -338,7 +339,7 @@ if (!id) {
                 }
               }
 
-              if (Array.isArray(info.subtitles)) {
+              if (Array.isArray(info.subtitles) && info.subtitles.length > 0) {
                 info.subtitles.forEach((sub, i) => {
                   const opt = document.createElement("option");
                   opt.value = sub.language;
@@ -352,6 +353,10 @@ if (!id) {
                 langSelect.addEventListener("change", () => {
                   loadSubtitle(langSelect.value);
                 });
+              } else {
+                subtitleEnabled = false;
+                toggleBtn.disabled = true;
+                subtitleDiv.style.display = "none";
               }
             })
             .catch(() => {
@@ -398,4 +403,3 @@ function copyCode() {
 </script>
 </body>
 </html>
-
