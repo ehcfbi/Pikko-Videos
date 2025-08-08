@@ -54,6 +54,9 @@
     .subtitleRow {
       margin: 6px 0;
     }
+    .subtitleEditRow {
+      margin: 4px 0;
+    }
   </style>
 </head>
 <body class="bg-animation">
@@ -115,6 +118,7 @@
     <option value="asc">oldest first</option>
   </select>
   <div id="list"></div>
+
 <script>
 let me = Storage.getUser();
 if (!me) location.href = "signin";
@@ -237,6 +241,7 @@ function upload() {
     submit(form);
   }
 }
+
 function renderVideos() {
   fetch(`${SERVER}/videos/user/${me}`)
     .then(res => res.json())
@@ -266,36 +271,6 @@ function renderVideos() {
       document.getElementById("list").innerHTML = list || "No videos yet.";
     });
 }
-
-function updateIcon() {
-  const input = document.getElementById("iconInput");
-  const file = input.files[0];
-  const status = document.getElementById("iconStatus");
-  if (!file) return alert("Select a .jpg image.");
-  if (file.size > 30 * 1024) return alert("Icon too big.");
-
-  status.innerHTML = `<span class="spinner"></span> Updating icon...`;
-
-  cropImage(file, 600, 600, blob => {
-    const form = new FormData();
-    form.append("username", me);
-    form.append("icon", blob, "icon.jpg");
-
-    fetch(`${SERVER}/updateIcon`, {
-      method: "POST",
-      body: form
-    })
-      .then(res => res.ok ? res.json() : Promise.reject())
-      .then(() => {
-        document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg?${Date.now()}`;
-        input.value = "";
-        status.textContent = "✅ Icon updated.";
-      })
-      .catch(() => status.textContent = "❌ Icon update failed.")
-      .finally(() => setTimeout(() => status.textContent = "", 3000));
-  });
-}
-
 function showEdit(id, title, description) {
   const container = document.getElementById(`edit-${id}`);
   container.innerHTML = `
@@ -310,6 +285,9 @@ function showEdit(id, title, description) {
     <p>lock</p>
     <input type="checkbox" id="lockToggle-${id}" onchange="toggleEditLock('${id}')"> lock this video or music<br>
     <input id="lockPassword-${id}" type="password" placeholder="password (if locked)" disabled><br>
+    <p>subtitles</p>
+    <div id="subtitleEdit-${id}"></div>
+    <button onclick="addSubtitleEditRow('${id}')">add subtitle</button><br>
     <button onclick="submitEdit('${id}')">save</button>
     <button onclick="cancelEdit('${id}')">cancel</button>
   `;
@@ -317,6 +295,33 @@ function showEdit(id, title, description) {
   document.getElementById(`useThumbEdit-${id}`).addEventListener("change", () => {
     document.getElementById(`thumb-${id}`).disabled = !document.getElementById(`useThumbEdit-${id}`).checked;
   });
+
+  fetch(`${SERVER}/subtitles/${id}`)
+    .then(res => res.json())
+    .then(subs => {
+      const subDiv = document.getElementById(`subtitleEdit-${id}`);
+      subs.forEach(sub => {
+        const row = document.createElement("div");
+        row.className = "subtitleEditRow";
+        row.innerHTML = `
+          ${sub.language}
+          <button onclick="deleteSubtitle('${id}', '${sub.language}')">delete</button>
+        `;
+        subDiv.appendChild(row);
+      });
+    });
+}
+
+function addSubtitleEditRow(id) {
+  const container = document.getElementById(`subtitleEdit-${id}`);
+  const index = container.querySelectorAll(".subtitleRow").length;
+  const row = document.createElement("div");
+  row.className = "subtitleRow";
+  row.innerHTML = `
+    <input placeholder="language code" id="editSubLang-${id}-${index}" style="width: 120px;">
+    <input type="file" accept=".vtt" id="editSubFile-${id}-${index}">
+  `;
+  container.appendChild(row);
 }
 
 function toggleEditLock(id) {
@@ -363,6 +368,7 @@ function submitEdit(id) {
     })
     .then(res => res.ok ? res.json() : Promise.reject())
     .then(() => {
+      uploadEditSubtitles(id);
       renderVideos();
       cancelEdit(id);
     })
@@ -374,6 +380,32 @@ function submitEdit(id) {
   } else {
     finishSend(null);
   }
+}
+
+function uploadEditSubtitles(id) {
+  const container = document.getElementById(`subtitleEdit-${id}`);
+  const rows = container.querySelectorAll(".subtitleRow");
+  rows.forEach((row, i) => {
+    const lang = document.getElementById(`editSubLang-${id}-${i}`).value.trim();
+    const file = document.getElementById(`editSubFile-${id}-${i}`).files[0];
+    if (!lang || !file) return;
+
+    const formData = new FormData();
+    formData.append("language", lang);
+    formData.append("subtitle", file);
+
+    fetch(`${SERVER}/uploadSubtitle/${id}`, {
+      method: "POST",
+      body: formData
+    }).catch(() => console.warn(`Subtitle upload failed for ${lang}`));
+  });
+}
+
+function deleteSubtitle(id, lang) {
+  if (!confirm(`Delete subtitle for ${lang}?`)) return;
+  fetch(`${SERVER}/deleteSubtitle/${id}/${lang}`, { method: "DELETE" })
+    .then(() => renderVideos())
+    .catch(() => alert("Failed to delete subtitle."));
 }
 
 function deleteVideo(id) {
