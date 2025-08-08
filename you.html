@@ -51,22 +51,6 @@
       color: #333;
       margin-top: 8px;
     }
-    .subtitleItem {
-      margin: 2px 0;
-    }
-    .edit-form {
-      background: #f9f9f9;
-      padding: 10px;
-      margin-top: 10px;
-      border: 1px solid #ccc;
-    }
-    .edit-form input, .edit-form textarea {
-      width: 100%;
-      margin-bottom: 8px;
-    }
-    .edit-form button {
-      margin-right: 6px;
-    }
   </style>
 </head>
 <body class="bg-animation">
@@ -90,10 +74,11 @@
   <button onclick="changeAccount()">change account</button>
 
   <h2>change your icon</h2>
-  <h3>icon (.jpg, 600×600, 30KB or less)</h3>
+  <h3>icon(.jpg, 600px×600px, 30KB or less)</h3>
   <input id="iconInput" type="file" accept=".jpg"><br>
   <button onclick="updateIcon()">update icon</button>
   <div id="iconStatus"></div>
+
   <h2>upload a video or music</h2>
   <h3>title</h3>
   <input id="titleInput" placeholder="title"><br>
@@ -113,37 +98,21 @@
   <h3>lock</h3>
   <input type="checkbox" id="lockToggle" onchange="toggleUploadLock()"> lock this video or music<br>
   <input id="lockPassword" type="password" placeholder="password (if locked)" disabled><br>
-
-  <h3>subtitles (.vtt)</h3>
-  <input type="checkbox" id="useSubtitleUpload"> upload subtitles?<br>
-  <div id="subtitleUploadArea" style="display: none;">
-    <input id="subtitleLangInput" placeholder="language (e.g. en, ja)">
-    <input id="subtitleInput" type="file" accept=".vtt">
-    <button onclick="addSubtitle()">add subtitle</button>
-    <ul id="subtitleList"></ul>
-  </div>
-
   <button class="upload_button" onclick="upload()">upload</button>
   <div id="uploadStatus"></div>
-
   <h2>your videos and musics</h2>
-  <label for="sortSelect">Sort by:</label>
-  <select id="sortSelect" onchange="setSortOrder(this.value)">
-    <option value="desc">newest first</option>
-    <option value="asc">oldest first</option>
-  </select>
-  <div id="list"></div>
+<label for="sortSelect">Sort by:</label>
+<select id="sortSelect" onchange="setSortOrder(this.value)">
+  <option value="desc">newest first</option>
+  <option value="asc">oldest first</option>
+</select>
+<div id="list"></div>
 <script>
 let me = Storage.getUser();
 if (!me) location.href = "signin";
 document.getElementById("currentUser").textContent = me;
 document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg`;
 let sortOrder = "desc";
-const subtitleFiles = [];
-
-function sanitizeText(text) {
-  return text.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\r?\n/g, "\\n");
-}
 
 document.getElementById("useThumbUpload").addEventListener("change", () => {
   const checked = document.getElementById("useThumbUpload").checked;
@@ -151,130 +120,17 @@ document.getElementById("useThumbUpload").addEventListener("change", () => {
   document.getElementById("thumbSize").disabled = !checked;
 });
 
-document.getElementById("useSubtitleUpload").addEventListener("change", () => {
-  const checked = document.getElementById("useSubtitleUpload").checked;
-  document.getElementById("subtitleUploadArea").style.display = checked ? "block" : "none";
-});
+function setSortOrder(order) {
+  sortOrder = order;
+  renderVideos();
+}
 
 function toggleUploadLock() {
   document.getElementById("lockPassword").disabled = !document.getElementById("lockToggle").checked;
 }
 
-function toggleTheme() {
-  const body = document.body;
-  const btn = document.getElementById("themeBtn");
-  const isDark = body.classList.toggle("dark-mode");
-  btn.textContent = isDark ? "Light Mode" : "Dark Mode";
-}
-
-function updateIcon() {
-  const file = document.getElementById("iconInput").files[0];
-  const status = document.getElementById("iconStatus");
-  if (!file) return alert("Select a .jpg file.");
-
-  cropImage(file, 600, 600, blob => {
-    const form = new FormData();
-    form.append("icon", blob, "icon.jpg");
-    form.append("username", me);
-
-    fetch(`${SERVER}/updateIcon`, {
-      method: "POST",
-      body: form
-    })
-      .then(res => res.ok ? res.json() : Promise.reject())
-      .then(() => {
-        status.textContent = "Icon updated.";
-        document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg?${Date.now()}`;
-      })
-      .catch(() => {
-        status.textContent = "Failed to update icon.";
-      });
-  });
-}
-function upload() {
-  const title = document.getElementById("titleInput").value.trim();
-  const file = document.getElementById("fileInput").files[0];
-  const thumbChecked = document.getElementById("useThumbUpload").checked;
-  const thumb = document.getElementById("thumbInput").files[0];
-  const thumbSize = document.getElementById("thumbSize").value;
-  const description = document.getElementById("description").value.trim();
-  const isLocked = document.getElementById("lockToggle").checked;
-  const password = document.getElementById("lockPassword").value.trim();
-  const subtitleChecked = document.getElementById("useSubtitleUpload").checked;
-  const status = document.getElementById("uploadStatus");
-
-  if (!title || !file) return alert("Enter title and select a file.");
-
-  const form = new FormData();
-  form.append("username", me);
-  form.append("title", title);
-  form.append("description", description);
-  form.append("lockPassword", isLocked ? password : "");
-  form.append("video", file);
-
-  function finishSend(blob) {
-    if (blob) form.append("thumbnail", blob, "thumb.jpg");
-
-    fetch(`${SERVER}/upload`, {
-      method: "POST",
-      body: form
-    })
-      .then(res => res.ok ? res.json() : Promise.reject())
-      .then(({ id }) => {
-        const subtitlePromises = [];
-
-        if (subtitleChecked && subtitleFiles.length > 0) {
-          subtitleFiles.forEach(({ language, file }) => {
-            if (!file.name.endsWith(".vtt")) return;
-
-            const subForm = new FormData();
-            subForm.append("subtitle", file);
-            subForm.append("language", language);
-            subtitlePromises.push(
-              fetch(`${SERVER}/uploadSubtitle/${id}`, {
-                method: "POST",
-                body: subForm
-              })
-            );
-          });
-        }
-
-        Promise.all(subtitlePromises)
-          .then(() => {
-            status.textContent = "Upload complete.";
-            renderVideos();
-          })
-          .catch(() => {
-            status.textContent = "Upload complete (subtitle failed).";
-            renderVideos();
-          });
-      })
-      .catch(() => {
-        status.textContent = "Upload failed.";
-      });
-  }
-
-  if (thumbChecked && thumb) {
-    const [w, h] = thumbSize.split("x").map(Number);
-    cropImage(thumb, w, h, finishSend);
-  } else {
-    finishSend(null);
-  }
-}
-
-function addSubtitle() {
-  const lang = document.getElementById("subtitleLangInput").value.trim();
-  const file = document.getElementById("subtitleInput").files[0];
-  if (!lang || !file) return alert("Enter language and select a .vtt file.");
-  if (!file.name.endsWith(".vtt")) return alert("Only .vtt files allowed.");
-
-  subtitleFiles.push({ language: lang, file });
-  const li = document.createElement("li");
-  li.textContent = `${lang} - ${file.name}`;
-  document.getElementById("subtitleList").appendChild(li);
-
-  document.getElementById("subtitleLangInput").value = "";
-  document.getElementById("subtitleInput").value = "";
+function toggleEditLock(id) {
+  document.getElementById(`lockPassword-${id}`).disabled = !document.getElementById(`lockToggle-${id}`).checked;
 }
 
 function cropImage(file, width, height, callback) {
@@ -310,45 +166,140 @@ function renderVideos() {
         return sortOrder === "asc" ? ta - tb : tb - ta;
       });
 
-      const list = videos.map(v => {
-        const thumb = v.thumbnail || `${v.id}.jpg`;
-        const subtitleList = v.subtitles ? Object.keys(v.subtitles).map(lang => `<li>${lang}</li>`).join("") : "";
-        const safeTitle = sanitizeText(v.title);
-        const safeDesc = sanitizeText(v.description || "");
-
-        return `
-          <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;" id="video-${v.id}">
-            <img src="${SERVER}/thumbnails/${thumb}?t=${Date.now()}" width="200"><br>
-            <b>
-              ${safeTitle}
-              ${v.password ? `<img src="img/lock.svg" alt="locked" class="lockIcon">` : ""}
-            </b><br>
-            ${new Date(v.date).toLocaleString("ja-JP", {
-              year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
-            })}<br>
-            <a href="watch?id=${v.id}">watch</a>
-            <button onclick='deleteVideo("${v.id}")'>delete</button>
-            <button onclick='showEdit("${v.id}", "${safeTitle}", "${safeDesc}")'>edit</button>
-            <div id="edit-${v.id}"></div>
-            ${subtitleList ? `<ul>${subtitleList}</ul>` : ""}
-          </div>
-        `;
-      }).join("");
+      const list = videos.map(v => `
+        <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+          <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}?t=${Date.now()}" width="200"><br>
+          <b>
+            ${v.title}
+            ${v.password ? `<img src="img/lock.svg" alt="locked" class="lockIcon">` : ""}
+          </b><br>
+          ${new Date(v.date).toLocaleString("ja-JP", {
+            year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
+          })}<br>
+          <a href="watch?id=${v.id}">watch</a>
+          <button onclick="deleteVideo('${v.id}')">delete</button>
+          <button onclick="showEdit('${v.id}', \`${v.title}\`, \`${v.description || ""}\`)">edit</button>
+          <div id="edit-${v.id}"></div>
+        </div>
+      `).join("");
       document.getElementById("list").innerHTML = list || "No videos yet.";
     });
+}
+
+function upload() {
+  const title = document.getElementById("titleInput").value.trim();
+  const file = document.getElementById("fileInput").files[0];
+  const thumbChecked = document.getElementById("useThumbUpload").checked;
+  const thumb = document.getElementById("thumbInput").files[0];
+  const thumbSizeValue = document.getElementById("thumbSize").value;
+  const [tw, th] = thumbSizeValue.split("x").map(Number);
+  const description = document.getElementById("description").value.trim();
+  const isLocked = document.getElementById("lockToggle").checked;
+  const password = document.getElementById("lockPassword").value.trim();
+  const status = document.getElementById("uploadStatus");
+
+  if (!title || !file) return alert("Enter title and file.");
+  if (file.size > 30 * 1024 * 1024) return alert("File too big.");
+  if (thumbChecked && !thumb) return alert("Select a thumbnail image.");
+  if (thumbChecked && thumb.size > 130 * 1024) return alert("Thumbnail too big.");
+  if (isLocked && !password) return alert("Enter password.");
+
+  status.innerHTML = `<span class="spinner"></span> Uploading...`;
+
+  const form = new FormData();
+  form.append("username", me);
+  form.append("title", title);
+  form.append("description", description);
+  form.append("video", file);
+  form.append("lockPassword", isLocked ? password : "");
+
+  function submit(formData) {
+    fetch(`${SERVER}/upload`, { method: "POST", body: formData })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(() => {
+        status.textContent = "✅ Upload successful.";
+        renderVideos();
+        resetForm();
+      })
+      .catch(() => {
+        status.textContent = "❌ Upload failed.";
+      });
+  }
+
+  function resetForm() {
+    document.getElementById("titleInput").value = "";
+    document.getElementById("fileInput").value = "";
+    document.getElementById("thumbInput").value = "";
+    document.getElementById("description").value = "";
+    document.getElementById("lockToggle").checked = false;
+    document.getElementById("lockPassword").value = "";
+    document.getElementById("lockPassword").disabled = true;
+    document.getElementById("useThumbUpload").checked = false;
+    document.getElementById("thumbInput").disabled = true;
+    document.getElementById("thumbSize").disabled = true;
+    setTimeout(() => status.textContent = "", 3000);
+  }
+
+  if (thumbChecked) {
+    cropImage(thumb, tw, th, blob => {
+      form.append("thumbnail", blob, "thumb.jpg");
+      submit(form);
+    });
+  } else {
+    submit(form);
+  }
+}
+
+function updateIcon() {
+  const input = document.getElementById("iconInput");
+  const file = input.files[0];
+  const status = document.getElementById("iconStatus");
+  if (!file) return alert("Select a .jpg image.");
+  if (file.size > 30 * 1024) return alert("Icon too big.");
+
+  status.innerHTML = `<span class="spinner"></span> Updating icon...`;
+
+  cropImage(file, 600, 600, blob => {
+    const form = new FormData();
+    form.append("username", me);
+    form.append("icon", blob, "icon.jpg");
+
+    fetch(`${SERVER}/updateIcon`, {
+      method: "POST",
+      body: form
+    })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(() => {
+        document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg?${Date.now()}`;
+        input.value = "";
+        status.textContent = "✅ Icon updated.";
+      })
+      .catch(() => status.textContent = "❌ Icon update failed.")
+      .finally(() => setTimeout(() => status.textContent = "", 3000));
+  });
 }
 
 function showEdit(id, title, description) {
   const container = document.getElementById(`edit-${id}`);
   container.innerHTML = `
-    <div class="edit-form">
-      <h4>編集</h4>
-      <input id="edit-title-${id}" value="${title}"><br>
-      <textarea id="edit-desc-${id}" rows="3">${description}</textarea><br>
-      <button onclick="submitEdit('${id}')">保存</button>
-      <button onclick="cancelEdit('${id}')">キャンセル</button>
-    </div>
+    <p>Edit:</p>
+    <p>title</p>
+    <input id="title-${id}" value="${title}" style="width: 80%;"><br>
+    <p>description</p>
+    <textarea id="desc-${id}" rows="4" style="width: 80%;">${description}</textarea><br>
+    <p>thumbnail</p>
+    <input type="checkbox" id="useThumbEdit-${id}"> change thumbnail?<br>
+    <input id="thumb-${id}" type="file" accept=".jpg" disabled><br>
+    <p>lock</p>
+    <input type="checkbox" id="lockToggle-${id}" onchange="toggleEditLock('${id}')"> lock this video or music<br>
+    <input id="lockPassword-${id}" type="password" placeholder="password (if locked)" disabled><br>
+    <button onclick="submitEdit('${id}')">save</button>
+    <button onclick="cancelEdit('${id}')">cancel</button>
   `;
+
+  document.getElementById(`useThumbEdit-${id}`).addEventListener("change", () => {
+    document.getElementById(`thumb-${id}`).disabled = !document.getElementById(`useThumbEdit-${id}`).checked;
+  });
 }
 
 function cancelEdit(id) {
@@ -356,40 +307,58 @@ function cancelEdit(id) {
 }
 
 function submitEdit(id) {
-  const title = document.getElementById(`edit-title-${id}`).value.trim();
-  const description = document.getElementById(`edit-desc-${id}`).value.trim();
-  if (!title) return alert("タイトルを入力してください");
+  const titleEl = document.getElementById(`title-${id}`);
+  const descEl = document.getElementById(`desc-${id}`);
+  const thumbEl = document.getElementById(`thumb-${id}`);
+  const lockToggle = document.getElementById(`lockToggle-${id}`);
+  const passEl = document.getElementById(`lockPassword-${id}`);
+
+  if (!titleEl || !descEl || !thumbEl || !lockToggle || !passEl) {
+    alert("編集フォームが正しく表示されていません。");
+    return;
+  }
+
+  const newTitle = titleEl.value.trim();
+  const newDesc = descEl.value.trim();
+  const thumbChecked = document.getElementById(`useThumbEdit-${id}`).checked;
+  const newThumb = thumbEl.files[0];
+  const isLocked = lockToggle.checked;
+  const password = passEl.value.trim();
+
+  if (thumbChecked && !newThumb) return alert("Select a thumbnail image.");
+  if (thumbChecked && newThumb.size > 130 * 1024) return alert("Thumbnail too big.");
+  if (isLocked && !password) return alert("Enter password.");
 
   const form = new FormData();
-  form.append("title", title);
-  form.append("description", description);
+  form.append("title", newTitle);
+  form.append("description", newDesc);
+  form.append("lockPassword", isLocked ? password : "");
 
-  fetch(`${SERVER}/edit/${id}`, {
-    method: "POST",
-    body: form
-  })
+  function finishSend(blob) {
+    if (blob) form.append("thumbnail", blob, "thumb.jpg");
+    fetch(`${SERVER}/editVideo/${id}`, {
+      method: "PATCH",
+      body: form
+    })
     .then(res => res.ok ? res.json() : Promise.reject())
     .then(() => {
       renderVideos();
+      cancelEdit(id);
     })
-    .catch(() => alert("編集に失敗しました"));
+    .catch(() => alert("Failed to save edits."));
+  }
+
+  if (thumbChecked) {
+    cropImage(newThumb, 640, 360, finishSend); // サイズは自由に調整可能
+  } else {
+    finishSend(null);
+  }
 }
 
 function deleteVideo(id) {
-  if (!confirm("本当に削除しますか？")) return;
-  fetch(`${SERVER}/delete/${id}`, {
-    method: "DELETE"
-  })
-    .then(res => res.ok ? res.json() : Promise.reject())
-    .then(() => {
-      document.getElementById(`video-${id}`).remove();
-    })
-    .catch(() => alert("削除に失敗しました"));
-}
-
-function setSortOrder(order) {
-  sortOrder = order;
-  renderVideos();
+  if (!confirm("Delete this video?")) return;
+  fetch(`${SERVER}/deleteVideo/${id}`, { method: "DELETE" })
+    .then(() => renderVideos());
 }
 
 function logout() {
@@ -451,3 +420,4 @@ renderVideos();
 </script>
 </body>
 </html>
+
