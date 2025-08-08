@@ -144,7 +144,6 @@ function addSubtitleRow() {
   `;
   container.appendChild(row);
 }
-
 function upload() {
   const title = document.getElementById("titleInput").value.trim();
   const file = document.getElementById("fileInput").files[0];
@@ -210,6 +209,7 @@ function upload() {
     submit(form);
   }
 }
+
 function uploadSubtitles(videoId) {
   const container = document.getElementById("subtitleContainer");
   const rows = container.querySelectorAll(".subtitleRow");
@@ -237,7 +237,6 @@ function uploadSubtitles(videoId) {
     });
   });
 }
-
 function renderVideos() {
   fetch(`${SERVER}/videos/user/${me}`)
     .then(res => res.json())
@@ -398,35 +397,6 @@ function deleteVideo(id) {
   if (!confirm("Delete this video?")) return;
   fetch(`${SERVER}/deleteVideo/${id}`, { method: "DELETE" })
     .then(() => renderVideos());
-}
-
-function updateIcon() {
-  const input = document.getElementById("iconInput");
-  const file = input.files[0];
-  const status = document.getElementById("iconStatus");
-  if (!file) return alert("Select a .jpg image.");
-  if (file.size > 30 * 1024) return alert("Icon too big.");
-
-  status.innerHTML = `<span class="spinner"></span> Updating icon...`;
-
-  cropImage(file, 600, 600, blob => {
-    const form = new FormData();
-    form.append("username", me);
-    form.append("icon", blob, "icon.jpg");
-
-    fetch(`${SERVER}/updateIcon`, {
-      method: "POST",
-      body: form
-    })
-      .then(res => res.ok ? res.json() : Promise.reject())
-      .then(() => {
-        document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg?${Date.now()}`;
-        input.value = "";
-        status.textContent = "✅ Icon updated.";
-      })
-      .catch(() => status.textContent = "❌ Icon update failed.")
-      .finally(() => setTimeout(() => status.textContent = "", 3000));
-  });
 }
 
 function logout() {
