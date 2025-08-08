@@ -41,10 +41,10 @@
     .subtitle {
       position: absolute;
       bottom: 5%;
-      left: 0;
-      margin-left: 10px;
+      left: 50%;
+      transform: translateX(-50%);
       max-width: 90%;
-      text-align: left;
+      text-align: center;
       font-size: 1.5em;
       color: white;
       background-color: rgba(0, 0, 0, 0.6);
@@ -60,8 +60,6 @@
     :-webkit-full-screen .subtitle {
       font-size: 2em;
       bottom: 8%;
-      left: 0;
-      margin-left: 10px;
     }
 
     .subtitle-controls {
@@ -210,51 +208,84 @@ if (!id) {
               const toggleBtn = document.getElementById("toggleSubtitle");
 
               let subtitles = [];
-              let currentLang = "";
               let subtitleEnabled = true;
 
-              fetch(`${SERVER}/subtitles/${id}`)
-                .then(res => res.ok ? res.json() : [])
-                .then(data => {
-                  if (!Array.isArray(data) || data.length === 0) {
-                    langSelect.style.display = "none";
-                    toggleBtn.style.display = "none";
-                    return;
+              function loadSubtitle(lang) {
+                const sub = info.subtitles.find(s => s.language === lang);
+                if (!sub) return;
+                const langOnly = sub.fileName.replace(".vtt", "");
+                fetch(`${SERVER}/subtitles/${id}/${langOnly}`)
+                  .then(res => res.ok ? res.text() : "")
+                  .then(text => {
+                    subtitles = parseVTT(text);
+                  });
+              }
+
+              function parseVTT(vttText) {
+                vttText = vttText.replace(/\r\n/g, "\n").trim();
+                const entries = [];
+                const blocks = vttText.split(/\n\n+/);
+                for (const block of blocks) {
+                  const lines = block.trim().split("\n");
+                  if (lines.length < 2) continue;
+                  const timeLine = lines.find(line => line.includes("-->"));
+                  if (!timeLine) continue;
+                  const [start, end] = timeLine.split(" --> ").map(parseTime);
+                  const text = lines.slice(lines.indexOf(timeLine) + 1).join("\n");
+                  if (!isNaN(start) && !isNaN(end)) {
+                    entries.push({ start, end, text });
                   }
+                }
+                return entries;
+              }
 
-                  data.forEach(sub => {
-                    const option = document.createElement("option");
-                    option.value = sub.lang;
-                    option.textContent = sub.lang;
-                    langSelect.appendChild(option);
-                  });
+              function parseTime(t) {
+                const parts = t.split(":");
+                if (parts.length === 3) {
+                  const h = parseInt(parts[0]);
+                  const m = parseInt(parts[1]);
+                  const s = parseFloat(parts[2]);
+                  return h * 3600 + m * 60 + s;
+                } else if (parts.length === 2) {
+                  const m = parseInt(parts[0]);
+                  const s = parseFloat(parts[1]);
+                  return m * 60 + s;
+                } else {
+                  return parseFloat(t);
+                }
+              }
 
-                  currentLang = data[0].lang;
-                  langSelect.value = currentLang;
-                  subtitles = data.find(s => s.lang === currentLang)?.lines || [];
+              video.addEventListener("timeupdate", () => {
+                if (!subtitleEnabled || subtitles.length === 0) {
+                  subtitleDiv.textContent = "";
+                  return;
+                }
+                const current = video.currentTime;
+                const active = subtitles.find(s => current >= s.start && current <= s.end);
+                subtitleDiv.textContent = active ? active.text : "";
+              });
 
-                  langSelect.addEventListener("change", () => {
-                    currentLang = langSelect.value;
-                    const selected = data.find(s => s.lang === currentLang);
-                    subtitles = selected ? selected.lines : [];
-                    subtitleDiv.textContent = "";
-                  });
-
-                  toggleBtn.addEventListener("click", () => {
-                    subtitleEnabled = !subtitleEnabled;
-                    subtitleDiv.style.display = subtitleEnabled ? "block" : "none";
-                    toggleBtn.textContent = subtitleEnabled ? "字幕オフ" : "字幕オン";
-                  });
-
-                  video.addEventListener("timeupdate", () => {
-                    if (!subtitleEnabled || subtitles.length === 0) return;
-                    const currentTime = video.currentTime;
-                    const current = subtitles.find(line =>
-                      currentTime >= line.start && currentTime <= line.end
-                    );
-                    subtitleDiv.textContent = current ? current.text : "";
-                  });
+              if (Array.isArray(info.subtitles)) {
+                info.subtitles.forEach((sub, i) => {
+                  const opt = document.createElement("option");
+                  opt.value = sub.language;
+                  opt.textContent = sub.language;
+                  langSelect.appendChild(opt);
+                  if (i === 0) langSelect.value = sub.language;
                 });
+
+                loadSubtitle(langSelect.value);
+
+                langSelect.addEventListener("change", () => {
+                  loadSubtitle(langSelect.value);
+                });
+
+                toggleBtn.addEventListener("click", () => {
+                  subtitleEnabled = !subtitleEnabled;
+                  toggleBtn.textContent = subtitleEnabled ? "字幕オフ" : "字幕オン";
+                  subtitleDiv.textContent = "";
+                });
+              }
             })
             .catch(() => {
               const player = document.getElementById("player");
@@ -290,16 +321,12 @@ function rewriteDescription(desc) {
 }
 
 function copyUrl() {
-  navigator.clipboard.writeText(location.href)
-    .then(() => alert("URL copied!"))
-    .catch(() => alert("Failed to copy URL."));
+  navigator.clipboard.writeText(location.href);
 }
 
 function copyCode() {
-  const embedCode = `<iframe src="${location.href}" width="640" height="360" frameborder="0" allowfullscreen></iframe>`;
-  navigator.clipboard.writeText(embedCode)
-    .then(() => alert("Embed code copied!"))
-    .catch(() => alert("Failed to copy embed code."));
+  const url = `<iframe src="https://videos.bird.f5.si/embed?id=${id}" width="560" height="315" frameborder="0" allowfullscreen></iframe>`;
+  navigator.clipboard.writeText(url);
 }
 </script>
 </body>
