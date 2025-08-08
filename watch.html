@@ -31,7 +31,14 @@
       width: 40px; height: 40px; border-radius: 5px; margin-right: 8px; object-fit: cover;
     }
 
-    /* 🎞️ 字幕表示スタイル（track風） */
+    /* 🎞️ 字幕表示スタイル（動画上に重ねる） */
+    #videoWrapper {
+      position: relative;
+      width: 100%;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
     .subtitle {
       position: absolute;
       bottom: 5%;
@@ -144,8 +151,8 @@ if (!id) {
           <div id="waveform"></div>
           <div id="controls"><button id="togglePlay">play</button></div>
         ` : `
-          <div style="position: relative;">
-            <video id="player" width="480px" height="270px" controls controlsList="nodownload" autoplay playsinline></video>
+          <div id="videoWrapper">
+            <video id="player" width="100%" height="auto" controls controlsList="nodownload" autoplay playsinline></video>
             <div class="subtitle" id="subtitle"></div>
           </div>
           <div class="subtitle-controls">
@@ -293,8 +300,6 @@ if (!id) {
     .catch(() => {
       content.innerHTML = `<p class="error">error</p>`;
     });
-}
-
 function rewriteDescription(desc) {
   const temp = document.createElement("div");
   temp.innerHTML = desc;
