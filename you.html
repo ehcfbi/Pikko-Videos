@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <title>my page - Pikko Videos</title>
+  <meta name="description" content="my page">
+  <meta property="og:title" content="Pikko Videos">
+  <meta property="og:description" content="my page">
+  <meta property="og:url" content="https://videos.bird.f5.si">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <script>
-    const SERVER = "https://pikko1.tcpexposer.com";
-  </script>
   <script src="js/config.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/dark.js"></script>
@@ -73,7 +74,7 @@
   <button onclick="changeAccount()">change account</button>
 
   <h2>change your icon</h2>
-  <h3>icon(.jpg, 600px×600px, 30KB or less)</h3>
+  <h3>icon (.jpg, 600×600, 30KB or less)</h3>
   <input id="iconInput" type="file" accept=".jpg"><br>
   <button onclick="updateIcon()">update icon</button>
   <div id="iconStatus"></div>
@@ -97,16 +98,6 @@
   <h3>lock</h3>
   <input type="checkbox" id="lockToggle" onchange="toggleUploadLock()"> lock this video or music<br>
   <input id="lockPassword" type="password" placeholder="password (if locked)" disabled><br>
-
-  <h3>subtitle (.vtt, any language)</h3>
-  <input type="checkbox" id="useSubtitleUpload"> upload custom subtitles?<br>
-  <div id="subtitleUploadArea" style="display: none;">
-    <input type="text" id="subtitleLangInput" placeholder="language (e.g. 日本語, english)"><br>
-    <input type="file" id="subtitleInput" accept=".vtt"><br>
-    <button onclick="addSubtitle()">add subtitle</button>
-    <ul id="subtitleList"></ul>
-  </div>
-
   <button class="upload_button" onclick="upload()">upload</button>
   <div id="uploadStatus"></div>
 
@@ -123,33 +114,12 @@ if (!me) location.href = "signin";
 document.getElementById("currentUser").textContent = me;
 document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg`;
 let sortOrder = "desc";
-const subtitleFiles = [];
 
 document.getElementById("useThumbUpload").addEventListener("change", () => {
   const checked = document.getElementById("useThumbUpload").checked;
   document.getElementById("thumbInput").disabled = !checked;
   document.getElementById("thumbSize").disabled = !checked;
 });
-
-document.getElementById("useSubtitleUpload").addEventListener("change", () => {
-  const checked = document.getElementById("useSubtitleUpload").checked;
-  document.getElementById("subtitleUploadArea").style.display = checked ? "block" : "none";
-});
-
-function addSubtitle() {
-  const lang = document.getElementById("subtitleLangInput").value.trim();
-  const file = document.getElementById("subtitleInput").files[0];
-  if (!lang || !file) return alert("Enter language and select a .vtt file.");
-  if (!file.name.endsWith(".vtt")) return alert("Only .vtt files allowed.");
-
-  subtitleFiles.push({ language: lang, file });
-  const li = document.createElement("li");
-  li.textContent = `${lang} - ${file.name}`;
-  document.getElementById("subtitleList").appendChild(li);
-
-  document.getElementById("subtitleLangInput").value = "";
-  document.getElementById("subtitleInput").value = "";
-}
 
 function toggleUploadLock() {
   document.getElementById("lockPassword").disabled = !document.getElementById("lockToggle").checked;
@@ -158,6 +128,29 @@ function toggleUploadLock() {
 function setSortOrder(order) {
   sortOrder = order;
   renderVideos();
+}
+
+function cropImage(file, width, height, callback) {
+  const img = new Image();
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    img.onload = () => {
+      const ratio = Math.max(width / img.width, height / img.height);
+      const w = img.width * ratio;
+      const h = img.height * ratio;
+      const x = (width - w) / 2;
+      const y = (height - h) / 2;
+      ctx.drawImage(img, x, y, w, h);
+      canvas.toBlob(callback, "image/jpeg");
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
 }
 
 function renderVideos() {
@@ -170,22 +163,22 @@ function renderVideos() {
         return sortOrder === "asc" ? ta - tb : tb - ta;
       });
 
-      const list = videos.map(v => {
-        const thumb = v.thumbnail || `${v.id}.jpg`;
-        return `
-          <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
-            <img src="${SERVER}/thumbnails/${thumb}?t=${Date.now()}" width="200"><br>
-            <b>
-              ${v.title}
-              ${v.password ? `<img src="img/lock.svg" alt="locked" class="lockIcon">` : ""}
-            </b><br>
-            ${new Date(v.date).toLocaleString("ja-JP", {
-              year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
-            })}<br>
-            <a href="watch?id=${v.id}">watch</a>
-          </div>
-        `;
-      }).join("");
+      const list = videos.map(v => `
+        <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+          <img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}?t=${Date.now()}" width="200"><br>
+          <b>
+            ${v.title}
+            ${v.password ? `<img src="img/lock.svg" alt="locked" class="lockIcon">` : ""}
+          </b><br>
+          ${new Date(v.date).toLocaleString("ja-JP", {
+            year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
+          })}<br>
+          <a href="watch?id=${v.id}">watch</a>
+          <button onclick="deleteVideo('${v.id}')">delete</button>
+          <button onclick="showEdit('${v.id}', \`${v.title}\`, \`${v.description || ""}\`)">edit</button>
+          <div id="edit-${v.id}"></div>
+        </div>
+      `).join("");
       document.getElementById("list").innerHTML = list || "No videos yet.";
     });
 }
@@ -220,22 +213,10 @@ function upload() {
   function submit(formData) {
     fetch(`${SERVER}/upload`, { method: "POST", body: formData })
       .then(res => res.ok ? res.json() : Promise.reject())
-      .then(data => {
+      .then(() => {
         status.textContent = "✅ Upload successful.";
         renderVideos();
         resetForm();
-
-        if (document.getElementById("useSubtitleUpload").checked && subtitleFiles.length > 0) {
-          subtitleFiles.forEach(({ language, file }) => {
-            const subForm = new FormData();
-            subForm.append("subtitle", file);
-            subForm.append("language", language);
-            fetch(`${SERVER}/uploadSubtitle/${data.id}`, {
-              method: "POST",
-              body: subForm
-            });
-          });
-        }
       })
       .catch(() => {
         status.textContent = "❌ Upload failed.";
@@ -253,10 +234,6 @@ function upload() {
     document.getElementById("useThumbUpload").checked = false;
     document.getElementById("thumbInput").disabled = true;
     document.getElementById("thumbSize").disabled = true;
-    document.getElementById("useSubtitleUpload").checked = false;
-    document.getElementById("subtitleUploadArea").style.display = "none";
-    subtitleFiles.length = 0;
-    document.getElementById("subtitleList").innerHTML = "";
     setTimeout(() => status.textContent = "", 3000);
   }
 
@@ -270,36 +247,173 @@ function upload() {
   }
 }
 
+function updateIcon() {
+  const input = document.getElementById("iconInput");
+  const file = input.files[0];
+  const status = document.getElementById("iconStatus");
+  if (!file) return alert("Select a .jpg image.");
+  if (file.size > 30 * 1024) return alert("Icon too big.");
+
+  status.innerHTML = `<span class="spinner"></span> Updating icon...`;
+
+  cropImage(file, 600, 600, blob => {
+    const form = new FormData();
+    form.append("username", me);
+    form.append("icon", blob, "icon.jpg");
+
+    fetch(`${SERVER}/updateIcon`, {
+      method: "POST",
+      body: form
+    })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(() => {
+        document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg?${Date.now()}`;
+        input.value = "";
+        status.textContent = "✅ Icon updated.";
+      })
+      .catch(() => status.textContent = "❌ Icon update failed.")
+      .finally(() => setTimeout(() => status.textContent = "", 3000));
+  });
+}
+function showEdit(id, title, description) {
+  const container = document.getElementById(`edit-${id}`);
+  container.innerHTML = `
+    <p>Edit:</p>
+    <p>title</p>
+    <input id="title-${id}" value="${title}" style="width: 80%;"><br>
+    <p>description</p>
+    <textarea id="desc-${id}" rows="4" style="width: 80%;">${description}</textarea><br>
+    <p>thumbnail</p>
+    <input type="checkbox" id="useThumbEdit-${id}"> change thumbnail?<br>
+    <input id="thumb-${id}" type="file" accept=".jpg" disabled><br>
+    <p>lock</p>
+    <input type="checkbox" id="lockToggle-${id}" onchange="toggleEditLock('${id}')"> lock this video or music<br>
+    <input id="lockPassword-${id}" type="password" placeholder="password (if locked)" disabled><br>
+    <button onclick="submitEdit('${id}')">save</button>
+    <button onclick="cancelEdit('${id}')">cancel</button>
+  `;
+
+  document.getElementById(`useThumbEdit-${id}`).addEventListener("change", () => {
+    document.getElementById(`thumb-${id}`).disabled = !document.getElementById(`useThumbEdit-${id}`).checked;
+  });
+}
+
+function toggleEditLock(id) {
+  document.getElementById(`lockPassword-${id}`).disabled = !document.getElementById(`lockToggle-${id}`).checked;
+}
+
+function cancelEdit(id) {
+  document.getElementById(`edit-${id}`).innerHTML = "";
+}
+
+function submitEdit(id) {
+  const titleEl = document.getElementById(`title-${id}`);
+  const descEl = document.getElementById(`desc-${id}`);
+  const thumbEl = document.getElementById(`thumb-${id}`);
+  const lockToggle = document.getElementById(`lockToggle-${id}`);
+  const passEl = document.getElementById(`lockPassword-${id}`);
+
+  if (!titleEl || !descEl || !thumbEl || !lockToggle || !passEl) {
+    alert("編集フォームが正しく表示されていません。");
+    return;
+  }
+
+  const newTitle = titleEl.value.trim();
+  const newDesc = descEl.value.trim();
+  const thumbChecked = document.getElementById(`useThumbEdit-${id}`).checked;
+  const newThumb = thumbEl.files[0];
+  const isLocked = lockToggle.checked;
+  const password = passEl.value.trim();
+
+  if (thumbChecked && !newThumb) return alert("Select a thumbnail image.");
+  if (thumbChecked && newThumb.size > 130 * 1024) return alert("Thumbnail too big.");
+  if (isLocked && !password) return alert("Enter password.");
+
+  const form = new FormData();
+  form.append("title", newTitle);
+  form.append("description", newDesc);
+  form.append("lockPassword", isLocked ? password : "");
+
+  function finishSend(blob) {
+    if (blob) form.append("thumbnail", blob, "thumb.jpg");
+    fetch(`${SERVER}/editVideo/${id}`, {
+      method: "PATCH",
+      body: form
+    })
+    .then(res => res.ok ? res.json() : Promise.reject())
+    .then(() => {
+      renderVideos();
+      cancelEdit(id);
+    })
+    .catch(() => alert("Failed to save edits."));
+  }
+
+  if (thumbChecked) {
+    cropImage(newThumb, 640, 360, finishSend); // サイズは自由に調整可能
+  } else {
+    finishSend(null);
+  }
+}
+
+function deleteVideo(id) {
+  if (!confirm("Delete this video?")) return;
+  fetch(`${SERVER}/deleteVideo/${id}`, { method: "DELETE" })
+    .then(() => renderVideos());
+}
+
 function logout() {
   Storage.clearUser();
-  location.href = "./";
+  location.href = "signin";
+}
+
+function removeAccount() {
+  if (!confirm("Do you want to delete your account?")) return;
+  fetch(`${SERVER}/deleteAccount`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: me })
+  })
+    .then(() => {
+      Storage.clearUser();
+      location.href = "signin";
+    })
+    .catch(() => alert("Failed to delete account."));
+}
+
+function changeAccount() {
+  const now = document.getElementById("currentPassword").value.trim();
+  const name = document.getElementById("newUsername").value.trim();
+  const pass = document.getElementById("newPassword").value.trim();
+  if (!now || !name || !pass) return alert("Enter all.");
+
+  fetch(`${SERVER}/changeAccount`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      oldUsername: me,
+      currentPassword: now,
+      newUsername: name,
+      newPassword: pass
+    })
+  })
+    .then(res => res.ok ? res.json() : Promise.reject())
+    .then(() => {
+      Storage.setUser(name);
+      me = name;
+      document.getElementById("currentUser").textContent = name;
+      document.getElementById("iconPreview").src = `${SERVER}/icons/${name}.jpg?${Date.now()}`;
+      renderVideos();
+    })
+    .catch(() => alert("Change failed"));
 }
 
 function copyUrl() {
-  navigator.clipboard.writeText(location.href);
-}
-
-function cropImage(file, width, height, callback) {
-  const img = new Image();
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext("2d");
-
-  const reader = new FileReader();
-  reader.onload = () => {
-    img.onload = () => {
-      const ratio = Math.max(width / img.width, height / img.height);
-      const w = img.width * ratio;
-      const h = img.height * ratio;
-      const x = (width - w) / 2;
-      const y = (height - h) / 2;
-      ctx.drawImage(img, x, y, w, h);
-      canvas.toBlob(callback, "image/jpeg");
-    };
-    img.src = reader.result;
-  };
-  reader.readAsDataURL(file);
+  const element = document.createElement('input');
+  element.value = `https://videos.bird.f5.si/user?name=${me}`;
+  document.body.appendChild(element);
+  element.select();
+  document.execCommand('copy');
+  document.body.removeChild(element);
 }
 
 renderVideos();
