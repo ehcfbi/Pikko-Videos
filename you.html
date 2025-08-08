@@ -197,7 +197,7 @@ function upload() {
   form.append("title", title);
   form.append("description", description);
   form.append("lockPassword", isLocked ? password : "");
-  form.append("file", file);
+  form.append("video", file);
 
   function finishSend(blob) {
     if (blob) form.append("thumbnail", blob, "thumb.jpg");
@@ -383,3 +383,4 @@ renderVideos();
 </script>
 </body>
 </html>
+
