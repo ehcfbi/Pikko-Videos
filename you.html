@@ -81,7 +81,6 @@
   <input id="iconInput" type="file" accept=".jpg"><br>
   <button onclick="updateIcon()">update icon</button>
   <div id="iconStatus"></div>
-
   <h2>upload a video or music</h2>
   <h3>title</h3>
   <input id="titleInput" placeholder="title"><br>
@@ -154,7 +153,6 @@ function toggleTheme() {
   const isDark = body.classList.toggle("dark-mode");
   btn.textContent = isDark ? "Light Mode" : "Dark Mode";
 }
-
 function updateIcon() {
   const file = document.getElementById("iconInput").files[0];
   const status = document.getElementById("iconStatus");
@@ -194,6 +192,7 @@ function upload() {
   if (!title || !file) return alert("Enter title and select a file.");
 
   const form = new FormData();
+  form.append("username", me); // ✅ 修正済み
   form.append("title", title);
   form.append("description", description);
   form.append("lockPassword", isLocked ? password : "");
@@ -246,6 +245,7 @@ function upload() {
     finishSend(null);
   }
 }
+
 function addSubtitle() {
   const lang = document.getElementById("subtitleLangInput").value.trim();
   const file = document.getElementById("subtitleInput").files[0];
@@ -383,4 +383,3 @@ renderVideos();
 </script>
 </body>
 </html>
-
