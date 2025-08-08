@@ -48,66 +48,98 @@
   <p><button onclick="copyUrl()">share</button></p>
   <div id="info"></div>
   <h2>videos and musics</h2>
+
+  <!-- 🔽 並び順セレクターと検索欄 -->
+  <p>
+    <label for="sortSelect">Sort:</label>
+    <select id="sortSelect">
+      <option value="new">Newest first</option>
+      <option value="old">Oldest first</option>
+    </select>
+  </p>
+  <p>
+    <label for="searchInput">Search by title:</label>
+    <input type="text" id="searchInput" placeholder="Enter keyword">
+  </p>
+
   <div id="list"></div>
-  <script>
-    const params = new URLSearchParams(location.search);
-    const name = params.get("name");
-    if (!name) location.href = "./";
+<script>
+  const params = new URLSearchParams(location.search);
+  const name = params.get("name");
+  if (!name) location.href = "./";
 
-    document.title = `${name} - Pikko Videos`;
+  document.title = `${name} - Pikko Videos`;
 
-    const iconUrl = `${SERVER}/icons/${name}.jpg`;
-    const iconImg = new Image();
-    iconImg.src = iconUrl;
+  const iconUrl = `${SERVER}/icons/${name}.jpg`;
+  const iconImg = new Image();
+  iconImg.src = iconUrl;
 
-    iconImg.onload = () => {
-      // ユーザーアイコン画像が存在する → ユーザーは存在する
-      document.getElementById("info").innerHTML = `
-        <div style="display: flex; align-items: center; margin-bottom: 10px;">
-          <img src="${iconUrl}" alt="icon" width="60" height="60" style="margin-right: 10px;">
-          <font size="6" color="purple">${name}</font>
-        </div>
-      `;
+  let allVideos = [];
 
-      // 動画取得
-      fetch(`${SERVER}/videos/user/${encodeURIComponent(name)}`)
-        .then(res => res.json())
-        .then(videos => {
-          videos.sort((a, b) => new Date(b.date) - new Date(a.date));
-          const list = videos.map(v => `
-            <div class="videoCard">
-              <a href="watch?id=${v.id}"><img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}" alt="thumb"></a><br>
-              <b>
-                ${v.title}
-                ${v.password ? `<img src="img/lock.svg" alt="locked" class="lockIcon">` : ""}
-              </b><br>
-              ${new Date(v.date).toLocaleString("ja-JP", {
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit"
-              })}<br>
-            </div>
-          `).join("");
-          document.getElementById("list").innerHTML = list || "No videos yet.";
-        });
-    };
+  function renderVideos(videos) {
+    const list = videos.map(v => `
+      <div class="videoCard">
+        <a href="watch?id=${v.id}"><img src="${SERVER}/thumbnails/${v.thumbnail || `${v.id}.jpg`}" alt="thumb"></a><br>
+        <b>
+          ${v.title}
+          ${v.password ? `<img src="img/lock.svg" alt="locked" class="lockIcon">` : ""}
+        </b><br>
+        ${new Date(v.date).toLocaleString("ja-JP", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit"
+        })}<br>
+      </div>
+    `).join("");
+    document.getElementById("list").innerHTML = list || "No videos found.";
+  }
 
-    iconImg.onerror = () => {
-      // ユーザーアイコン画像が存在しない → アカウントなし
-      document.getElementById("info").innerHTML = `<p class="error">This account does not exist.</p>`;
-      document.getElementById("list").innerHTML = "";
-    };
+  function applyFilters() {
+    const sort = document.getElementById("sortSelect").value;
+    const keyword = document.getElementById("searchInput").value.trim().toLowerCase();
 
-    function copyUrl() {
-      const element = document.createElement('input');
-      element.value = location.href;
-      document.body.appendChild(element);
-      element.select();
-      document.execCommand('copy');
-      document.body.removeChild(element);
+    let filtered = allVideos.filter(v => v.title.toLowerCase().includes(keyword));
+    if (sort === "new") {
+      filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+    } else {
+      filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
     }
-  </script>
+    renderVideos(filtered);
+  }
+  iconImg.onload = () => {
+    document.getElementById("info").innerHTML = `
+      <div style="display: flex; align-items: center; margin-bottom: 10px;">
+        <img src="${iconUrl}" alt="icon" width="60" height="60" style="margin-right: 10px;">
+        <font size="6" color="purple">${name}</font>
+      </div>
+    `;
+
+    fetch(`${SERVER}/videos/user/${encodeURIComponent(name)}`)
+      .then(res => res.json())
+      .then(videos => {
+        allVideos = videos;
+        applyFilters();
+
+        document.getElementById("sortSelect").addEventListener("change", applyFilters);
+        document.getElementById("searchInput").addEventListener("input", applyFilters);
+      });
+  };
+
+  iconImg.onerror = () => {
+    document.getElementById("info").innerHTML = `<p class="error">This account does not exist.</p>`;
+    document.getElementById("list").innerHTML = "";
+  };
+
+  function copyUrl() {
+    const element = document.createElement('input');
+    element.value = location.href;
+    document.body.appendChild(element);
+    element.select();
+    document.execCommand('copy');
+    document.body.removeChild(element);
+  }
+</script>
 </body>
 </html>
