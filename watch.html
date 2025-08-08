@@ -14,78 +14,35 @@
   <link rel="stylesheet" href="css/animation.css">
   <link rel="stylesheet" href="css/dark.css">
   <style>
-    body {
-      font-family: sans-serif;
-    }
-    .error {
-      color: red;
-      font-weight: bold;
-      margin-top: 1em;
-    }
-    #waveform {
-      width: 100%;
-      height: 100px;
-      background: #f0f0f0;
-      margin-top: 20px;
-    }
-    #controls {
-      margin-top: 10px;
-    }
+    body { font-family: sans-serif; }
+    .error { color: red; font-weight: bold; margin-top: 1em; }
+    #waveform { width: 100%; height: 100px; background: #f0f0f0; margin-top: 20px; }
+    #controls { margin-top: 10px; }
     button {
-      background: #0af;
-      color: white;
-      border: none;
-      padding: 8px 14px;
-      font-size: 14px;
-      cursor: pointer;
-      border-radius: 4px;
+      background: #0af; color: white; border: none; padding: 8px 14px;
+      font-size: 14px; cursor: pointer; border-radius: 4px;
     }
-    button:hover {
-      background: #09c;
-    }
-    .lockIcon {
-      width: 16px;
-      height: 16px;
-      vertical-align: middle;
-      margin-left: 4px;
-    }
+    button:hover { background: #09c; }
+    .lockIcon { width: 16px; height: 16px; vertical-align: middle; margin-left: 4px; }
     .author {
-      display: flex;
-      align-items: center;
-      margin-top: 4px;
-      margin-bottom: 6px;
+      display: flex; align-items: center; margin-top: 4px; margin-bottom: 6px;
     }
     .author img {
-      width: 40px;
-      height: 40px;
-      border-radius: 5px;
-      margin-right: 8px;
-      object-fit: cover;
+      width: 40px; height: 40px; border-radius: 5px; margin-right: 8px; object-fit: cover;
     }
     .subtitle {
-      position: absolute;
-      bottom: 8%;
-      width: 100%;
-      text-align: center;
-      font-size: 1.2em;
-      color: white;
-      text-shadow: 0 0 4px black;
-      pointer-events: none;
-      padding: 0 1em;
-      box-sizing: border-box;
+      position: absolute; bottom: 8%; width: 100%; text-align: center;
+      font-size: 1.2em; color: white; text-shadow: 0 0 4px black;
+      pointer-events: none; padding: 0 1em; box-sizing: border-box;
     }
-    :fullscreen .subtitle,
-    :-webkit-full-screen .subtitle {
+    :fullscreen .subtitle, :-webkit-full-screen .subtitle {
       font-size: 1.5em;
     }
     .subtitle-controls {
       margin-top: 1em;
     }
-    .subtitle-controls select,
-    .subtitle-controls button {
-      font-size: 1em;
-      padding: 0.3em 0.6em;
-      margin-right: 0.5em;
+    .subtitle-controls select, .subtitle-controls button {
+      font-size: 1em; padding: 0.3em 0.6em; margin-right: 0.5em;
     }
   </style>
 </head>
@@ -231,10 +188,13 @@ if (!id) {
                 fetch(`${SERVER}/subtitles/${id}/${langOnly}`)
                   .then(res => res.ok ? res.text() : "")
                   .then(text => {
+                    console.log("📥 VTT raw text:", text);
                     subtitles = parseVTT(text);
+                    console.log("✅ Parsed subtitles:", subtitles);
                   });
               }
               function parseVTT(vttText) {
+                vttText = vttText.replace(/\r\n/g, "\n").trim();
                 const entries = [];
                 const blocks = vttText.split(/\n\n+/);
                 for (const block of blocks) {
@@ -252,7 +212,10 @@ if (!id) {
               }
 
               function parseTime(t) {
-                const [h, m, s] = t.split(":").map(parseFloat);
+                const parts = t.split(":");
+                const h = parseInt(parts[0]);
+                const m = parseInt(parts[1]);
+                const s = parseFloat(parts[2]);
                 return h * 3600 + m * 60 + s;
               }
 
@@ -263,6 +226,7 @@ if (!id) {
                 }
                 const current = video.currentTime;
                 const active = subtitles.find(s => current >= s.start && current <= s.end);
+                console.log("⏱ Current time:", current, "🗨️ Active subtitle:", active?.text);
                 subtitleDiv.textContent = active ? active.text : "";
               });
 
