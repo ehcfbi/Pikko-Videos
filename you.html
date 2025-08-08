@@ -54,6 +54,19 @@
     .subtitleItem {
       margin: 2px 0;
     }
+    .edit-form {
+      background: #f9f9f9;
+      padding: 10px;
+      margin-top: 10px;
+      border: 1px solid #ccc;
+    }
+    .edit-form input, .edit-form textarea {
+      width: 100%;
+      margin-bottom: 8px;
+    }
+    .edit-form button {
+      margin-right: 6px;
+    }
   </style>
 </head>
 <body class="bg-animation">
@@ -153,6 +166,7 @@ function toggleTheme() {
   const isDark = body.classList.toggle("dark-mode");
   btn.textContent = isDark ? "Light Mode" : "Dark Mode";
 }
+
 function updateIcon() {
   const file = document.getElementById("iconInput").files[0];
   const status = document.getElementById("iconStatus");
@@ -161,7 +175,7 @@ function updateIcon() {
   cropImage(file, 600, 600, blob => {
     const form = new FormData();
     form.append("icon", blob, "icon.jpg");
-    form.append("username", me); // ✅ server.js に合わせて追加
+    form.append("username", me);
 
     fetch(`${SERVER}/updateIcon`, {
       method: "POST",
@@ -177,7 +191,6 @@ function updateIcon() {
       });
   });
 }
-
 function upload() {
   const title = document.getElementById("titleInput").value.trim();
   const file = document.getElementById("fileInput").files[0];
@@ -193,11 +206,11 @@ function upload() {
   if (!title || !file) return alert("Enter title and select a file.");
 
   const form = new FormData();
-  form.append("username", me); // ✅ server.js に合わせて追加
+  form.append("username", me);
   form.append("title", title);
   form.append("description", description);
   form.append("lockPassword", isLocked ? password : "");
-  form.append("video", file); // ✅ server.js は video フィールドを期待
+  form.append("video", file);
 
   function finishSend(blob) {
     if (blob) form.append("thumbnail", blob, "thumb.jpg");
@@ -212,7 +225,7 @@ function upload() {
 
         if (subtitleChecked && subtitleFiles.length > 0) {
           subtitleFiles.forEach(({ language, file }) => {
-            if (!file.name.endsWith(".vtt")) return; // ✅ server.js は .vtt 限定
+            if (!file.name.endsWith(".vtt")) return;
 
             const subForm = new FormData();
             subForm.append("subtitle", file);
@@ -300,16 +313,14 @@ function renderVideos() {
       const list = videos.map(v => {
         const thumb = v.thumbnail || `${v.id}.jpg`;
         const subtitleList = v.subtitles ? Object.keys(v.subtitles).map(lang => `<li>${lang}</li>`).join("") : "";
-        const safeVideo = {
-          ...v,
-          title: sanitizeText(v.title),
-          description: sanitizeText(v.description || "")
-        };
+        const safeTitle = sanitizeText(v.title);
+        const safeDesc = sanitizeText(v.description || "");
+
         return `
-          <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+          <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;" id="video-${v.id}">
             <img src="${SERVER}/thumbnails/${thumb}?t=${Date.now()}" width="200"><br>
             <b>
-              ${v.title}
+              ${safeTitle}
               ${v.password ? `<img src="img/lock.svg" alt="locked" class="lockIcon">` : ""}
             </b><br>
             ${new Date(v.date).toLocaleString("ja-JP", {
@@ -317,7 +328,7 @@ function renderVideos() {
             })}<br>
             <a href="watch?id=${v.id}">watch</a>
             <button onclick='deleteVideo("${v.id}")'>delete</button>
-            <button class="editBtn" data-video='${encodeURIComponent(JSON.stringify(safeVideo))}'>edit</button>
+            <button onclick='showEdit("${v.id}", "${safeTitle}", "${safeDesc}")'>edit</button>
             <div id="edit-${v.id}"></div>
             ${subtitleList ? `<ul>${subtitleList}</ul>` : ""}
           </div>
@@ -325,6 +336,60 @@ function renderVideos() {
       }).join("");
       document.getElementById("list").innerHTML = list || "No videos yet.";
     });
+}
+
+function showEdit(id, title, description) {
+  const container = document.getElementById(`edit-${id}`);
+  container.innerHTML = `
+    <div class="edit-form">
+      <h4>編集</h4>
+      <input id="edit-title-${id}" value="${title}"><br>
+      <textarea id="edit-desc-${id}" rows="3">${description}</textarea><br>
+      <button onclick="submitEdit('${id}')">保存</button>
+      <button onclick="cancelEdit('${id}')">キャンセル</button>
+    </div>
+  `;
+}
+
+function cancelEdit(id) {
+  document.getElementById(`edit-${id}`).innerHTML = "";
+}
+
+function submitEdit(id) {
+  const title = document.getElementById(`edit-title-${id}`).value.trim();
+  const description = document.getElementById(`edit-desc-${id}`).value.trim();
+  if (!title) return alert("タイトルを入力してください");
+
+  const form = new FormData();
+  form.append("title", title);
+  form.append("description", description);
+
+  fetch(`${SERVER}/edit/${id}`, {
+    method: "POST",
+    body: form
+  })
+    .then(res => res.ok ? res.json() : Promise.reject())
+    .then(() => {
+      renderVideos();
+    })
+    .catch(() => alert("編集に失敗しました"));
+}
+
+function deleteVideo(id) {
+  if (!confirm("本当に削除しますか？")) return;
+  fetch(`${SERVER}/delete/${id}`, {
+    method: "DELETE"
+  })
+    .then(res => res.ok ? res.json() : Promise.reject())
+    .then(() => {
+      document.getElementById(`video-${id}`).remove();
+    })
+    .catch(() => alert("削除に失敗しました"));
+}
+
+function setSortOrder(order) {
+  sortOrder = order;
+  renderVideos();
 }
 
 function logout() {
