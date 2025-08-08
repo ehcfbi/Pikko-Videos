@@ -98,6 +98,16 @@
   <h3>lock</h3>
   <input type="checkbox" id="lockToggle" onchange="toggleUploadLock()"> lock this video or music<br>
   <input id="lockPassword" type="password" placeholder="password (if locked)" disabled><br>
+
+  <h3>subtitles (.vtt)</h3>
+  <input type="checkbox" id="useSubtitleUpload"> upload subtitles?<br>
+  <div id="subtitleUploadArea" style="display: none;">
+    <input id="subtitleLangInput" placeholder="language (e.g. en, ja)">
+    <input id="subtitleInput" type="file" accept=".vtt">
+    <button onclick="addSubtitle()">add subtitle</button>
+    <ul id="subtitleList"></ul>
+  </div>
+
   <button class="upload_button" onclick="upload()">upload</button>
   <div id="uploadStatus"></div>
 
@@ -114,12 +124,33 @@ if (!me) location.href = "signin";
 document.getElementById("currentUser").textContent = me;
 document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg`;
 let sortOrder = "desc";
+const subtitleFiles = [];
 
 document.getElementById("useThumbUpload").addEventListener("change", () => {
   const checked = document.getElementById("useThumbUpload").checked;
   document.getElementById("thumbInput").disabled = !checked;
   document.getElementById("thumbSize").disabled = !checked;
 });
+
+document.getElementById("useSubtitleUpload").addEventListener("change", () => {
+  const checked = document.getElementById("useSubtitleUpload").checked;
+  document.getElementById("subtitleUploadArea").style.display = checked ? "block" : "none";
+});
+
+function addSubtitle() {
+  const lang = document.getElementById("subtitleLangInput").value.trim();
+  const file = document.getElementById("subtitleInput").files[0];
+  if (!lang || !file) return alert("Enter language and select a .vtt file.");
+  if (!file.name.endsWith(".vtt")) return alert("Only .vtt files allowed.");
+
+  subtitleFiles.push({ language: lang, file });
+  const li = document.createElement("li");
+  li.textContent = `${lang} - ${file.name}`;
+  document.getElementById("subtitleList").appendChild(li);
+
+  document.getElementById("subtitleLangInput").value = "";
+  document.getElementById("subtitleInput").value = "";
+}
 
 function toggleUploadLock() {
   document.getElementById("lockPassword").disabled = !document.getElementById("lockToggle").checked;
@@ -213,10 +244,22 @@ function upload() {
   function submit(formData) {
     fetch(`${SERVER}/upload`, { method: "POST", body: formData })
       .then(res => res.ok ? res.json() : Promise.reject())
-      .then(() => {
+      .then(data => {
         status.textContent = "✅ Upload successful.";
         renderVideos();
         resetForm();
+
+        if (document.getElementById("useSubtitleUpload").checked && subtitleFiles.length > 0) {
+          subtitleFiles.forEach(({ language, file }) => {
+            const subForm = new FormData();
+            subForm.append("subtitle", file);
+            subForm.append("language", language);
+            fetch(`${SERVER}/uploadSubtitle/${data.id}`, {
+              method: "POST",
+              body: subForm
+            });
+          });
+        }
       })
       .catch(() => {
         status.textContent = "❌ Upload failed.";
@@ -234,6 +277,10 @@ function upload() {
     document.getElementById("useThumbUpload").checked = false;
     document.getElementById("thumbInput").disabled = true;
     document.getElementById("thumbSize").disabled = true;
+    document.getElementById("useSubtitleUpload").checked = false;
+    document.getElementById("subtitleUploadArea").style.display = "none";
+    subtitleFiles.length = 0;
+    document.getElementById("subtitleList").innerHTML = "";
     setTimeout(() => status.textContent = "", 3000);
   }
 
@@ -245,35 +292,6 @@ function upload() {
   } else {
     submit(form);
   }
-}
-
-function updateIcon() {
-  const input = document.getElementById("iconInput");
-  const file = input.files[0];
-  const status = document.getElementById("iconStatus");
-  if (!file) return alert("Select a .jpg image.");
-  if (file.size > 30 * 1024) return alert("Icon too big.");
-
-  status.innerHTML = `<span class="spinner"></span> Updating icon...`;
-
-  cropImage(file, 600, 600, blob => {
-    const form = new FormData();
-    form.append("username", me);
-    form.append("icon", blob, "icon.jpg");
-
-    fetch(`${SERVER}/updateIcon`, {
-      method: "POST",
-      body: form
-    })
-      .then(res => res.ok ? res.json() : Promise.reject())
-      .then(() => {
-        document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg?${Date.now()}`;
-        input.value = "";
-        status.textContent = "✅ Icon updated.";
-      })
-      .catch(() => status.textContent = "❌ Icon update failed.")
-      .finally(() => setTimeout(() => status.textContent = "", 3000));
-  });
 }
 function showEdit(id, title, description) {
   const container = document.getElementById(`edit-${id}`);
@@ -349,7 +367,7 @@ function submitEdit(id) {
   }
 
   if (thumbChecked) {
-    cropImage(newThumb, 640, 360, finishSend); // サイズは自由に調整可能
+    cropImage(newThumb, 640, 360, finishSend);
   } else {
     finishSend(null);
   }
@@ -359,6 +377,35 @@ function deleteVideo(id) {
   if (!confirm("Delete this video?")) return;
   fetch(`${SERVER}/deleteVideo/${id}`, { method: "DELETE" })
     .then(() => renderVideos());
+}
+
+function updateIcon() {
+  const input = document.getElementById("iconInput");
+  const file = input.files[0];
+  const status = document.getElementById("iconStatus");
+  if (!file) return alert("Select a .jpg image.");
+  if (file.size > 30 * 1024) return alert("Icon too big.");
+
+  status.innerHTML = `<span class="spinner"></span> Updating icon...`;
+
+  cropImage(file, 600, 600, blob => {
+    const form = new FormData();
+    form.append("username", me);
+    form.append("icon", blob, "icon.jpg");
+
+    fetch(`${SERVER}/updateIcon`, {
+      method: "POST",
+      body: form
+    })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(() => {
+        document.getElementById("iconPreview").src = `${SERVER}/icons/${me}.jpg?${Date.now()}`;
+        input.value = "";
+        status.textContent = "✅ Icon updated.";
+      })
+      .catch(() => status.textContent = "❌ Icon update failed.")
+      .finally(() => setTimeout(() => status.textContent = "", 3000));
+  });
 }
 
 function logout() {
