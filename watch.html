@@ -62,8 +62,6 @@
       margin-right: 8px;
       object-fit: cover;
     }
-
-    /* 🎞️ 字幕表示用スタイル */
     .subtitle {
       position: absolute;
       bottom: 8%;
@@ -76,16 +74,13 @@
       padding: 0 1em;
       box-sizing: border-box;
     }
-
     :fullscreen .subtitle,
     :-webkit-full-screen .subtitle {
       font-size: 1.5em;
     }
-
     .subtitle-controls {
       margin-top: 1em;
     }
-
     .subtitle-controls select,
     .subtitle-controls button {
       font-size: 1em;
@@ -164,7 +159,6 @@ if (!id) {
       } else {
         showMedia(info, mediaUrl, isAudio, lockIcon, postedTime);
       }
-
       function showMedia(info, mediaUrl, isAudio, lockIcon, postedTime) {
         const playerHtml = isAudio ? `
           <div id="waveform"></div>
@@ -223,7 +217,6 @@ if (!id) {
               const video = document.getElementById("player");
               video.src = url;
 
-              // 🎞️ 自前字幕処理
               const subtitleDiv = document.getElementById("subtitle");
               const langSelect = document.getElementById("subtitleLang");
               const toggleBtn = document.getElementById("toggleSubtitle");
@@ -234,13 +227,13 @@ if (!id) {
               function loadSubtitle(lang) {
                 const sub = info.subtitles.find(s => s.language === lang);
                 if (!sub) return;
-                fetch(`${SERVER}/subtitles/${id}/${sub.fileName}`)
+                const langOnly = sub.fileName.replace(".vtt", "");
+                fetch(`${SERVER}/subtitles/${id}/${langOnly}`)
                   .then(res => res.ok ? res.text() : "")
                   .then(text => {
                     subtitles = parseVTT(text);
                   });
               }
-
               function parseVTT(vttText) {
                 const entries = [];
                 const blocks = vttText.split(/\n\n+/);
