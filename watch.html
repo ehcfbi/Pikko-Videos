@@ -37,8 +37,8 @@
       margin-left: 0;
     }
     #player {
-      width: 640px;
-      height: 360px;
+      width: 100%;
+      height: 100%;
       background: black;
     }
     .subtitle {
@@ -298,21 +298,27 @@ if (!id) {
                 if (document.fullscreenElement) {
                   video.style.width = "100vw";
                   video.style.height = "100vh";
+                  videoWrapper.style.width = "100vw";
+                  videoWrapper.style.height = "100vh";
                   subtitleDiv.style.fontSize = "2em";
                   subtitleDiv.style.bottom = "8%";
                   customControls.style.bottom = "3%";
                 } else {
-                  video.style.width = "640px";
-                  video.style.height = "360px";
+                  video.style.width = "100%";
+                  video.style.height = "100%";
+                  videoWrapper.style.width = "640px";
+                  videoWrapper.style.height = "360px";
                   subtitleDiv.style.fontSize = "1.5em";
                   subtitleDiv.style.bottom = "5%";
                   customControls.style.bottom = "5%";
                 }
               });
 
-              videoWrapper.addEventListener("click", () => {
-                controlsVisible = !controlsVisible;
-                customControls.style.display = controlsVisible ? "flex" : "none";
+              videoWrapper.addEventListener("click", (event) => {
+                if (event.target === video) {
+                  controlsVisible = !controlsVisible;
+                  customControls.style.display = controlsVisible ? "flex" : "none";
+                }
               });
 
               function loadSubtitle(lang) {
