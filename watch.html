@@ -32,9 +32,10 @@
     }
     #videoWrapper {
       position: relative;
-      width: 640px;
-      height: 360px;
-      margin-left: 0;
+      width: 100%;
+      max-width: 960px;
+      margin: 0 auto;
+      aspect-ratio: 16 / 9;
     }
     #player {
       width: 100%;
@@ -88,18 +89,6 @@
       height: 24px;
       cursor: pointer;
     }
-
-    @media screen and (max-width: 480px) {
-      #videoWrapper {
-        width: 100%;
-        height: auto;
-      }
-      #player {
-        width: 100%;
-        height: auto;
-        max-height: 240px;
-      }
-    }
   </style>
 </head>
 <body class="bg-animation">
@@ -115,6 +104,21 @@
 <script>
 const id = new URLSearchParams(location.search).get("id");
 const content = document.getElementById("content");
+
+function resizeSubtitleAndControls() {
+  const subtitleDiv = document.getElementById("subtitle");
+  const customControls = document.getElementById("customControls");
+  if (document.fullscreenElement) {
+    if (subtitleDiv) subtitleDiv.style.bottom = "8%";
+    if (customControls) customControls.style.bottom = "3%";
+  } else {
+    if (subtitleDiv) subtitleDiv.style.bottom = "5%";
+    if (customControls) customControls.style.bottom = "5%";
+  }
+}
+
+document.addEventListener("fullscreenchange", resizeSubtitleAndControls);
+window.addEventListener("resize", resizeSubtitleAndControls);
 
 if (!id) {
   content.innerHTML = `<p class="error">Pikko and Pikko Videos couldn't find this video or music.</p>`;
@@ -294,34 +298,6 @@ if (!id) {
                 video.currentTime = (seekBar.value / 100) * video.duration;
               });
 
-              document.addEventListener("fullscreenchange", () => {
-                if (document.fullscreenElement) {
-                  video.removeAttribute("playsinline");
-                  videoWrapper.style.position = "fixed";
-                  videoWrapper.style.top = "0";
-                  videoWrapper.style.left = "0";
-                  videoWrapper.style.width = "100vw";
-                  videoWrapper.style.height = "100vh";
-                  video.style.width = "100vw";
-                  video.style.height = "100vh";
-                  subtitleDiv.style.fontSize = "2em";
-                  subtitleDiv.style.bottom = "8%";
-                  customControls.style.bottom = "3%";
-                } else {
-                  video.setAttribute("playsinline", "");
-                  videoWrapper.style.position = "relative";
-                  videoWrapper.style.top = "";
-                  videoWrapper.style.left = "";
-                  videoWrapper.style.width = "640px";
-                  videoWrapper.style.height = "360px";
-                  video.style.width = "100%";
-                  video.style.height = "100%";
-                  subtitleDiv.style.fontSize = "1.5em";
-                  subtitleDiv.style.bottom = "5%";
-                  customControls.style.bottom = "5%";
-                }
-              });
-
               videoWrapper.addEventListener("click", (event) => {
                 if (event.target === video) {
                   controlsVisible = !controlsVisible;
@@ -329,7 +305,6 @@ if (!id) {
                 }
               });
 
-              // subtitle loading and parsing functions follow...
               function loadSubtitle(lang) {
                 const sub = info.subtitles.find(s => s.language === lang);
                 if (!sub) return;
