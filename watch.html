@@ -86,8 +86,27 @@
     }
     #seekBar {
       width: 160px;
-      height: 24px;
+      height: 32px;
       cursor: pointer;
+      appearance: none;
+      background: #ccc;
+      border-radius: 8px;
+    }
+    #seekBar::-webkit-slider-thumb {
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      background: #0af;
+      border-radius: 50%;
+      border: none;
+      margin-top: -6px;
+    }
+    #seekBar::-moz-range-thumb {
+      width: 24px;
+      height: 24px;
+      background: #0af;
+      border-radius: 50%;
+      border: none;
     }
   </style>
 </head>
@@ -119,7 +138,6 @@ function resizeSubtitleAndControls() {
 
 document.addEventListener("fullscreenchange", resizeSubtitleAndControls);
 window.addEventListener("resize", resizeSubtitleAndControls);
-
 if (!id) {
   content.innerHTML = `<p class="error">Pikko and Pikko Videos couldn't find this video or music.</p>`;
 } else {
@@ -275,27 +293,35 @@ if (!id) {
                 subtitleDiv.style.display = "none";
               });
 
+              video.addEventListener("loadedmetadata", () => {
+                seekBar.max = 100;
+              });
+
               video.addEventListener("timeupdate", () => {
                 if (!subtitleEnabled || subtitles.length === 0) {
                   subtitleDiv.textContent = "";
                   subtitleDiv.style.display = "none";
-                  return;
-                }
-                const current = video.currentTime;
-                const active = subtitles.find(s => current >= s.start && current <= s.end);
-                if (active) {
-                  subtitleDiv.textContent = active.text;
-                  subtitleDiv.style.display = "block";
                 } else {
-                  subtitleDiv.textContent = "";
-                  subtitleDiv.style.display = "none";
+                  const current = video.currentTime;
+                  const active = subtitles.find(s => current >= s.start && current <= s.end);
+                  if (active) {
+                    subtitleDiv.textContent = active.text;
+                    subtitleDiv.style.display = "block";
+                  } else {
+                    subtitleDiv.textContent = "";
+                    subtitleDiv.style.display = "none";
+                  }
                 }
 
-                seekBar.value = (video.currentTime / video.duration) * 100;
+                if (!isNaN(video.duration) && video.duration > 0) {
+                  seekBar.value = (video.currentTime / video.duration) * 100;
+                }
               });
 
               seekBar.addEventListener("input", () => {
-                video.currentTime = (seekBar.value / 100) * video.duration;
+                if (!isNaN(video.duration) && video.duration > 0) {
+                  video.currentTime = (seekBar.value / 100) * video.duration;
+                }
               });
 
               videoWrapper.addEventListener("click", (event) => {
