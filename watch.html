@@ -296,18 +296,26 @@ if (!id) {
 
               document.addEventListener("fullscreenchange", () => {
                 if (document.fullscreenElement) {
-                  video.style.width = "100vw";
-                  video.style.height = "100vh";
+                  video.removeAttribute("playsinline");
+                  videoWrapper.style.position = "fixed";
+                  videoWrapper.style.top = "0";
+                  videoWrapper.style.left = "0";
                   videoWrapper.style.width = "100vw";
                   videoWrapper.style.height = "100vh";
+                  video.style.width = "100vw";
+                  video.style.height = "100vh";
                   subtitleDiv.style.fontSize = "2em";
                   subtitleDiv.style.bottom = "8%";
                   customControls.style.bottom = "3%";
                 } else {
-                  video.style.width = "100%";
-                  video.style.height = "100%";
+                  video.setAttribute("playsinline", "");
+                  videoWrapper.style.position = "relative";
+                  videoWrapper.style.top = "";
+                  videoWrapper.style.left = "";
                   videoWrapper.style.width = "640px";
                   videoWrapper.style.height = "360px";
+                  video.style.width = "100%";
+                  video.style.height = "100%";
                   subtitleDiv.style.fontSize = "1.5em";
                   subtitleDiv.style.bottom = "5%";
                   customControls.style.bottom = "5%";
@@ -321,6 +329,7 @@ if (!id) {
                 }
               });
 
+              // subtitle loading and parsing functions follow...
               function loadSubtitle(lang) {
                 const sub = info.subtitles.find(s => s.language === lang);
                 if (!sub) return;
