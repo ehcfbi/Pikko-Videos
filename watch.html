@@ -296,8 +296,8 @@ if (!id) {
 
               document.addEventListener("fullscreenchange", () => {
                 if (document.fullscreenElement) {
-                  video.style.width = "100%";
-                  video.style.height = "100%";
+                  video.style.width = "100vw";
+                  video.style.height = "100vh";
                   subtitleDiv.style.fontSize = "2em";
                   subtitleDiv.style.bottom = "8%";
                   customControls.style.bottom = "3%";
