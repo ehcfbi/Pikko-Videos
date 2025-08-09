@@ -7,7 +7,7 @@
   <meta property="og:title" content="Pikko Videos">
   <meta property="og:description" content="Let's watch the videos.">
   <meta property="og:url" content="https://videos.bird.f5.si">
-  <meta name="viewport" content="width=640,initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <script>const SERVER = "https://pikko1.tcpexposer.com";</script>
   <script src="https://unpkg.com/wavesurfer.js"></script>
   <script src="js/dark.js"></script>
@@ -84,7 +84,21 @@
       background: #09c;
     }
     #seekBar {
-      width: 120px;
+      width: 160px;
+      height: 24px;
+      cursor: pointer;
+    }
+
+    @media screen and (max-width: 480px) {
+      #videoWrapper {
+        width: 100%;
+        height: auto;
+      }
+      #player {
+        width: 100%;
+        height: auto;
+        max-height: 240px;
+      }
     }
   </style>
 </head>
@@ -226,9 +240,11 @@ if (!id) {
               const langSelect = document.getElementById("subtitleLang");
               const seekBar = document.getElementById("seekBar");
               const videoWrapper = document.getElementById("videoWrapper");
+              const customControls = document.getElementById("customControls");
 
               let subtitles = [];
               let subtitleEnabled = true;
+              let controlsVisible = true;
 
               playPauseBtn.addEventListener("click", () => {
                 if (video.paused) {
@@ -284,14 +300,19 @@ if (!id) {
                   video.style.height = "100%";
                   subtitleDiv.style.fontSize = "2em";
                   subtitleDiv.style.bottom = "8%";
-                  document.getElementById("customControls").style.bottom = "3%";
+                  customControls.style.bottom = "3%";
                 } else {
                   video.style.width = "640px";
                   video.style.height = "360px";
                   subtitleDiv.style.fontSize = "1.5em";
                   subtitleDiv.style.bottom = "5%";
-                  document.getElementById("customControls").style.bottom = "5%";
+                  customControls.style.bottom = "5%";
                 }
+              });
+
+              videoWrapper.addEventListener("click", () => {
+                controlsVisible = !controlsVisible;
+                customControls.style.display = controlsVisible ? "flex" : "none";
               });
 
               function loadSubtitle(lang) {
