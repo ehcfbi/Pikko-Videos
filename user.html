@@ -49,7 +49,6 @@
   <div id="info"></div>
   <h2>videos and musics</h2>
 
-  <!-- 🔽 並び順セレクターと検索欄 -->
   <p>
     <label for="sortSelect">Sort:</label>
     <select id="sortSelect">
@@ -71,9 +70,6 @@
   document.title = `${name} - Pikko Videos`;
 
   const iconUrl = `${SERVER}/icons/${name}.jpg`;
-  const iconImg = new Image();
-  iconImg.src = iconUrl;
-
   let allVideos = [];
 
   function renderVideos(videos) {
@@ -108,29 +104,43 @@
     }
     renderVideos(filtered);
   }
-  iconImg.onload = () => {
-    document.getElementById("info").innerHTML = `
-      <div style="display: flex; align-items: center; margin-bottom: 10px;">
-        <img src="${iconUrl}" alt="icon" width="60" height="60" style="margin-right: 10px; object-fit: cover; border-radius: 5px;">
-        <font size="6" color="purple">${name}</font>
-      </div>
-    `;
 
-    fetch(`${SERVER}/videos/user/${encodeURIComponent(name)}`)
-      .then(res => res.json())
-      .then(videos => {
-        allVideos = videos;
-        applyFilters();
+  // ユーザー存在判定をAPIレスポンスで行う
+  fetch(`${SERVER}/users`)
+    .then(res => res.ok ? res.json() : Promise.reject())
+    .then(usersData => {
+      const exists = Array.isArray(usersData.users) && usersData.users.some(u => u.username === name);
+      if (!exists) {
+        document.getElementById("info").innerHTML = `<p class="error">This account does not exist.</p>`;
+        document.getElementById("list").innerHTML = "";
+        return;
+      }
 
-        document.getElementById("sortSelect").addEventListener("change", applyFilters);
-        document.getElementById("searchInput").addEventListener("input", applyFilters);
-      });
-  };
+      // 存在する場合はアイコン＋名前を表示し、動画一覧を取得
+      document.getElementById("info").innerHTML = `
+        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+          <img src="${iconUrl}" alt="icon" width="60" height="60" style="margin-right: 10px; object-fit: cover; border-radius: 5px;">
+          <font size="6" color="purple">${name}</font>
+        </div>
+      `;
 
-  iconImg.onerror = () => {
-    document.getElementById("info").innerHTML = `<p class="error">This account does not exist.</p>`;
-    document.getElementById("list").innerHTML = "";
-  };
+      fetch(`${SERVER}/videos/user/${encodeURIComponent(name)}`)
+        .then(res => res.ok ? res.json() : Promise.reject())
+        .then(videos => {
+          allVideos = videos;
+          applyFilters();
+
+          document.getElementById("sortSelect").addEventListener("change", applyFilters);
+          document.getElementById("searchInput").addEventListener("input", applyFilters);
+        })
+        .catch(() => {
+          document.getElementById("list").innerHTML = "No videos found.";
+        });
+    })
+    .catch(() => {
+      document.getElementById("info").innerHTML = `<p class="error">This account does not exist.</p>`;
+      document.getElementById("list").innerHTML = "";
+    });
 
   function copyUrl() {
     const element = document.createElement('input');
@@ -143,4 +153,3 @@
 </script>
 </body>
 </html>
-
