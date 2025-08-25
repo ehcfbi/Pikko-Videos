@@ -42,6 +42,18 @@
       height: 100%;
       background: black;
     }
+    /* 追加：暗転オーバーレイ */
+    #videoOverlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.25);
+      pointer-events: none;
+      z-index: 5;
+      display: none;
+    }
     .subtitle {
       position: absolute;
       bottom: 5%;
@@ -202,6 +214,7 @@ if (!id) {
         ` : `
           <div id="videoWrapper">
             <video id="player" autoplay playsinline></video>
+            <div id="videoOverlay"></div>
             <div class="subtitle" id="subtitle"></div>
             <div class="custom-controls" id="customControls">
               <button id="playPauseBtn" aria-label="Play/Pause"></button>
@@ -265,17 +278,13 @@ if (!id) {
               const timeDisplay = document.getElementById("timeDisplay");
               const videoWrapper = document.getElementById("videoWrapper");
               const customControls = document.getElementById("customControls");
+              const videoOverlay = document.getElementById("videoOverlay");
 
-              // SVG icons for consistency across devices
               const svgPlay = '<svg width="18" height="18" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z"/></svg>';
               const svgPause = '<svg width="18" height="18" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>';
 
-              function setPlayIcon() {
-                playPauseBtn.innerHTML = svgPlay;
-              }
-              function setPauseIcon() {
-                playPauseBtn.innerHTML = svgPause;
-              }
+              function setPlayIcon() { playPauseBtn.innerHTML = svgPlay; }
+              function setPauseIcon() { playPauseBtn.innerHTML = svgPause; }
               function formatTime(sec) {
                 if (!isFinite(sec)) return "0:00";
                 sec = Math.max(0, Math.floor(sec));
@@ -288,12 +297,8 @@ if (!id) {
                 return `${m}:${String(s).padStart(2, "0")}`;
               }
               function updateTimeDisplay() {
-                const cur = video.currentTime || 0;
-                const dur = video.duration || 0;
-                timeDisplay.textContent = `${formatTime(cur)} / ${formatTime(dur)}`;
+                timeDisplay.textContent = `${formatTime(video.currentTime || 0)} / ${formatTime(video.duration || 0)}`;
               }
-
-              // Initialize button state based on actual playback state
               function updatePlayPauseVisual() {
                 if (video.ended || video.paused) {
                   setPlayIcon();
@@ -302,7 +307,6 @@ if (!id) {
                 }
               }
 
-              // Button behaviors
               playPauseBtn.addEventListener("click", () => {
                 if (video.paused || video.ended) {
                   video.play();
@@ -331,31 +335,17 @@ if (!id) {
               });
 
               video.addEventListener("loadedmetadata", () => {
-                // keep seekBar scale as percentage
                 updateTimeDisplay();
                 updatePlayPauseVisual();
               });
 
-              video.addEventListener("play", () => {
-                setPauseIcon();
-              });
-              video.addEventListener("pause", () => {
-                // If paused due to end, we'll also show Play icon (handled below)
-                if (!video.ended) setPlayIcon();
-              });
-              video.addEventListener("ended", () => {
-                // Show play-from-start icon after ending
-                setPlayIcon();
-                updateTimeDisplay();
-              });
+              video.addEventListener("play", () => { setPauseIcon(); });
+              video.addEventListener("pause", () => { if (!video.ended) setPlayIcon(); });
+              video.addEventListener("ended", () => { setPlayIcon(); updateTimeDisplay(); });
 
               video.addEventListener("timeupdate", () => {
-                if (!subtitleEnabled || subtitles.length === 0) {
-                  subtitleDiv.textContent = "";
-                  subtitleDiv.style.display = "none";
-                } else {
-                  const current = video.currentTime;
-                  const active = subtitles.find(s => current >= s.start && current <= s.end);
+                if (subtitleEnabled && subtitles.length > 0) {
+                  const active = subtitles.find(s => video.currentTime >= s.start && video.currentTime <= s.end);
                   if (active) {
                     subtitleDiv.textContent = active.text;
                     subtitleDiv.style.display = "block";
@@ -363,8 +353,10 @@ if (!id) {
                     subtitleDiv.textContent = "";
                     subtitleDiv.style.display = "none";
                   }
+                } else {
+                  subtitleDiv.textContent = "";
+                  subtitleDiv.style.display = "none";
                 }
-
                 if (!isNaN(video.duration) && video.duration > 0) {
                   seekBar.value = (video.currentTime / video.duration) * 100;
                 }
@@ -381,19 +373,17 @@ if (!id) {
                 if (event.target === video) {
                   controlsVisible = !controlsVisible;
                   customControls.style.display = controlsVisible ? "flex" : "none";
+                  videoOverlay.style.display = controlsVisible ? "block" : "none";
                 }
               });
 
-              // subtitle loading and parsing
               function loadSubtitle(lang) {
                 const sub = info.subtitles.find(s => s.language === lang);
                 if (!sub) return;
                 const langOnly = sub.fileName.replace(".vtt", "");
                 fetch(`${SERVER}/subtitles/${id}/${langOnly}`)
                   .then(res => res.ok ? res.text() : "")
-                  .then(text => {
-                    subtitles = parseVTT(text);
-                  });
+                  .then(text => { subtitles = parseVTT(text); });
               }
 
               function parseVTT(vttText) {
@@ -417,10 +407,7 @@ if (!id) {
               function parseTime(t) {
                 const parts = t.split(":");
                 if (parts.length === 3) {
-                  const h = parseInt(parts[0]);
-                  const m = parseInt(parts[1]);
-                  const s = parseFloat(parts[2]);
-                  return h * 3600 + m * 60 + s;
+                  return parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseFloat(parts[2]);
                 } else if (parts.length === 2) {
                   const m = parseInt(parts[0]);
                   const s = parseFloat(parts[1]);
@@ -450,7 +437,6 @@ if (!id) {
                 subtitleDiv.style.display = "none";
               }
 
-              // Set initial state after source attached
               updatePlayPauseVisual();
               updateTimeDisplay();
             })
