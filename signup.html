@@ -19,7 +19,8 @@
   <a href="./"><img class="logo" src="logo.png" alt="logo" width="200" height="100"></a>
   <p><button onclick="toggleTheme()" id="themeBtn">Light Mode</button></p>
   <h1>signup</h1>
-  <input id="username" placeholder="name"><br>
+  <input id="username" placeholder="name"
+       oninput="this.value = this.value.toLowerCase();"><br>
   <input id="password" type="password" placeholder="password"><br>
   <p>Agree to the <a href="terms">"terms"</a> before creating an account.</p>
   <p><a href="about">What service is this?</a></p>
@@ -35,6 +36,12 @@
 
       if (!user || !pass) {
         msg.textContent = "Enter.";
+        return;
+      }
+
+      // 大文字禁止チェック
+      if (/[A-Z]/.test(user)) {
+        msg.textContent = "ユーザー名に大文字は使用できません。";
         return;
       }
 
@@ -55,3 +62,4 @@
   </script>
 </body>
 </html>
+
