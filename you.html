@@ -471,6 +471,49 @@ function copyUrl() {
 
 addSubtitleRow();
 renderVideos();
+
+async function updateIcon() {
+  const fileInput = document.getElementById("iconInput");
+  const status = document.getElementById("iconStatus");
+  const file = fileInput.files[0];
+
+  if (!file) {
+    alert("Please select a .jpg file for your icon.");
+    return;
+  }
+  if (file.type !== "image/jpeg") {
+    alert("Only .jpg files are allowed.");
+    return;
+  }
+  if (file.size > 30 * 1024) { // 30KB 制限
+    alert("File is too large. Please choose a file under 30KB.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("username", me); // ログイン中ユーザー名
+  formData.append("icon", file);
+
+  status.textContent = "⏳ Uploading icon...";
+
+  try {
+    const res = await fetch(`${SERVER}/updateIcon`, {
+      method: "POST",
+      body: formData
+    });
+    if (!res.ok) throw new Error();
+    const result = await res.json();
+    status.textContent = "✅ " + result.message;
+
+    // キャッシュ回避のためクエリを付ける
+    document.getElementById("iconPreview").src =
+      `${SERVER}/icons/${me}.jpg?${Date.now()}`;
+    fileInput.value = "";
+  } catch {
+    status.textContent = "❌ Failed to update icon.";
+  }
+}
 </script>
 </body>
 </html>
+
