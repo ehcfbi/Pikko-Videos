@@ -75,7 +75,8 @@
 
   <h2>change account</h2>
   <input id="currentPassword" type="password" placeholder="current password"><br>
-  <input id="newUsername" placeholder="new username"><br>
+  <input id="newUsername" placeholder="new username"
+       oninput="this.value = this.value.toLowerCase();"><br>
   <input id="newPassword" type="password" placeholder="new password"><br>
   <button onclick="changeAccount()">change account</button>
 
@@ -439,6 +440,12 @@ function changeAccount() {
   const pass = document.getElementById("newPassword").value.trim();
   if (!now || !name || !pass) return alert("Enter all.");
 
+  // 大文字禁止チェック
+  if (/[A-Z]/.test(name)) {
+    alert("Usernames cannot contain uppercase letters.");
+    return;
+  }
+
   fetch(`${SERVER}/changeAccount`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -516,4 +523,5 @@ async function updateIcon() {
 </script>
 </body>
 </html>
+
 
